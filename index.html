@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hotel La Gruta — Arequipa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Dancing+Script:wght@500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 <style>
 :root {
   --ink:    #2B2B26;
@@ -30,6 +32,7 @@ body {
 }
 img { display: block; max-width: 100%; }
 .imgc { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#botanic path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 
 /* transition */
 .pt { position: fixed; inset: 0; z-index: 8000; background: var(--paper2); transform: scaleY(0); transform-origin: bottom; pointer-events: none; }
@@ -273,6 +276,8 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 </head>
 <body>
 
+<svg id="botanic" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;"></svg>
+
 <div class="pt" id="pt"></div>
 
 <nav id="nav">
@@ -475,23 +480,27 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
       <div class="rv-contact"><span class="rv-cl">Email</span><span class="rv-cv">lagruta@lagrutahotel.com</span></div>
       <div class="rv-contact"><span class="rv-cl">Check-in / out</span><span class="rv-cv">2:00 PM / 12:00 PM</span></div>
     </div>
-    <div class="rv-form rv-el">
+    <form class="rv-form rv-el" id="reservaForm" novalidate>
       <div class="rv-row">
-        <div class="rv-field"><label>Nombre completo</label><input type="text" placeholder="Tu nombre"></div>
-        <div class="rv-field"><label>Teléfono</label><input type="tel" placeholder="+51"></div>
+        <div class="rv-field"><label>Nombre completo</label><input type="text" name="nombre" placeholder="Tu nombre" required></div>
+        <div class="rv-field"><label>Teléfono</label><input type="tel" name="telefono" placeholder="+51" required></div>
       </div>
-      <div class="rv-field"><label>Correo electrónico</label><input type="email" placeholder="correo@ejemplo.com"></div>
+      <div class="rv-field"><label>Correo electrónico</label><input type="email" name="correo" placeholder="correo@ejemplo.com"></div>
       <div class="rv-row">
-        <div class="rv-field"><label>Habitación</label><select><option>Seleccionar</option><option>Individual</option><option>Doble</option><option>Triple</option><option>Matrimonial</option><option>Semi Suite</option><option>Suite</option></select></div>
-        <div class="rv-field"><label>Huéspedes</label><input type="number" placeholder="1" min="1"></div>
+        <div class="rv-field"><label>Habitación</label><select name="habitacion"><option value="">Seleccionar</option><option>Individual</option><option>Doble</option><option>Triple</option><option>Matrimonial</option><option>Semi Suite</option><option>Suite</option></select></div>
+        <div class="rv-field"><label>Huéspedes</label><input type="number" name="huespedes" placeholder="1" min="1"></div>
       </div>
       <div class="rv-row">
-        <div class="rv-field"><label>Llegada</label><input type="date"></div>
-        <div class="rv-field"><label>Salida</label><input type="date"></div>
+        <div class="rv-field"><label>Llegada</label><input type="date" name="llegada" required></div>
+        <div class="rv-field"><label>Salida</label><input type="date" name="salida" required></div>
       </div>
-      <div class="rv-field"><label>Mensaje adicional</label><textarea rows="3" placeholder="¿Alguna preferencia especial?"></textarea></div>
-      <button class="rv-submit">Enviar solicitud</button>
-    </div>
+      <div class="rv-field"><label>Mensaje adicional</label><textarea rows="3" name="mensaje" placeholder="¿Alguna preferencia especial?"></textarea></div>
+      <div style="display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:40px;">
+        <button class="rv-submit" type="submit" style="margin-top:0;">Enviar por WhatsApp</button>
+        <a href="#" class="rc-more" id="reservaMailto">o escríbenos por correo</a>
+      </div>
+      <p class="rv-note" id="reservaNote" style="font-size:12px;color:var(--muted);margin-top:16px;min-height:1em;"></p>
+    </form>
   </div>
   <footer>
     <div class="ft-top">
@@ -517,7 +526,7 @@ function goTo(page){
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
-    current=page; window.scrollTo(0,0); reAnim(page);
+    current=page; window.scrollTo(0,0); reAnim(page); window.rebuildBotanicGrowth?.();
     pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
   },520);
 }
@@ -537,6 +546,288 @@ obs();
 const navEl=document.getElementById('nav');
 function navColor(){ navEl.classList.toggle('dark', window.scrollY > window.innerHeight*.82); }
 window.addEventListener('scroll',navColor);
+
+/* ── Formulario de reservas → WhatsApp / correo ── */
+const rvForm = document.getElementById('reservaForm');
+if (rvForm) {
+  const WA_NUMBER = '51959344759';
+  const HOTEL_EMAIL = 'lagruta@lagrutahotel.com';
+  const val = n => (rvForm.elements[n]?.value || '').trim();
+  function buildMessage(){
+    return [
+      'Hola, quisiera consultar disponibilidad en Hotel La Gruta:',
+      `Nombre: ${val('nombre')}`,
+      `Teléfono: ${val('telefono')}`,
+      val('correo') && `Correo: ${val('correo')}`,
+      `Habitación: ${val('habitacion') || 'Sin preferencia'}`,
+      `Huéspedes: ${val('huespedes') || '1'}`,
+      `Llegada: ${val('llegada')}`,
+      `Salida: ${val('salida')}`,
+      val('mensaje') && `Mensaje: ${val('mensaje')}`,
+    ].filter(Boolean).join('\n');
+  }
+  const note = document.getElementById('reservaNote');
+  rvForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!rvForm.checkValidity()) { rvForm.reportValidity(); return; }
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(buildMessage())}`, '_blank');
+    if (note) note.textContent = 'Se abrió WhatsApp con tu solicitud lista para enviar.';
+  });
+  document.getElementById('reservaMailto')?.addEventListener('click', e => {
+    e.preventDefault();
+    if (!rvForm.checkValidity()) { rvForm.reportValidity(); return; }
+    const subject = encodeURIComponent(`Solicitud de reserva — ${val('nombre')}`);
+    location.href = `mailto:${HOTEL_EMAIL}?subject=${subject}&body=${encodeURIComponent(buildMessage())}`;
+    if (note) note.textContent = 'Se abrió tu cliente de correo con la solicitud lista para enviar.';
+  });
+}
+</script>
+
+<!-- ═══ Jardín de fondo: crecimiento botánico ligado al scroll ═══
+     Un brote crece a los costados de la pantalla a medida que se
+     avanza en la página, y se queda dibujado (no retrocede). Solo
+     asoma donde una sección no tiene fondo opaco encima — por eso
+     convive sin competir con fotos, tarjetas ni el formulario. -->
+<script>
+if (window.gsap && window.ScrollTrigger) (function(){
+  gsap.registerPlugin(ScrollTrigger);
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.getElementById('botanic');
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  const mk=tag=>document.createElementNS(NS,tag);
+
+  const WIN = {
+    stem: [0.00,0.42],
+    branch: ti => [0.28+ti*0.16, 0.62+ti*0.16],
+    leaf:   tb => [0.50+tb*0.16, 0.86+tb*0.16]
+  };
+  function windowProgress(tri,[a,b],extra=0){
+    const sp=(tri-a-extra)/(b-a);
+    return Math.max(0,Math.min(1,sp));
+  }
+
+  function smallLeaf(len,ang){
+    const g=mk('g'), w=len*0.42;
+    const p=mk('path');
+    p.setAttribute('d',`M0,0 C ${w*.6},${-len*.2} ${w*.5},${-len*.7} 0,${-len} C ${-w*.5},${-len*.7} ${-w*.6},${-len*.2} 0,0`);
+    g.appendChild(p);
+    const vein=mk('path'); vein.setAttribute('d',`M0,-3 L0,${-len*.9}`); g.appendChild(vein);
+    g.setAttribute('transform',`rotate(${ang})`);
+    return {g,paths:[p,vein]};
+  }
+  function floret(s){
+    const g=mk('g'), paths=[];
+    for(let p=0;p<4;p++){
+      const a=(p/4)*Math.PI*2+rnd(-.2,.2);
+      const path=mk('path');
+      const ex=Math.cos(a)*s, ey=Math.sin(a)*s, w=s*.6;
+      path.setAttribute('d',`M0,0 Q ${(Math.cos(a-.65)*w).toFixed(1)},${(Math.sin(a-.65)*w).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)} Q ${(Math.cos(a+.65)*w).toFixed(1)},${(Math.sin(a+.65)*w).toFixed(1)} 0,0`);
+      g.appendChild(path); paths.push(path);
+    }
+    return {g,paths};
+  }
+  function floretCluster(n,R){
+    const g=mk('g'), paths=[];
+    for(let i=0;i<n;i++){
+      const a=Math.random()*Math.PI*2, r=Math.pow(Math.random(),.6)*R;
+      const f=floret(rnd(5,9));
+      f.g.setAttribute('transform',`translate(${(Math.cos(a)*r).toFixed(1)} ${(Math.sin(a)*r).toFixed(1)})`);
+      g.appendChild(f.g); paths.push(...f.paths);
+    }
+    return {g,paths};
+  }
+  function miniRose(size,rot){
+    const g=mk('g'), paths=[];
+    g.setAttribute('transform',`rotate(${rot}) scale(${size})`);
+    const spiral=mk('path');
+    spiral.setAttribute('d','M0,0 C 3,-2 5,1 3,4 C 0,7 -5,4 -3,-1 C -1,-6 6,-6 7,0');
+    g.appendChild(spiral); paths.push(spiral);
+    for(let i=0;i<5;i++){
+      const a=(i/5)*Math.PI*2+rnd(-.15,.15), r=10+i*3;
+      const petal=mk('path');
+      const x1=Math.cos(a)*r,y1=Math.sin(a)*r;
+      petal.setAttribute('d',`M0,0 C ${(Math.cos(a-.5)*r*.7).toFixed(1)},${(Math.sin(a-.5)*r*.7).toFixed(1)} ${(x1*.9).toFixed(1)},${(y1*.9).toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} C ${(x1*.9).toFixed(1)},${(y1*.9).toFixed(1)} ${(Math.cos(a+.5)*r*.7).toFixed(1)},${(Math.sin(a+.5)*r*.7).toFixed(1)} 0,0`);
+      g.appendChild(petal); paths.push(petal);
+    }
+    return {g,paths};
+  }
+  function miniFern(len,ang){
+    const g=mk('g'), paths=[];
+    const stem=mk('path');
+    stem.setAttribute('d',`M0,0 Q ${len*.3},${-len*.1} ${len},${-len*.05}`);
+    g.appendChild(stem); paths.push(stem);
+    const n=5;
+    for(let i=1;i<=n;i++){
+      const p=i/n, sx=len*p, sy=-len*.05*Math.sin(p*Math.PI);
+      const s=(1-p*.5)*len*.22;
+      for(const side of [1,-1]){
+        const fol=mk('path');
+        const a=side*1.1;
+        const ex=sx+Math.cos(a)*s*.3, ey=sy+Math.sin(a)*s;
+        fol.setAttribute('d',`M${sx.toFixed(1)},${sy.toFixed(1)} Q ${(sx+Math.cos(a-.3)*s*.15).toFixed(1)},${(sy+Math.sin(a-.3)*s*.5).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
+        g.appendChild(fol); paths.push(fol);
+      }
+    }
+    g.setAttribute('transform',`rotate(${ang})`);
+    return {g,paths};
+  }
+  function buildStem(g,edgeX,y0,reach,dir,swing,angleBias){
+    angleBias=angleBias||0;
+    const ab=angleBias*reach;
+    const x1=edgeX+dir*reach*.28, y1=y0+swing*.9+ab*.2;
+    const x2=edgeX+dir*reach*.5,  y2=y0-swing*.15+ab*.4;
+    const xm=edgeX+dir*reach*.56, ym=y0-swing*.05+ab*.5;
+    const x3=edgeX+dir*reach*.62, y3=y0-swing*.85+ab*.6;
+    const x4=edgeX+dir*reach*.85, y4=y0+swing*.12+ab*.8;
+    const xe=edgeX+dir*reach,     ye=y0+swing*.05+ab;
+    const path=mk('path');
+    path.setAttribute('d',
+      `M${edgeX},${y0} C ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${xm.toFixed(1)},${ym.toFixed(1)} `+
+      `C ${x3.toFixed(1)},${y3.toFixed(1)} ${x4.toFixed(1)},${y4.toFixed(1)} ${xe.toFixed(1)},${ye.toFixed(1)}`);
+    g.appendChild(path);
+    return path;
+  }
+
+  function buildAll(){
+    // En pantallas angostas el margen lateral casi no existe y el jardín
+    // solo estorbaría — se omite en vez de forzarlo.
+    if (window.innerWidth < 760){ svg.innerHTML=''; ScrollTrigger.getAll().forEach(t=>t.kill()); return; }
+
+    const aspect=window.innerWidth/window.innerHeight;
+    const W=Math.round(1000*aspect);
+    svg.setAttribute('viewBox',`0 0 ${W} 1000`);
+    svg.innerHTML='';
+    const g=mk('g');
+    svg.appendChild(g);
+    const allSprouts=[];
+
+    const N_PER_SIDE=13;
+    for(let k=0;k<N_PER_SIDE;k++){
+      [0,1].forEach(sideIdx=>{
+        const edgeX=sideIdx===0?0:W;
+        const dir=sideIdx===0?1:-1;
+        const y=(k+0.5)/N_PER_SIDE*1000+rnd(-65,65);
+        const swingSign=k%2===0?-1:1;
+        const reach=Math.random()<0.22?rnd(160,220):rnd(75,130);
+        const swing=swingSign*rnd(35,85);
+        const angleBias=rnd(-0.22,0.22);
+        const young=Math.random()<0.22;
+        const stemPath=buildStem(g,edgeX,y,young?reach*0.45:reach,dir,swing,angleBias);
+        const stemLen=stemPath.getTotalLength();
+
+        const nBranch=young?Math.round(rnd(0,1)):Math.round(rnd(2,4));
+        const speciesPool=['hydrangea','rose','fern','leaf'];
+        const speciesOrder=[...speciesPool].sort(()=>Math.random()-.5);
+        const branches=[];
+        for(let i=0;i<nBranch;i++){
+          const ti=(i+1)/(nBranch+1)+rnd(-.05,.05);
+          const pt=stemPath.getPointAtLength(Math.max(0,Math.min(stemLen,ti*stemLen)));
+          const pt2=stemPath.getPointAtLength(Math.max(0,Math.min(stemLen,(ti+0.03)*stemLen)));
+          const tangent=Math.atan2(pt2.y-pt.y,pt2.x-pt.x);
+          const side=i%2===0?1:-1;
+          const outAngle=tangent+side*Math.PI/2*rnd(.65,1.15);
+          const len=rnd(18,36);
+          const bend=rnd(-.5,.5)*side;
+          const midx=Math.cos(outAngle+bend*.5)*len*.55, midy=Math.sin(outAngle+bend*.5)*len*.55;
+          const ex=Math.cos(outAngle+bend)*len, ey=Math.sin(outAngle+bend)*len;
+          const branchPath=mk('path');
+          branchPath.setAttribute('d',`M0,0 Q ${midx.toFixed(1)},${midy.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
+          branchPath.setAttribute('transform',`translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
+          g.appendChild(branchPath);
+
+          const tipAngDeg=(outAngle+bend)*180/Math.PI;
+          const leafWrap=mk('g');
+          leafWrap.setAttribute('transform',`translate(${(pt.x+ex).toFixed(1)} ${(pt.y+ey).toFixed(1)})`);
+          const kind=speciesOrder[i%speciesOrder.length];
+          let tip;
+          if(kind==='hydrangea') tip=floretCluster(Math.round(rnd(3,5)),rnd(9,14));
+          else if(kind==='rose')  tip=miniRose(rnd(0.5,0.72),rnd(-30,30));
+          else if(kind==='fern')  tip=miniFern(rnd(16,24),tipAngDeg);
+          else                    tip=smallLeaf(rnd(12,18),tipAngDeg+90);
+          leafWrap.appendChild(tip.g);
+          g.appendChild(leafWrap);
+          branches.push({branchPath,leafPaths:tip.paths,ti});
+        }
+        if(young){
+          const tipPt=stemPath.getPointAtLength(stemLen);
+          const tipWrap=mk('g');
+          tipWrap.setAttribute('transform',`translate(${tipPt.x.toFixed(1)} ${tipPt.y.toFixed(1)})`);
+          const tip=smallLeaf(rnd(11,16),dir>0?0:180);
+          tipWrap.appendChild(tip.g);
+          g.appendChild(tipWrap);
+          branches.push({branchPath:null,leafPaths:tip.paths,ti:0.9,skipBranch:true});
+        }
+        allSprouts.push({stemPath,branches});
+      });
+    }
+
+    const GREENS=['#3A5236','#5E7355'];
+    const allPaths=[...svg.querySelectorAll('path')];
+    allPaths.forEach(p=>{
+      p.setAttribute('stroke', GREENS[Math.random()<0.5?0:1]);
+      p.setAttribute('stroke-width',(0.9+Math.random()*0.3).toFixed(2));
+      p.setAttribute('opacity',(0.16+Math.random()*0.22).toFixed(2));
+    });
+    const prep=el=>{
+      let len; try{ len=el.getTotalLength(); }catch(e){ len=50; }
+      if(!len||!isFinite(len)) len=50;
+      el.style.strokeDasharray=len; el.style.strokeDashoffset=len;
+      return len;
+    };
+    allSprouts.forEach(sp=>{
+      sp.stemLen=prep(sp.stemPath);
+      sp.branches.forEach(b=>{
+        b.branchLen=b.branchPath?prep(b.branchPath):0;
+        b.leafLens=b.leafPaths.map(prep);
+      });
+    });
+
+    ScrollTrigger.getAll().forEach(t=>t.kill());
+
+    const N=allSprouts.length;
+    allSprouts.forEach((sp,i)=>{
+      sp.winStart=Math.max(0,i/N-0.03);
+      sp.winEnd=Math.min(1,(i+1)/N+0.05);
+    });
+
+    function applyGrowth(sp,tri){
+      const stemSp=windowProgress(tri,WIN.stem);
+      sp.stemPath.style.strokeDashoffset=sp.stemLen*(1-stemSp);
+      sp.branches.forEach(b=>{
+        if(b.branchPath){
+          const brSp=windowProgress(tri,WIN.branch(b.ti));
+          b.branchPath.style.strokeDashoffset=b.branchLen*(1-brSp);
+        }
+        const lfWin=WIN.leaf(b.ti);
+        b.leafLens.forEach((len,i)=>{
+          const lfSp=windowProgress(tri,lfWin,i*0.02);
+          b.leafPaths[i].style.strokeDashoffset=len*(1-lfSp);
+        });
+      });
+    }
+
+    ScrollTrigger.create({
+      trigger: document.body,
+      start:'top top', end:'bottom bottom',
+      scrub:0.8,
+      onUpdate:self=>{
+        const p=self.progress;
+        allSprouts.forEach(sp=>{
+          const span=sp.winEnd-sp.winStart;
+          const local=span>0?(p-sp.winStart)/span:1;
+          applyGrowth(sp, Math.max(0,Math.min(1,local)));
+        });
+      }
+    });
+    ScrollTrigger.refresh();
+  }
+
+  window.rebuildBotanicGrowth = () => setTimeout(buildAll, 30);
+  buildAll();
+  let resizeT;
+  window.addEventListener('resize',()=>{ clearTimeout(resizeT); resizeT=setTimeout(buildAll,300); });
+  if(document.fonts){ document.fonts.ready.then(()=>ScrollTrigger.refresh()); }
+})();
 </script>
 </body>
 </html>
