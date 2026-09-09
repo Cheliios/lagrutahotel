@@ -689,9 +689,10 @@ if (window.gsap && window.ScrollTrigger) (function(){
   }
 
   function buildAll(){
-    // En pantallas angostas el margen lateral casi no existe y el jardín
-    // solo estorbaría — se omite en vez de forzarlo.
-    if (window.innerWidth < 760){ svg.innerHTML=''; ScrollTrigger.getAll().forEach(t=>t.kill()); return; }
+    // En pantallas angostas el margen lateral casi no existe, así que se
+    // usa una versión más chica (menos brotes, alcance más corto) en vez
+    // de omitir el efecto por completo.
+    const isMobile = window.innerWidth < 760;
 
     const aspect=window.innerWidth/window.innerHeight;
     const W=Math.round(1000*aspect);
@@ -701,15 +702,17 @@ if (window.gsap && window.ScrollTrigger) (function(){
     svg.appendChild(g);
     const allSprouts=[];
 
-    const N_PER_SIDE=13;
+    const N_PER_SIDE=isMobile?7:13;
     for(let k=0;k<N_PER_SIDE;k++){
       [0,1].forEach(sideIdx=>{
         const edgeX=sideIdx===0?0:W;
         const dir=sideIdx===0?1:-1;
         const y=(k+0.5)/N_PER_SIDE*1000+rnd(-65,65);
         const swingSign=k%2===0?-1:1;
-        const reach=Math.random()<0.22?rnd(160,220):rnd(75,130);
-        const swing=swingSign*rnd(35,85);
+        const reach=isMobile
+          ? (Math.random()<0.2?rnd(70,95):rnd(28,50))
+          : (Math.random()<0.22?rnd(160,220):rnd(75,130));
+        const swing=swingSign*(isMobile?rnd(14,30):rnd(35,85));
         const angleBias=rnd(-0.22,0.22);
         const young=Math.random()<0.22;
         const stemPath=buildStem(g,edgeX,y,young?reach*0.45:reach,dir,swing,angleBias);
