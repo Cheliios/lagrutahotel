@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Gruta — Crecimiento botánico jerárquico</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+:root{
+  --bg1:#1E2B22; --bg2:#18221B;
+  --gold:#D4AF37; --gold2:#C5A059;
+  --txt:#F4F4F0; --mint:#A3B899; --muted:#9DAF92;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(140% 110% at 50% 0%, var(--bg1) 0%, var(--bg2) 60%);
+  font-family:'Jost',sans-serif;font-weight:300;color:var(--txt);overflow-x:hidden}
+.note{position:fixed;top:16px;left:16px;z-index:20;background:rgba(30,43,34,.9);padding:9px 15px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mint);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.status{position:fixed;top:16px;right:16px;z-index:20;background:rgba(30,43,34,.9);padding:9px 15px;font-size:11px;letter-spacing:1px;color:var(--muted)}
+#botanic{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+#botanic path{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+
+.wrap{position:relative;z-index:1}
+.hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px}
+.eye{font-size:10px;letter-spacing:7px;text-transform:uppercase;color:var(--gold2);margin-bottom:18px}
+.ttl{font-family:'Cormorant Garamond',serif;font-size:clamp(44px,7vw,100px);font-weight:300;line-height:.95;color:var(--txt)}
+.ttl em{font-style:italic;color:var(--gold)}
+.scrollcue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+
+section.block{min-height:90vh;display:flex;align-items:center;justify-content:center;padding:80px 24px}
+.card{max-width:600px;text-align:center;background:rgba(30,43,34,.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  padding:38px 34px;border:1px solid rgba(212,175,55,.18)}
+.card .k{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--gold2);margin-bottom:18px}
+.card h2{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4vw,48px);font-weight:300;line-height:1.3;color:var(--txt)}
+.card h2 em{font-style:italic;color:var(--gold)}
+.card p{margin-top:18px;font-size:15px;line-height:1.85;color:var(--mint)}
+.foot{height:50vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase}
+@media (max-width:700px){ .card{padding:28px 22px} }
+</style>
+</head>
+<body>
+
+<div class="note">Scrollea despacio ↓</div>
+<div class="status" id="status">sección: hero · 0%</div>
+
+<svg id="botanic" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"></svg>
+
+<div class="wrap">
+  <section class="hero" id="sec-hero">
+    <p class="eye">Selva Alegre · Arequipa</p>
+    <h1 class="ttl">Tu refugio<br><em>de calma</em></h1>
+    <div class="scrollcue">desliza · el brote crece</div>
+  </section>
+
+  <section class="block" id="sec-1"><div class="card">
+    <p class="k">Por qué La Gruta</p>
+    <h2>A siete minutos caminando del centro histórico, pero rodeado de jardines y silencio. <em>Cerca de todo, lejos del ruido.</em></h2>
+  </div></section>
+
+  <section class="block" id="sec-2"><div class="card">
+    <p class="k">Habitaciones</p>
+    <h2>Seis espacios distintos,<br>una misma promesa:<br><em>que descanses de verdad.</em></h2>
+    <p>Todas con baño privado y agua caliente 24 horas.</p>
+  </div></section>
+
+  <section class="block" id="sec-3"><div class="card">
+    <p class="k">El jardín</p>
+    <h2>Desayunar entre hortensias,<br>leer sin apuro,<br><em>respirar despacio.</em></h2>
+  </div></section>
+
+  <div class="foot">Fin del recorrido de prueba</div>
+</div>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('botanic');
+function rnd(a,b){return a+Math.random()*(b-a);}
+function mk(tag){return document.createElementNS(NS,tag);}
+
+/* ═══════════════════════════════════════════════════════════
+   VENTANAS DE TIEMPO por nivel jerárquico (dentro del 0..1 de
+   crecimiento local de la sección). El nivel 3 no puede empezar
+   antes de que el nivel 2 vaya avanzado, y este no antes de que
+   el nivel 1 (tallo) esté bien encaminado — así se ve un brote
+   creciendo, no todo apareciendo a la vez.
+   ═══════════════════════════════════════════════════════════ */
+const WIN = {
+  stem:            [0.00, 0.42],
+  branch:(ti)=>     [0.28+ti*0.16, 0.62+ti*0.16],
+  leaf:(tb)=>        [0.50+tb*0.16, 0.86+tb*0.16]
+};
+function windowProgress(tri, [a,b], extra=0){
+  let sp=(tri-a-extra)/(b-a);
+  return Math.max(0,Math.min(1,sp));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEL 3 — hojas y florecillas (se cuelgan en la punta de una rama)
+   ═══════════════════════════════════════════════════════════ */
+function smallLeaf(len,ang){
+  const g=mk('g');
+  const w=len*0.42;
+  const p=mk('path');
+  p.setAttribute('d',`M0,0 C ${w*.6},${-len*.2} ${w*.5},${-len*.7} 0,${-len} C ${-w*.5},${-len*.7} ${-w*.6},${-len*.2} 0,0`);
+  g.appendChild(p);
+  const vein=mk('path'); vein.setAttribute('d',`M0,-3 L0,${-len*.9}`); g.appendChild(vein);
+  g.setAttribute('transform',`rotate(${ang})`);
+  return {g, paths:[p,vein]};
+}
+function floret(s){
+  const g=mk('g'); const paths=[];
+  for(let p=0;p<4;p++){
+    const a=(p/4)*Math.PI*2+rnd(-.2,.2);
+    const path=mk('path');
+    const ex=Math.cos(a)*s, ey=Math.sin(a)*s, w=s*.6;
+    path.setAttribute('d',`M0,0 Q ${(Math.cos(a-.65)*w).toFixed(1)},${(Math.sin(a-.65)*w).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)} Q ${(Math.cos(a+.65)*w).toFixed(1)},${(Math.sin(a+.65)*w).toFixed(1)} 0,0`);
+    g.appendChild(path); paths.push(path);
+  }
+  return {g,paths};
+}
+function floretCluster(n,R){
+  const g=mk('g'); const paths=[];
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, r=Math.pow(Math.random(),.6)*R;
+    const f=floret(rnd(5,9));
+    f.g.setAttribute('transform',`translate(${(Math.cos(a)*r).toFixed(1)} ${(Math.sin(a)*r).toFixed(1)})`);
+    g.appendChild(f.g); paths.push(...f.paths);
+  }
+  return {g,paths};
+}
+
+// Rosa de trazo fino: espiral central + 5 pétalos, pocas líneas elegantes
+function miniRose(size,rot){
+  const g=mk('g'); const paths=[];
+  g.setAttribute('transform',`rotate(${rot}) scale(${size})`);
+  const spiral=mk('path');
+  spiral.setAttribute('d','M0,0 C 3,-2 5,1 3,4 C 0,7 -5,4 -3,-1 C -1,-6 6,-6 7,0');
+  g.appendChild(spiral); paths.push(spiral);
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2+rnd(-.15,.15), r=10+i*3;
+    const petal=mk('path');
+    const x1=Math.cos(a)*r,y1=Math.sin(a)*r;
+    petal.setAttribute('d',`M0,0 C ${(Math.cos(a-.5)*r*.7).toFixed(1)},${(Math.sin(a-.5)*r*.7).toFixed(1)} ${(x1*.9).toFixed(1)},${(y1*.9).toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} C ${(x1*.9).toFixed(1)},${(y1*.9).toFixed(1)} ${(Math.cos(a+.5)*r*.7).toFixed(1)},${(Math.sin(a+.5)*r*.7).toFixed(1)} 0,0`);
+    g.appendChild(petal); paths.push(petal);
+  }
+  return {g,paths};
+}
+
+// Helecho miniatura: fronda corta con foliolos finos, para la punta de una rama
+function miniFern(len,ang){
+  const g=mk('g'); const paths=[];
+  const stem=mk('path');
+  stem.setAttribute('d',`M0,0 Q ${len*.3},${-len*.1} ${len},${-len*.05}`);
+  g.appendChild(stem); paths.push(stem);
+  const n=5;
+  for(let i=1;i<=n;i++){
+    const p=i/n, sx=len*p, sy=-len*.05*Math.sin(p*Math.PI);
+    const s=(1-p*.5)*len*.22;
+    for(const side of [1,-1]){
+      const fol=mk('path');
+      const a=side*1.1;
+      const ex=sx+Math.cos(a)*s*.3, ey=sy+Math.sin(a)*s;
+      fol.setAttribute('d',`M${sx.toFixed(1)},${sy.toFixed(1)} Q ${(sx+Math.cos(a-.3)*s*.15).toFixed(1)},${(sy+Math.sin(a-.3)*s*.5).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
+      g.appendChild(fol); paths.push(fol);
+    }
+  }
+  g.setAttribute('transform',`rotate(${ang})`);
+  return {g,paths};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEL 1 — tallo principal: nace EXACTAMENTE en el borde
+   (M = x0,y0 con x0 = 0 o W) y avanza en curva 'S' hacia el
+   interior, arqueándose para enmarcar la tarjeta sin tapar el
+   texto (se aleja hacia la esquina más próxima).
+   ═══════════════════════════════════════════════════════════ */
+function buildStem(g, edgeX, y0, reach, dir, swing, angleBias){
+  angleBias = angleBias||0;
+  // el sesgo de ángulo inclina levemente TODA la curva (como si el brote
+  // se ladeara buscando espacio en vez de ir siempre perfectamente recto)
+  const ab = angleBias*reach;
+  const x1=edgeX+dir*reach*.28, y1=y0+swing*.9+ab*.2;
+  const x2=edgeX+dir*reach*.5,  y2=y0-swing*.15+ab*.4;
+  const xm=edgeX+dir*reach*.56, ym=y0-swing*.05+ab*.5;
+  const x3=edgeX+dir*reach*.62, y3=y0-swing*.85+ab*.6;
+  const x4=edgeX+dir*reach*.85, y4=y0+swing*.12+ab*.8;
+  const xe=edgeX+dir*reach,     ye=y0+swing*.05+ab;
+  const path=mk('path');
+  path.setAttribute('d',
+    `M${edgeX},${y0} C ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${xm.toFixed(1)},${ym.toFixed(1)} `+
+    `C ${x3.toFixed(1)},${y3.toFixed(1)} ${x4.toFixed(1)},${y4.toFixed(1)} ${xe.toFixed(1)},${ye.toFixed(1)}`);
+  g.appendChild(path);
+  return path;
+}
+
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Composición ÚNICA para todo el documento — ancla puntos a lo
+   largo de TODO el borde (no solo arriba y abajo), y no se repite
+   por sección (antes se generaban 4 copias casi iguales, una por
+   sección, todas ancladas en los mismos 2 puntos — de ahí la maraña).
+   ═══════════════════════════════════════════════════════════ */
+const SECTION_IDS=['sec-hero','sec-1','sec-2','sec-3']; // se conserva solo por si se necesita más adelante
+
+function buildAll(){
+  const aspect=window.innerWidth/window.innerHeight;
+  const W=Math.round(1000*aspect);
+  svg.setAttribute('viewBox',`0 0 ${W} 1000`);
+  svg.innerHTML='';
+  const g=mk('g');
+  svg.appendChild(g);
+  const allSprouts=[];
+
+  const N_PER_SIDE = 21;
+  for(let k=0;k<N_PER_SIDE;k++){
+    [0,1].forEach(sideIdx=>{
+      const edgeX = sideIdx===0 ? 0 : W;
+      const dir   = sideIdx===0 ? 1 : -1;
+      // separación MENOS uniforme (jitter más grande, ya no se siente "en fila")
+      const y = (k+0.5)/N_PER_SIDE*1000 + rnd(-65,65);
+      const swingSign = k%2===0 ? -1 : 1;
+
+      // Alcance con variación real, no un rango angosto parejo: la MAYORÍA
+      // son brotes cortos/medianos, pero de tanto en tanto uno "se estira"
+      // bastante más — como en un time-lapse, donde no todo crece igual.
+      const reach = Math.random()<0.22 ? rnd(190,260) : rnd(85,150);
+      const swing = swingSign * rnd(40,100);
+      // Ángulo de salida ya no siempre perfectamente horizontal — a veces
+      // el brote "se ladea" buscando espacio, como si sorteara algo.
+      const angleBias = rnd(-0.22,0.22);
+
+      // 22% de las veces: un brote joven, apenas un tallito corto con una
+      // hoja — no todo tiene que verse igual de desarrollado.
+      const young = Math.random()<0.22;
+      const stemPath = buildStem(g, edgeX, y, young? reach*0.45:reach, dir, swing, angleBias);
+      const stemLen = stemPath.getTotalLength();
+
+      const nBranch = young ? Math.round(rnd(0,1)) : Math.round(rnd(2,5));
+      const speciesPool=['hydrangea','rose','fern','leaf'];
+      const speciesOrder=[...speciesPool].sort(()=>Math.random()-.5);
+      const branches=[];
+      for(let i=0;i<nBranch;i++){
+        const ti = (i+1)/(nBranch+1) + rnd(-.05,.05);
+        const pt = stemPath.getPointAtLength(Math.max(0,Math.min(stemLen,ti*stemLen)));
+        const pt2= stemPath.getPointAtLength(Math.max(0,Math.min(stemLen,(ti+0.03)*stemLen)));
+        const tangent = Math.atan2(pt2.y-pt.y, pt2.x-pt.x);
+        const side = i%2===0 ? 1 : -1;
+        const outAngle = tangent + side*Math.PI/2*rnd(.65,1.15);
+
+        const len=rnd(20,42);
+        const bend=rnd(-.5,.5)*side;
+        const midx=Math.cos(outAngle+bend*.5)*len*.55, midy=Math.sin(outAngle+bend*.5)*len*.55;
+        const ex=Math.cos(outAngle+bend)*len, ey=Math.sin(outAngle+bend)*len;
+        const branchPath=mk('path');
+        branchPath.setAttribute('d',`M0,0 Q ${midx.toFixed(1)},${midy.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
+        branchPath.setAttribute('transform',`translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
+        g.appendChild(branchPath);
+
+        const tipAngDeg=(outAngle+bend)*180/Math.PI;
+        let leafPaths=[];
+        const leafWrap=mk('g');
+        leafWrap.setAttribute('transform',`translate(${(pt.x+ex).toFixed(1)} ${(pt.y+ey).toFixed(1)})`);
+        const kind=speciesOrder[i % speciesOrder.length];
+        let tip;
+        if(kind==='hydrangea')   tip=floretCluster(Math.round(rnd(3,5)), rnd(10,16));
+        else if(kind==='rose')   tip=miniRose(rnd(0.55,0.8), rnd(-30,30));
+        else if(kind==='fern')   tip=miniFern(rnd(18,28), tipAngDeg);
+        else                     tip=smallLeaf(rnd(14,20), tipAngDeg+90);
+        leafWrap.appendChild(tip.g); leafPaths=tip.paths;
+        g.appendChild(leafWrap);
+
+        branches.push({branchPath, leafPaths, ti});
+      }
+      // el brote joven también lleva SU propia hojita en la punta del tallo
+      if(young){
+        const tipPt=stemPath.getPointAtLength(stemLen);
+        const tipWrap=mk('g');
+        tipWrap.setAttribute('transform',`translate(${tipPt.x.toFixed(1)} ${tipPt.y.toFixed(1)})`);
+        const tip=smallLeaf(rnd(12,18), dir>0?0:180);
+        tipWrap.appendChild(tip.g);
+        g.appendChild(tipWrap);
+        branches.push({branchPath:null, leafPaths:tip.paths, ti:0.9, skipBranch:true});
+      }
+      allSprouts.push({stemPath, branches});
+    });
+  }
+
+  /* ---- Ocultar el 100% de TODOS los trazos antes de crear
+     cualquier ScrollTrigger ---- */
+  const allPaths=[...svg.querySelectorAll('path')];
+  allPaths.forEach(p=>{
+    p.setAttribute('stroke', Math.random()<0.5 ? '#D4AF37' : '#C5A059');
+    p.setAttribute('stroke-width',(1.1+Math.random()*0.3).toFixed(2));
+    p.setAttribute('opacity',(0.42+Math.random()*0.4).toFixed(2));
+  });
+  const prep=(el)=>{
+    let len; try{ len=el.getTotalLength(); }catch(e){ len=50; }
+    if(!len||!isFinite(len)) len=50;
+    el.style.strokeDasharray=len; el.style.strokeDashoffset=len;
+    return len;
+  };
+  allSprouts.forEach(sp=>{
+    sp.stemLen = prep(sp.stemPath);
+    sp.branches.forEach(b=>{
+      b.branchLen = b.branchPath ? prep(b.branchPath) : 0; // brote joven: sin rama
+      b.leafLens = b.leafPaths.map(prep);
+    });
+  });
+
+  ScrollTrigger.getAll().forEach(t=>t.kill());
+
+  /* ---- CRECIMIENTO PERMANENTE, SIN RETROCESO ----
+     A diferencia de la versión anterior (que dibujaba y luego "desdibujaba"
+     al salir cada sección), ahora cada brote tiene asignado un tramo propio
+     y NO SUPERPUESTO de todo el scroll del documento. Una vez que su tramo
+     termina, se queda dibujado al 100% para siempre — el jardín se va
+     acumulando conforme bajas, no se repliega. */
+  const N = allSprouts.length;
+  allSprouts.forEach((sp,i)=>{
+    // tramos consecutivos y independientes: el brote i crece SOLO durante
+    // su ventana [i/N, (i+1)/N] del scroll total (con un pelín de traslape
+    // suave entre consecutivos para que no se sientan "por turnos" robóticos)
+    sp.winStart = Math.max(0, i/N - 0.03);
+    sp.winEnd   = Math.min(1, (i+1)/N + 0.05);
+  });
+
+  function applyGrowth(sp, tri){
+    const stemSp = windowProgress(tri, WIN.stem);
+    sp.stemPath.style.strokeDashoffset = sp.stemLen*(1-stemSp);
+    sp.branches.forEach(b=>{
+      if(b.branchPath){
+        const brSp = windowProgress(tri, WIN.branch(b.ti));
+        b.branchPath.style.strokeDashoffset = b.branchLen*(1-brSp);
+      }
+      const lfWin = WIN.leaf(b.ti);
+      b.leafLens.forEach((len,i)=>{
+        const lfSp = windowProgress(tri, lfWin, i*0.02);
+        b.leafPaths[i].style.strokeDashoffset = len*(1-lfSp);
+      });
+    });
+  }
+
+  const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+  ScrollTrigger.create({
+    trigger: document.body,
+    start:'top top', end:'bottom bottom',
+    scrub:0.8, // el "lag" orgánico entre el dedo/mouse y el dibujo
+    onUpdate:self=>{
+      const p = self.progress; // 0→1 a lo largo de TODO el documento, sin retroceso
+      allSprouts.forEach(sp=>{
+        const span = sp.winEnd-sp.winStart;
+        const local = span>0 ? (p-sp.winStart)/span : 1;
+        const tri = Math.max(0, Math.min(1, local)); // se queda en 1 (dibujado) para siempre
+        applyGrowth(sp, tri);
+      });
+      document.getElementById('status').textContent = `crecimiento · ${Math.round(p*100)}%`;
+    }
+  });
+
+  ScrollTrigger.refresh();
+}
+
+buildAll();
+let resizeT;
+window.addEventListener('resize', ()=>{ clearTimeout(resizeT); resizeT=setTimeout(buildAll,300); });
+if(document.fonts){ document.fonts.ready.then(()=> ScrollTrigger.refresh()); }
+</script>
+</body>
+</html>
