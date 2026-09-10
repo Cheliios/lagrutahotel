@@ -697,7 +697,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const g=mk('g'), paths=[];
     for(let i=0;i<n;i++){
       const a=Math.random()*Math.PI*2, r=Math.pow(Math.random(),.6)*R;
-      const f=floret(rnd(5,9));
+      const f=floret(rnd(8,14));
       f.g.setAttribute('transform',`translate(${(Math.cos(a)*r).toFixed(1)} ${(Math.sin(a)*r).toFixed(1)})`);
       g.appendChild(f.g); paths.push(...f.paths);
     }
@@ -769,7 +769,7 @@ document.addEventListener('DOMContentLoaded', function(){
     svg.appendChild(g);
     const allSprouts=[];
 
-    const N_PER_SIDE=isMobile?7:13;
+    const N_PER_SIDE=isMobile?9:17;
     for(let k=0;k<N_PER_SIDE;k++){
       [0,1].forEach(sideIdx=>{
         const edgeX=sideIdx===0?0:W;
@@ -777,9 +777,9 @@ document.addEventListener('DOMContentLoaded', function(){
         const y=(k+0.5)/N_PER_SIDE*1000+rnd(-65,65);
         const swingSign=k%2===0?-1:1;
         const reach=isMobile
-          ? (Math.random()<0.2?rnd(70,95):rnd(28,50))
-          : (Math.random()<0.22?rnd(160,220):rnd(75,130));
-        const swing=swingSign*(isMobile?rnd(14,30):rnd(35,85));
+          ? (Math.random()<0.2?rnd(95,130):rnd(42,72))
+          : (Math.random()<0.22?rnd(210,290):rnd(105,175));
+        const swing=swingSign*(isMobile?rnd(20,42):rnd(48,112));
         const angleBias=rnd(-0.22,0.22);
         const young=Math.random()<0.22;
         const stemPath=buildStem(g,edgeX,y,young?reach*0.45:reach,dir,swing,angleBias);
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function(){
           const tangent=Math.atan2(pt2.y-pt.y,pt2.x-pt.x);
           const side=i%2===0?1:-1;
           const outAngle=tangent+side*Math.PI/2*rnd(.65,1.15);
-          const len=rnd(18,36);
+          const len=rnd(28,54);
           const bend=rnd(-.5,.5)*side;
           const midx=Math.cos(outAngle+bend*.5)*len*.55, midy=Math.sin(outAngle+bend*.5)*len*.55;
           const ex=Math.cos(outAngle+bend)*len, ey=Math.sin(outAngle+bend)*len;
@@ -810,10 +810,10 @@ document.addEventListener('DOMContentLoaded', function(){
           leafWrap.setAttribute('transform',`translate(${(pt.x+ex).toFixed(1)} ${(pt.y+ey).toFixed(1)})`);
           const kind=speciesOrder[i%speciesOrder.length];
           let tip;
-          if(kind==='hydrangea') tip=floretCluster(Math.round(rnd(3,5)),rnd(9,14));
-          else if(kind==='rose')  tip=miniRose(rnd(0.5,0.72),rnd(-30,30));
-          else if(kind==='fern')  tip=miniFern(rnd(16,24),tipAngDeg);
-          else                    tip=smallLeaf(rnd(12,18),tipAngDeg+90);
+          if(kind==='hydrangea') tip=floretCluster(Math.round(rnd(3,5)),rnd(15,22));
+          else if(kind==='rose')  tip=miniRose(rnd(0.85,1.2),rnd(-30,30));
+          else if(kind==='fern')  tip=miniFern(rnd(26,38),tipAngDeg);
+          else                    tip=smallLeaf(rnd(19,28),tipAngDeg+90);
           leafWrap.appendChild(tip.g);
           g.appendChild(leafWrap);
           branches.push({branchPath,leafPaths:tip.paths,ti});
@@ -822,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function(){
           const tipPt=stemPath.getPointAtLength(stemLen);
           const tipWrap=mk('g');
           tipWrap.setAttribute('transform',`translate(${tipPt.x.toFixed(1)} ${tipPt.y.toFixed(1)})`);
-          const tip=smallLeaf(rnd(11,16),dir>0?0:180);
+          const tip=smallLeaf(rnd(17,24),dir>0?0:180);
           tipWrap.appendChild(tip.g);
           g.appendChild(tipWrap);
           branches.push({branchPath:null,leafPaths:tip.paths,ti:0.9,skipBranch:true});
