@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Dancing+Script:wght@500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js" defer></script>
 <style>
 :root {
   --ink:    #2B2B26;
@@ -211,12 +213,19 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 /* room list on rooms page — use same card grid */
 
 /* ═══ LOCATION ═══ */
-.loc-map { height: 76vh; position: relative; overflow: hidden; background: linear-gradient(160deg,#26301F,#3B4A32); }
-.loc-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(169,143,95,.06) 1px,transparent 1px), linear-gradient(90deg,rgba(169,143,95,.06) 1px,transparent 1px); background-size: 60px 60px; }
-.loc-pin { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-60%); display: flex; flex-direction: column; align-items: center; }
-.loc-dot { width: 13px; height: 13px; background: var(--gold); border-radius: 50%; box-shadow: 0 0 0 7px rgba(169,143,95,.2), 0 0 0 18px rgba(169,143,95,.08); animation: pulse 2s infinite; }
-.loc-line { width: 1px; height: 44px; background: linear-gradient(to bottom,var(--gold),transparent); }
-.loc-tag { background: var(--gold); color: #fff; padding: 9px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
+.loc-map { height: 76vh; position: relative; overflow: hidden; background: var(--paper2); }
+.loc-map .mapboxgl-map { position: absolute; inset: 0; }
+.loc-marker { display: flex; flex-direction: column; align-items: center; }
+.loc-dot { width: 13px; height: 13px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 7px rgba(58,82,54,.18), 0 0 0 18px rgba(58,82,54,.08); animation: pulse 2s infinite; }
+.loc-line { width: 1px; height: 44px; background: linear-gradient(to bottom,var(--green),transparent); }
+.loc-tag { background: var(--green); color: #fff; padding: 9px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
+.loc-badge {
+  position: absolute; left: 28px; bottom: 28px; z-index: 5;
+  background: var(--paper); box-shadow: 0 20px 50px rgba(0,0,0,.2);
+  padding: 20px 26px; display: flex; align-items: center; gap: 16px; max-width: 280px;
+}
+.loc-badge-n { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 400; color: var(--green); line-height: 1; }
+.loc-badge-t { font-size: 11px; line-height: 1.5; letter-spacing: .5px; color: var(--ink); text-transform: uppercase; }
 .loc-body { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
 .loc-head { text-align: center; margin-bottom: 64px; }
 .loc-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
@@ -227,6 +236,20 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-fact-n { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--gold); min-width: 56px; }
 .loc-fact strong { display: block; font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 5px; }
 .loc-fact span { font-size: 14px; color: var(--soft); }
+.loc-sub { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin: 72px 0 28px; }
+.loc-dir-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
+.loc-dir-item { padding: 24px 0 0; border-top: 1px solid var(--hair); }
+.loc-dir-t { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--green); display: block; margin-bottom: 8px; }
+.loc-dir-item strong { display: block; font-size: 15px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
+.loc-dir-item span:not(.loc-dir-t) { font-size: 13px; line-height: 1.6; color: var(--soft); }
+.loc-nearby-list { display: flex; flex-wrap: wrap; gap: 14px 32px; }
+.loc-nearby-list span { font-size: 14px; color: var(--soft); }
+@media (max-width: 900px) {
+  .loc-dir-grid { grid-template-columns: 1fr; gap: 20px; }
+  .loc-badge { left: 16px; bottom: 16px; padding: 14px 18px; gap: 12px; max-width: 220px; }
+  .loc-badge-n { font-size: 38px; }
+  .loc-badge-t { font-size: 10px; }
+}
 
 /* ═══ RESERVAS ═══ */
 .rv-body { padding: 150px 40px; max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.3fr; gap: 90px; }
@@ -442,14 +465,27 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 
 <!-- ═══ UBICACIÓN ═══ -->
 <div class="page" id="page-location">
-  <div class="loc-map"><div class="loc-grid"></div><div class="loc-pin"><div class="loc-dot"></div><div class="loc-line"></div><div class="loc-tag">Hotel La Gruta</div></div></div>
+  <div class="loc-map">
+    <div id="loc-mapbox" style="position:absolute;inset:0;"></div>
+    <div class="loc-badge"><span class="loc-badge-n">7</span><span class="loc-badge-t">minutos caminando<br>al centro histórico</span></div>
+  </div>
   <div class="loc-body">
     <div class="loc-head rv-el"><p class="eye">Cómo llegar</p><h2>Nos encuentras <em>fácil.</em></h2></div>
     <div class="rv-el">
-      <div class="loc-fact"><div class="loc-fact-n">7'</div><div><strong>Del centro histórico</strong><span>Caminando, sin tráfico, sin complicaciones</span></div></div>
       <div class="loc-fact"><div class="loc-fact-n">📍</div><div><strong>Pasaje La Gruta 304</strong><span>Urbanización Selva Alegre, Arequipa, Perú</span></div></div>
       <div class="loc-fact"><div class="loc-fact-n">📞</div><div><strong>(054) 289899 / 224631</strong><span>Celular: +51 959 344 759</span></div></div>
       <div class="loc-fact"><div class="loc-fact-n">✉</div><div><strong>lagruta@lagrutahotel.com</strong><span>Respondemos en menos de 24 horas</span></div></div>
+    </div>
+    <p class="loc-sub rv-el">Cómo llegar</p>
+    <div class="loc-dir-grid rv-el">
+      <div class="loc-dir-item"><span class="loc-dir-t">~20 min</span><strong>Desde el aeropuerto</strong><span>Aeropuerto Alfredo Rodríguez Ballón, en taxi</span></div>
+      <div class="loc-dir-item"><span class="loc-dir-t">~20 min</span><strong>Desde el terminal terrestre</strong><span>En taxi o auto particular</span></div>
+      <div class="loc-dir-item"><span class="loc-dir-t">7 min</span><strong>Desde la Plaza de Armas</strong><span>Caminando, sin complicaciones</span></div>
+    </div>
+    <p class="loc-sub rv-el">A pocos pasos del hotel</p>
+    <div class="loc-nearby-list rv-el">
+      <span>🌳 Parque Selva Alegre</span>
+      <span>🏦 Zona comercial y bancaria de Selva Alegre</span>
     </div>
   </div>
   <footer>
@@ -527,6 +563,7 @@ function goTo(page){
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
     current=page; window.scrollTo(0,0); reAnim(page); window.rebuildBotanicGrowth?.();
+    if(page==='location'){ window.initLocMap?.(); setTimeout(()=>window.locMap?.resize(),560); }
     pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
   },520);
 }
@@ -581,6 +618,34 @@ if (rvForm) {
     if (note) note.textContent = 'Se abrió tu cliente de correo con la solicitud lista para enviar.';
   });
 }
+</script>
+
+<!-- ── Mapa real de ubicación (Mapbox) ── -->
+<script>
+const HOTEL_COORDS = [-71.530067, -16.387764]; // [lng, lat]
+window.initLocMap = function(){
+  if (window.locMap || !window.mapboxgl || !document.getElementById('loc-mapbox')) return;
+  mapboxgl.accessToken = 'REEMPLAZAR_CON_TOKEN_PUBLICO_MAPBOX'; // pk.xxx — ver README para instrucciones
+  const map = new mapboxgl.Map({
+    container: 'loc-mapbox',
+    style: 'mapbox://styles/mapbox/light-v11',
+    center: HOTEL_COORDS,
+    zoom: 15.5,
+    cooperativeGestures: true,
+  });
+  map.dragRotate.disable();
+  map.touchZoomRotate.disableRotation();
+  map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+  const el = document.createElement('div');
+  el.className = 'loc-marker';
+  el.innerHTML = '<div class="loc-dot"></div><div class="loc-line"></div><div class="loc-tag">Hotel La Gruta</div>';
+  new mapboxgl.Marker({ element: el, anchor: 'top', offset: [0, 6] }).setLngLat(HOTEL_COORDS).addTo(map);
+
+  window.locMap = map;
+};
+let locMapResizeT;
+window.addEventListener('resize', () => { clearTimeout(locMapResizeT); locMapResizeT = setTimeout(() => window.locMap?.resize(), 300); });
 </script>
 
 <!-- ═══ Jardín de fondo: crecimiento botánico ligado al scroll ═══
