@@ -654,7 +654,9 @@ window.addEventListener('resize', () => { clearTimeout(locMapResizeT); locMapRes
      asoma donde una sección no tiene fondo opaco encima — por eso
      convive sin competir con fotos, tarjetas ni el formulario. -->
 <script>
-if (window.gsap && window.ScrollTrigger) (function(){
+document.addEventListener('DOMContentLoaded', function(){
+  if (!window.gsap || !window.ScrollTrigger) return; // los scripts de GSAP tienen "defer": recién están garantizados disponibles en este evento, no antes
+  (function(){
   gsap.registerPlugin(ScrollTrigger);
   const NS='http://www.w3.org/2000/svg';
   const svg=document.getElementById('botanic');
@@ -895,7 +897,8 @@ if (window.gsap && window.ScrollTrigger) (function(){
   let resizeT;
   window.addEventListener('resize',()=>{ clearTimeout(resizeT); resizeT=setTimeout(buildAll,300); });
   if(document.fonts){ document.fonts.ready.then(()=>ScrollTrigger.refresh()); }
-})();
+  })();
+});
 </script>
 </body>
 </html>
