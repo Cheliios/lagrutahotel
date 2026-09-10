@@ -344,7 +344,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
       <div class="avail-f"><span class="avail-l">Check In</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Check Out</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Huéspedes</span><select class="avail-s"><option>1 huésped</option><option>2 huéspedes</option><option>3 huéspedes</option><option>4+ huéspedes</option></select></div>
-      <button class="avail-btn" data-page="reservas">Consultar</button>
+      <button class="avail-btn" type="button">Consultar</button>
     </div>
     <div class="hero-down">⌄</div>
   </section>
@@ -432,7 +432,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
       <div class="avail-f"><span class="avail-l">Check In</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Check Out</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Huéspedes</span><select class="avail-s"><option>1 huésped</option><option>2 huéspedes</option><option>3 huéspedes</option><option>4+ huéspedes</option></select></div>
-      <button class="avail-btn" data-page="reservas">Consultar</button>
+      <button class="avail-btn" type="button">Consultar</button>
     </div>
     <div class="hero-down">⌄</div>
   </section>
@@ -618,6 +618,23 @@ if (rvForm) {
     if (note) note.textContent = 'Se abrió tu cliente de correo con la solicitud lista para enviar.';
   });
 }
+
+/* ── Barra de disponibilidad del hero → consulta directa por WhatsApp ── */
+document.querySelectorAll('.avail-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const box = btn.closest('.avail');
+    const [checkin, checkout] = box.querySelectorAll('.avail-i');
+    const guests = box.querySelector('.avail-s')?.value || '';
+    const lines = [
+      'Hola, quisiera consultar disponibilidad en Hotel La Gruta:',
+      checkin?.value && `Llegada: ${checkin.value}`,
+      checkout?.value && `Salida: ${checkout.value}`,
+      guests && `Huéspedes: ${guests}`,
+    ].filter(Boolean);
+    const WA_NUMBER = '51959344759';
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
+  });
+});
 </script>
 
 <!-- ── Mapa real de ubicación (Mapbox) ── -->
