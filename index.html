@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hotel La Gruta — Arequipa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Dancing+Script:wght@500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<script src="botanic-lib.js" defer></script>
 <script src="botanic.js" defer></script>
+<script src="vines.js" defer></script>
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js" defer></script>
 <style>
@@ -33,6 +35,21 @@ body {
 }
 img { display: block; max-width: 100%; }
 .imgc { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* ── CAPA VEGETAL PERIMETRAL (vines.js) ──
+   Va ANCLADA AL DOCUMENTO, no a la ventana: así una rama que bordea un título
+   sigue bordeándolo al hacer scroll. Con position:fixed sería un marco estático
+   y se perdería la sensación de crecimiento. */
+.vines-layer { position: absolute; top: 0; left: 0; z-index: 4; pointer-events: none; }
+.vines-layer svg { display: block; }
+.vines-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Orden de apilamiento del sitio:
+      fondo → vegetación (z4) → contenido (flujo) → fotos y mapa (z6)
+   Las secciones que SON una foto a sangre suben enteras; en las cards sube solo
+   el bloque de imagen, para que las ramas puedan cruzar el texto de la card. */
+.hero, .band { z-index: 6; }
+.wc-img, .room-card-media, .loc-map { z-index: 6; }
+
 /* ── SECCIÓN JARDÍN: ilustración botánica dibujada por scroll ── */
 .garden { position: relative; height: 380vh; background: var(--paper); }
 .garden-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; padding-top: 6vh; }
@@ -292,7 +309,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 
 /* reveal */
 .rv-el { opacity: 0; transform: translateY(30px); transition: opacity 1s, transform 1s cubic-bezier(.16,.84,.44,1); }
-.rv-el.on { opacity: 1; transform: translateY(0); }
+.rv-el.on { opacity: 1; transform: none; }   /* `none`, no translateY(0): así la card deja de ser stacking context y su foto puede subir sobre la vegetación */
 
 @keyframes fade { to { opacity: 1; } }
 @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
@@ -586,7 +603,7 @@ function goTo(page){
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
-    current=page; window.scrollTo(0,0); reAnim(page); window.gardenRefresh?.();
+    current=page; window.scrollTo(0,0); reAnim(page); window.gardenRefresh?.(); window.vinesRefresh?.();
     if(page==='location'){ window.initLocMap?.(); setTimeout(()=>window.locMap?.resize(),560); }
     pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
   },520);

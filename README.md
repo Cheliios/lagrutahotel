@@ -25,34 +25,51 @@ Cada vez que se haga push a la rama publicada, el sitio se actualiza solo (unos 
 
 ```
 index.html                  → el sitio real (Inicio, Habitaciones, Ubicación, Reservas)
-botanic.js                  → ilustración botánica vectorial dibujada por scroll (sección "El jardín")
+botanic-lib.js              → biblioteca botánica compartida (geometría + especies)
+botanic.js                  → sección "El jardín": composición vertical en grafito
+vines.js                    → capa vegetal perimetral dorada sobre toda la página
 crecimiento_persistente.html→ demo aislado de la animación anterior (referencia de diseño, no se publica)
 *.jpg                       → imágenes del hotel (comprimidas; varias son placeholders temporales — ver abajo)
 ```
 
-### La sección "El jardín" (`botanic.js`)
+### Las dos capas vegetales
 
-Composición botánica vertical en línea fina monocroma que se dibuja a medida que
-el usuario baja: tallo → ramas → ramillas → hojas → helechos → capullos →
-hortensias → rosas → zarcillos. No es un SVG exportado: la planta se genera por
-código con una semilla fija, de modo que es siempre la misma pero no es simétrica
-ni repetitiva.
+El sitio tiene **dos** sistemas botánicos, deliberadamente distintos:
 
-Notas para tocarlo:
+| | `botanic.js` — "El jardín" | `vines.js` — capa perimetral |
+|---|---|---|
+| Papel | Pieza editorial: se mira de frente | Ambiente: se descubre de reojo |
+| Dónde | Una sección de 380vh | Toda la página |
+| Color | Grafito (#252525 / #3A3A3A / #606060) | Dorado envejecido (#C5A059), opacidad 0.13–0.38 |
+| Origen | Un tallo desde abajo | Enredaderas desde los bordes izquierdo y derecho |
+| Reloj | Progreso dentro de su sección | Posición de cada planta en el documento |
+| Al subir el scroll | Se repliega (scrub reversible) | **Se queda**: el jardín se acumula |
 
-- La velocidad y el orden de aparición se controlan en la tabla `T` (una ventana
-  `{s, e}` de progreso de scroll por etapa). Es el único sitio donde hay que
-  tocar para recalibrar el ritmo.
-- La densidad se controla con los contadores de cada bloque (`perBranch`, `nH`,
-  `nR`, `pairs`, `nF`).
-- El largo del recorrido lo fija `.garden { height }` en el CSS de `index.html`
-  (380vh en escritorio, 320vh en móvil).
-- No tiene dependencias externas: es SVG + `requestAnimationFrame`. Se retiró
-  GSAP/ScrollTrigger del sitio porque ya no se usaba en ningún otro sitio.
+La geometría de las especies (hojas, helechos, hortensias, rosas, capullos,
+zarcillos) vive una sola vez en `botanic-lib.js`; cada capa aporta su "pintor"
+(color, opacidad, nivel de detalle, ventana de scroll). Un cambio en el dibujo
+de una rosa se aplica a las dos capas a la vez.
 
-### Estado de las imágenes
+#### Notas para tocarlo
 
-Algunas fotos (`fachada.jpg`, `recepcion.jpg`, `cafeteria.jpg`, `jardin.jpg`, `suite.jpg`, `matrimonial.jpg`, `triple.jpg`, `doble.jpg`, `individual.jpg`, `semisuite.jpg`) son **placeholders temporales de stock**, pendientes de reemplazo por fotos reales del hotel. `hero-inicio.jpg` y `panoramica.jpg` sí son fotos reales.
+- **Ritmo del jardín**: tabla `T` en `botanic.js` (una ventana `{s, e}` por etapa).
+- **Ritmo de la capa perimetral**: tablas `OFF` y `DUR` en `vines.js`, medidas en
+  "pantallas de scroll". `OFF` fija el orden biológico (una flor nunca antes que
+  su rama) y `DUR` cuánto tarda cada etapa en dibujarse.
+- **Densidad**: `bandH` en `vines.js` (cada cuántos píxeles nace una planta) y
+  `P.detail` (0–1, escala nervaduras, folíolos y florecillas).
+- **Largo del recorrido del jardín**: `.garden { height }` en el CSS de `index.html`.
+- **Orden de apilamiento**: la capa va a `z-index: 4`; las fotos y el mapa suben a
+  `z-index: 6`. Importante: `.rv-el.on` usa `transform: none` (no `translateY(0)`)
+  a propósito — con un `transform` distinto de `none` la card sigue siendo un
+  *stacking context* y su foto no puede subir por encima de la vegetación.
+- **Zonas**: `vines.js` no siembra sobre `.hero`, `.band` ni `.loc-map` (fotos a
+  sangre y mapa van siempre encima). Sobre `.garden` sí siembra, pero con el
+  alcance recortado, para no competir con la ilustración de grafito.
+- Sin dependencias externas: SVG + `requestAnimationFrame`. `getTotalLength()` se
+  mide una sola vez por trazo, al construir.
+- Con `prefers-reduced-motion: reduce` ambas capas se muestran completas y sin
+  motor de scroll.
 
 ## Probar localmente
 
