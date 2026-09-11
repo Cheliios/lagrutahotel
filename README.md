@@ -1,6 +1,6 @@
 # Hotel La Gruta — Landing page
 
-Landing page institucional para Hotel La Gruta (Arequipa, Perú). Sitio estático — un solo `index.html`, sin build ni dependencias que instalar.
+Landing page institucional para Hotel La Gruta (Arequipa, Perú). Sitio estático: sin build, sin dependencias que instalar y sin framework. Se sirve tal cual desde cualquier hosting.
 
 ## Ver el sitio en vivo (GitHub Pages)
 
@@ -24,52 +24,24 @@ Cada vez que se haga push a la rama publicada, el sitio se actualiza solo (unos 
 ## Estructura del proyecto
 
 ```
-index.html                  → el sitio real (Inicio, Habitaciones, Ubicación, Reservas)
-botanic-lib.js              → biblioteca botánica compartida (geometría + especies)
-botanic.js                  → sección "El jardín": composición vertical en grafito
-vines.js                    → capa vegetal perimetral dorada sobre toda la página
-crecimiento_persistente.html→ demo aislado de la animación anterior (referencia de diseño, no se publica)
-*.jpg                       → imágenes del hotel (comprimidas; varias son placeholders temporales — ver abajo)
+index.html          → markup de las 4 páginas (único archivo en la raíz)
+assets/css/         → estilos
+assets/js/          → interfaz, mapa y las dos capas botánicas
+assets/img/         → fotos, separadas por uso (hero / rooms / hotel / pendientes)
+docs/               → documentación y prototipos que no se publican
 ```
 
-### Las dos capas vegetales
+Los detalles de por qué está montado así —orden de carga, capas, apilamiento y
+las perillas para ajustar las animaciones— están en
+**[`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md)**.
 
-El sitio tiene **dos** sistemas botánicos, deliberadamente distintos:
+### Añadir una foto
 
-| | `botanic.js` — "El jardín" | `vines.js` — capa perimetral |
-|---|---|---|
-| Papel | Pieza editorial: se mira de frente | Ambiente: se descubre de reojo |
-| Dónde | Una sección de 380vh | Toda la página |
-| Color | Grafito (#252525 / #3A3A3A / #606060) | Dorado envejecido (#C5A059), opacidad 0.13–0.38 |
-| Origen | Un tallo desde abajo | Enredaderas desde los bordes izquierdo y derecho |
-| Reloj | Progreso dentro de su sección | Posición de cada planta en el documento |
-| Al subir el scroll | Se repliega (scrub reversible) | **Se queda**: el jardín se acumula |
+Deja el archivo en la carpeta que le corresponda y apunta el `src` ahí. Mientras
+una foto no exista, el sitio muestra un marcador generado a partir del atributo
+`data-ph` del `<img>` — no hace falta tocar nada más para que desaparezca.
 
-La geometría de las especies (hojas, helechos, hortensias, rosas, capullos,
-zarcillos) vive una sola vez en `botanic-lib.js`; cada capa aporta su "pintor"
-(color, opacidad, nivel de detalle, ventana de scroll). Un cambio en el dibujo
-de una rosa se aplica a las dos capas a la vez.
-
-#### Notas para tocarlo
-
-- **Ritmo del jardín**: tabla `T` en `botanic.js` (una ventana `{s, e}` por etapa).
-- **Ritmo de la capa perimetral**: tablas `OFF` y `DUR` en `vines.js`, medidas en
-  "pantallas de scroll". `OFF` fija el orden biológico (una flor nunca antes que
-  su rama) y `DUR` cuánto tarda cada etapa en dibujarse.
-- **Densidad**: `bandH` en `vines.js` (cada cuántos píxeles nace una planta) y
-  `P.detail` (0–1, escala nervaduras, folíolos y florecillas).
-- **Largo del recorrido del jardín**: `.garden { height }` en el CSS de `index.html`.
-- **Orden de apilamiento**: la capa va a `z-index: 4`; las fotos y el mapa suben a
-  `z-index: 6`. Importante: `.rv-el.on` usa `transform: none` (no `translateY(0)`)
-  a propósito — con un `transform` distinto de `none` la card sigue siendo un
-  *stacking context* y su foto no puede subir por encima de la vegetación.
-- **Zonas**: `vines.js` no siembra sobre `.hero`, `.band` ni `.loc-map` (fotos a
-  sangre y mapa van siempre encima). Sobre `.garden` sí siembra, pero con el
-  alcance recortado, para no competir con la ilustración de grafito.
-- Sin dependencias externas: SVG + `requestAnimationFrame`. `getTotalLength()` se
-  mide una sola vez por trazo, al construir.
-- Con `prefers-reduced-motion: reduce` ambas capas se muestran completas y sin
-  motor de scroll.
+Falta por subir: `assets/img/hotel/recepcion.jpg` (hoy se ve el marcador).
 
 ## Probar localmente
 
@@ -80,3 +52,31 @@ python3 -m http.server 8000
 ```
 
 Y abrir `http://localhost:8000/index.html`.
+
+## Desplegar en otro hosting
+
+No hay paso de build: lo que está en el repo es lo que se sube.
+
+- **Plesk / cPanel / FTP** → copiar `index.html` y `assets/` dentro de
+  `httpdocs` (o `public_html`). `docs/` no hace falta subirlo.
+- **Netlify / Vercel / Cloudflare Pages** → conectar el repo. Comando de build:
+  ninguno. Directorio de publicación: la raíz (`.`).
+- **Bucket estático (S3, R2…)** → subir `index.html` y `assets/` conservando la
+  estructura de carpetas, y marcar `index.html` como documento índice.
+
+Lo único que hay que revisar en producción es el token de Mapbox
+(`assets/js/map.js`) y que el dominio esté en la lista de URLs permitidas del
+token.
+
+## Pendientes conocidos
+
+- **Token público de Mapbox**: `assets/js/map.js` tiene un marcador de posición,
+  así que el mapa todavía no carga. Hace falta un token `pk.` (nunca uno `sk.`,
+  que es una clave secreta y no puede ir en el frontend).
+- **Foto de recepción**: falta `assets/img/hotel/recepcion.jpg`.
+- **Fotos en alta resolución**: los originales actuales llegan a 1448×1086, lo
+  que se nota en pantallas grandes. Harían falta a partir de ~2500 px de ancho.
+- **Habitación cuádruple**: la foto ya está en `assets/img/pendientes/`, falta
+  definir el texto para publicarla.
+- **URLs reales por página**: hoy las cuatro páginas comparten dirección, lo que
+  limita el posicionamiento en buscadores. Ver `docs/ARQUITECTURA.md`.

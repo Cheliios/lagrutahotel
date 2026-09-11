@@ -34,7 +34,12 @@
 
   // Dorado envejecido, no brillante. Todo el peso visual lo lleva la opacidad:
   // el usuario debe descubrir la vegetación, no tropezarse con ella.
-  var GOLD = '#C5A059', GOLD_D = '#A8874A';
+  //
+  // INTENSIDAD es la única perilla para subir o bajar TODA la capa de golpe.
+  // 1 = los valores base de abajo. 1.5 = un 50% más de presencia.
+  // Si algún día se quiere más discreta, se baja aquí y no en cinco sitios.
+  var INTENSIDAD = 1.5;
+  var GOLD = '#C5A059', GOLD_D = '#96762F';
   var TONE = {
     stem:   { c: GOLD_D, o: 0.34 },
     leaf:   { c: GOLD,   o: 0.26 },
@@ -134,7 +139,7 @@
         p.setAttribute('d', d);
         p.setAttribute('stroke', t.c);
         p.setAttribute('stroke-width', (w * 1.05).toFixed(2));
-        p.setAttribute('opacity', t.o.toFixed(2));
+        p.setAttribute('opacity', Math.min(1, t.o * INTENSIDAD).toFixed(2));
         g.appendChild(p);
         items.push({ el: p, s: sch.s, e: Math.max(sch.e, sch.s + 0.004),
                      ease: ease || B.EASE.out, k: -1, len: 0 });
