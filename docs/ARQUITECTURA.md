@@ -115,6 +115,31 @@ en una pantalla de 120Hz tarda lo mismo que en una de 60Hz. Medido: tras un
 salto de rueda de 120px, el dibujo cubre el 70% del camino en ~6 frames y
 termina de asentarse en ~300ms.
 
+### Dos subsistemas, no uno
+
+La capa tiene dos orígenes distintos, y la diferencia es conceptual, no técnica:
+
+1. **Enredaderas de borde** (`vine()`). Nacen en los laterales y se siembran a
+   ciegas, solo por altura del documento. Son el fondo: dan cobertura y
+   densidad.
+2. **Acentos anclados** (`acento()`, grupo `data-part="acentos"`). Estos
+   **consultan el DOM**: nacen pegados a un elemento real del contenido —un
+   rótulo, el nombre de una habitación, un botón— y crecen hacia el margen,
+   nunca hacia adentro del texto.
+
+El segundo subsistema es el que hace que la vegetación se lea como parte de la
+interfaz y no como un fondo bonito detrás. Un zarcillo que se enrosca junto a
+un botón "Reservar" no es decoración: es el jardín entrando en la página.
+
+No todos los elementos reciben acento — la lista de anclas lleva una
+probabilidad por selector. Si apareciera siempre y en todos, volvería a leerse
+como un adorno aplicado por regla.
+
+Detalle que importa: `acento()` mide con la cadena de `offsetParent`, no con
+`getBoundingClientRect()`. Los elementos con revelado al hacer scroll
+(`.rv-el`) llevan un `transform: translateY(30px)` temporal que falsearía la
+posición por 30px justo en los que aún no se han revelado.
+
 ### Fino y denso, no grande y pesado
 
 La presencia de la capa sale de la CANTIDAD de elementos pequeños, no del
@@ -159,6 +184,7 @@ hacer falta.
 | Reversible o acumulativa | `PERSISTENTE` en `vines.js` (false = se repliega al subir) |
 | Densidad de la capa | `bandH` (separación entre plantas) y `P.detail` en `vines.js` |
 | Variación de densidad | `densidad(u)` en `vines.js` |
+| Dónde nacen los acentos | la lista de anclas al final de `build()` en `vines.js` (selector + probabilidad) |
 | Ritmo de aparición | tablas `OFF` y `DUR` en `vines.js` |
 
 `OFF` fija el orden biológico —una flor nunca antes que su rama— y `DUR` cuánto

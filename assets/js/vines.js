@@ -48,10 +48,11 @@
   //         gesto del usuario y hace que se note que responde al scroll.
   // true  = persistente: lo dibujado se queda y el jardín se acumula.
   var PERSISTENTE = false;
-  // Verde oliva tirando a dorado: mezcla del dorado anterior (#C5A059) con el
-  // verde de marca del sitio (--green: #3A5236), 65% dorado / 35% verde para
-  // que siga leyéndose cálido y no se apague en caqui.
-  var GOLD = '#948550', GOLD_D = '#6E611F';
+  // Dorado apagado / champagne. Se le quitó la carga verde que tenía antes:
+  // más cálido y un punto más claro, pero desaturado — un champagne envejecido,
+  // no un dorado metálico. El tono oscuro se mantiene profundo a propósito: a
+  // opacidad 0.35 sobre papel crema, un champagne claro desaparecería.
+  var GOLD = '#A89468', GOLD_D = '#7A6739';
   // Cuatro niveles: la estructura sostiene, las flores puntúan, y el
   // microdetalle solo se percibe de cerca. La capa puede ser abundante
   // mientras cada trazo suelto sea tenue.
@@ -136,7 +137,7 @@
     var frag = document.createDocumentFragment();
     var groups = {};
     ['tallos', 'ramas', 'ramillas', 'hojas', 'helechos', 'capullos',
-     'hortensias', 'rosas', 'zarcillos'].forEach(function (n) {
+     'hortensias', 'rosas', 'zarcillos', 'acentos'].forEach(function (n) {
       var g = document.createElementNS(B.NS, 'g');
       g.setAttribute('data-part', n);
       frag.appendChild(g);
@@ -180,6 +181,30 @@
     var SPAN = (OFF.ten + DUR.ten) * U;      // lo que tarda una planta entera
 
     /* ── Una enredadera ───────────────────────────────────────────────────── */
+    // Reloj de una planta: se ancla a la planta ENTERA, no a cada trazo, para
+    // que crezca como un solo organismo mientras cruza la pantalla. En el
+    // último viewport ya no queda scroll por delante, así que la línea de
+    // tiempo se comprime (`sq`) para que alcance a dibujarse completa.
+    function reloj(y0) {
+      var s0 = clamp((y0 - vh * 0.85) / scrollMax, 0, 0.999);
+      var sq = clamp((0.995 - s0) / SPAN, 0.28, 1);
+      s0 = Math.min(s0, 0.995 - SPAN * sq);
+      return function (_y, off, dur) {
+        var st = s0 + (off + rnd(0, 0.03)) * U * sq;
+        return { s: st, e: st + dur * U * sq };
+      };
+    }
+
+    // Posición de layout en coordenadas del documento. Se suma la cadena de
+    // offsetParent en vez de usar getBoundingClientRect porque los elementos
+    // con revelado al hacer scroll (.rv-el) llevan un transform temporal de
+    // 30px que falsearía la medida.
+    function caja(el) {
+      var x = 0, y = 0, n = el;
+      while (n) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+      return { x: x, y: y, w: el.offsetWidth, h: el.offsetHeight };
+    }
+
     function vine(y0, side, u, shy) {
       // `rich` crece con la profundidad: arriba apenas un brote, abajo una mata.
       var rich = clamp((u - 0.05) / 0.75, 0, 1);
@@ -187,20 +212,10 @@
       var x0 = side < 0 ? -12 : W + 12;
       var down = rand() < 0.62;               // mayoría diagonal descendente
       var ang = inward * (down ? rnd(1.85, 2.45) : rnd(0.85, 1.35));
-      var reach = W * (MOBILE ? rnd(0.18, 0.32) : rnd(0.24, 0.44)) * (0.72 + 0.42 * rich);
+      var reach = W * (MOBILE ? rnd(0.19, 0.34) : rnd(0.27, 0.50)) * (0.72 + 0.42 * rich);
       if (shy) reach *= 0.42;                 // zona suave: se queda en el borde
 
-      // El reloj se ancla a la planta entera, no a cada trazo: así crece como
-      // un solo organismo mientras cruza la pantalla. En el último viewport ya
-      // no queda scroll por delante, así que la línea de tiempo se comprime
-      // (`sq`) para que la planta alcance a dibujarse entera.
-      var s0 = clamp((y0 - vh * 0.85) / scrollMax, 0, 0.999);
-      var sq = clamp((0.995 - s0) / SPAN, 0.28, 1);
-      s0 = Math.min(s0, 0.995 - SPAN * sq);
-      function when(_y, off, dur) {
-        var st = s0 + (off + rnd(0, 0.03)) * U * sq;
-        return { s: st, e: st + dur * U * sq };
-      }
+      var when = reloj(y0);
 
       /* ── ESTRUCTURA ──
          El tallo es soporte, no protagonista: corto y fino. El peso visual se
@@ -339,11 +354,62 @@
       }
     }
 
+    /* ── Acentos anclados al contenido ──────────────────────────────────────
+       Esto es lo que separa "una capa decorativa detrás" de "el jardín está
+       entrando en la interfaz". Las enredaderas de los costados se siembran a
+       ciegas, solo por altura. Estos acentos, en cambio, CONSULTAN EL DOM:
+       nacen pegados a un elemento real —un rótulo, el nombre de una
+       habitación, un botón— y crecen hacia el margen, nunca hacia adentro del
+       texto. Son pequeños y no salen en todos los elementos: si aparecieran
+       siempre y en todos, volverían a leerse como un patrón. */
+    function acento(el) {
+      var c = caja(el);
+      if (!c.w || !c.h) return;
+      var mid = c.x + c.w / 2;
+      // Nace por el lado que da al margen de página y crece hacia afuera.
+      var side = mid < W / 2 ? -1 : 1;
+      var x = side < 0 ? c.x - rnd(4, 16) : c.x + c.w + rnd(4, 16);
+      var y = c.y + c.h * rnd(0.10, 0.90);
+      if (y >= Hdoc - 30 || inside(Z.hard, y)) return;
+
+      var when = reloj(y);
+      var sube = rand() < 0.5;
+      var ang = (sube ? 0 : Math.PI) + side * rnd(0.30, 0.80);
+      var len = rnd(30, 62) * (MOBILE ? 0.72 : 1);
+      var tallo = B.growS(P, x, y, ang, len, rnd(0.40, 0.85), 9);
+      P.draw(groups.acentos, B.catmull(tallo), 0.48, 'stem',
+             when(y, OFF.branch, DUR.branch), E.out);
+
+      var nh = MOBILE ? 2 : 3;
+      for (var i = 0; i < nh; i++) {
+        var t = 0.28 + (0.62 / nh) * i + rnd(-0.06, 0.06);
+        var pt = B.along(tallo, t);
+        var sd = (i % 2) ? 1 : -1;
+        var lh = rnd(11, 21) * (MOBILE ? 0.78 : 1);
+        B.leaf(P, groups.acentos, pt.x, pt.y, pt.a + sd * rnd(0.60, 1.15),
+               lh, lh * rnd(0.26, 0.36), when(pt.y, OFF.leaf + t * 0.08, DUR.leaf));
+      }
+
+      // El zarcillo del final es lo que hace que el acento parezca agarrarse
+      // al elemento en vez de estar simplemente apoyado al lado.
+      var pz = B.along(tallo, rnd(0.80, 1.0));
+      B.tendril(P, groups.acentos, pz.x, pz.y, pz.a + rnd(-1.1, 1.1),
+                rnd(4, 8), when(pz.y, OFF.ten, DUR.ten));
+
+      if (rand() < 0.42) {
+        var pf = B.along(tallo, rnd(0.55, 0.95));
+        conDetalle(0.32, function () {
+          B.hydrangea(P, groups.acentos, pf.x, pf.y, rnd(6, 10),
+                      when(pf.y, OFF.hyd, DUR.hyd));
+        });
+      }
+    }
+
     /* ── Siembra por bandas ───────────────────────────────────────────────── */
     var Z      = zones(page);
     // Bandas más juntas que antes: más puntos de origen, cada uno con una
     // planta más chica. La cobertura sale de la cantidad, no del tamaño.
-    var bandH  = MOBILE ? 150 : 108;
+    var bandH  = MOBILE ? 146 : 100;
     var hero   = page.querySelector('.hero');
     var yStart = hero ? hero.getBoundingClientRect().bottom + window.scrollY + 40 : 120;
     var yEnd   = Hdoc - 40;
@@ -380,6 +446,19 @@
         vine(yy, k % 2 ? -side : side, clamp(yy / Hdoc, 0, 1), inside(Z.soft, yy));
       }
     }
+
+    // Elementos del contenido que reciben acento. No todos lo reciben: la
+    // probabilidad evita que se lea como un adorno aplicado por regla.
+    [['.statement .eye', 0.9], ['.statement h2', 0.7], ['.rooms-count', 0.8],
+     ['.room-card-name', 0.45], ['.rc-book', 0.35], ['.rc-more', 0.4],
+     ['.loc-head .eye', 0.9], ['.loc-sub', 0.6], ['.loc-badge', 0.8],
+     ['.rv-info h2', 0.8], ['.rv-submit', 0.5], ['.ft-logo', 0.9],
+     ['.band-in', 0.6], ['.welcome .wc-script', 0.9]
+    ].forEach(function (cfg) {
+      page.querySelectorAll(cfg[0]).forEach(function (el) {
+        if (rand() < cfg[1]) acento(el);
+      });
+    });
 
     svg.appendChild(frag);
     B.measure(items);
