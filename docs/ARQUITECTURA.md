@@ -84,6 +84,30 @@ una foto.
 > `translateY(0)`: ambos "no mueven nada", pero solo `none` disuelve el
 > contexto. Si alguien lo revierte, las fotos se van debajo de la vegetación.
 
+## Ritmo compositivo
+
+Las secciones no se componen todas igual a propósito. El ritmo de Inicio es:
+
+| Sección | Composición |
+|---|---|
+| hero | centrada (fotografía a sangre) |
+| welcome | collage asimétrico |
+| statement | desplazada a la izquierda, aire generoso a la derecha |
+| habitaciones | rejilla escalonada, texto de tarjeta alineado a la izquierda |
+| banda | invertida: texto a la derecha, mitad izquierda de la foto despejada |
+| footer | cierre |
+
+Todas las secciones desplazadas se apoyan en la **misma retícula de 12
+columnas de 1240px**. La asimetría sale de qué columnas ocupa cada bloque, no
+de márgenes inventados sección por sección: eso es lo que separa una
+composición editorial de un collage. En móvil el desfase y los
+desplazamientos se desactivan — en una sola columna no aportan ritmo, solo
+desalinean.
+
+El aire asimétrico no es solo estética: es por donde entra la vegetación. Una
+sección con el texto a la izquierda deja el costado derecho libre para que las
+ramas lo ocupen.
+
 ## La capa botánica (`vines.js`)
 
 Enredaderas en línea fina que nacen desde los bordes izquierdo y derecho y
@@ -134,6 +158,13 @@ un botón "Reservar" no es decoración: es el jardín entrando en la página.
 No todos los elementos reciben acento — la lista de anclas lleva una
 probabilidad por selector. Si apareciera siempre y en todos, volvería a leerse
 como un adorno aplicado por regla.
+
+Los acentos sortean con un generador aleatorio **propio**, no con el de las
+enredaderas. Compartirlo fue un error real: al cambiar el layout cambió la
+altura del documento, cambió el número de bandas sembradas, y eso desplazó la
+secuencia del generador — los acentos cayeron de 123 a 55 trazos sin que nadie
+hubiera tocado su código. Con un flujo aparte, la decoración anclada al
+contenido es estable frente a cambios en la siembra de los costados.
 
 Detalle que importa: `acento()` mide con la cadena de `offsetParent`, no con
 `getBoundingClientRect()`. Los elementos con revelado al hacer scroll

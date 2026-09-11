@@ -449,14 +449,21 @@
 
     // Elementos del contenido que reciben acento. No todos lo reciben: la
     // probabilidad evita que se lea como un adorno aplicado por regla.
-    [['.statement .eye', 0.9], ['.statement h2', 0.7], ['.rooms-count', 0.8],
-     ['.room-card-name', 0.45], ['.rc-book', 0.35], ['.rc-more', 0.4],
-     ['.loc-head .eye', 0.9], ['.loc-sub', 0.6], ['.loc-badge', 0.8],
-     ['.rv-info h2', 0.8], ['.rv-submit', 0.5], ['.ft-logo', 0.9],
-     ['.band-in', 0.6], ['.welcome .wc-script', 0.9]
+    //
+    // El sorteo usa un generador PROPIO, no el de las enredaderas. Compartirlo
+    // era un error: cualquier cambio en la siembra de los costados (más
+    // bandas, otra altura de página) desplazaba la secuencia y alteraba en
+    // silencio cuántos acentos salían. Con un flujo aparte, la decoración
+    // anclada al contenido es estable frente a cambios de layout.
+    var randA = B.makeRng(seed ^ 0x5BF03635);
+    [['.statement .eye', 0.95], ['.statement h2', 0.75], ['.rooms-count', 0.85],
+     ['.room-card-name', 0.55], ['.rc-book', 0.45], ['.rc-more', 0.45],
+     ['.loc-head .eye', 0.95], ['.loc-sub', 0.7], ['.loc-badge', 0.85],
+     ['.rv-info h2', 0.85], ['.rv-submit', 0.6], ['.ft-logo', 0.95],
+     ['.welcome .wc-script', 0.95]
     ].forEach(function (cfg) {
       page.querySelectorAll(cfg[0]).forEach(function (el) {
-        if (rand() < cfg[1]) acento(el);
+        if (randA() < cfg[1]) acento(el);
       });
     });
 

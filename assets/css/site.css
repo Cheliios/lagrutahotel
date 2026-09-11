@@ -195,7 +195,25 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .wc-desc { font-size: 15px; line-height: 1.8; color: var(--soft); max-width: 300px; margin: 22px auto 0; }
 
 /* ═══ SPACIOUS STATEMENT ═══ */
-.statement { text-align: center; padding: 40px 40px 160px; max-width: 940px; margin: 0 auto; }
+/* ── RITMO COMPOSITIVO ──
+   El ritmo de Inicio es: hero centrado → welcome asimétrico → statement
+   desplazado → habitaciones escalonadas → banda invertida → cierre.
+   Todas las secciones desplazadas se apoyan en la MISMA retícula de 12
+   columnas de 1240px: la asimetría sale de qué columnas ocupa cada bloque,
+   no de márgenes inventados sección por sección. Eso es lo que separa una
+   composición editorial de un collage. */
+.statement {
+  text-align: left;
+  padding: 40px 40px 170px;
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+/* Columnas 2-9 de 12: aire estrecho a la izquierda, generoso a la derecha.
+   Ese vacío asimétrico es además por donde entra la vegetación. */
+.statement .eye { grid-column: 2 / span 7; }
+.statement h2   { grid-column: 2 / span 8; }
 .statement .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 28px; }
 .statement h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,3.8vw,52px); font-weight: 300; line-height: 1.3; color: var(--ink); }
 .statement h2 em { font-style: italic; color: var(--green); }
@@ -207,7 +225,10 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .rooms-count { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft); font-weight: 500; }
 .rooms-head-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,52px); font-weight: 300; color: var(--ink); }
 .rooms-head-title em { font-style: italic; color: var(--green); }
-.rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+/* Desfase vertical entre columnas: rompe la simetría de espejo sin salirse
+   de la retícula. Con 6 tarjetas produce un ritmo de ladrillo constante. */
+.rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px 64px; align-items: start; }
+.rooms-grid > :nth-child(even) { margin-top: 96px; }
 .room-card { background: var(--white); }
 .room-card-media { position: relative; aspect-ratio: 16/10; overflow: hidden; }
 .room-card-media .imgc { transition: transform .8s cubic-bezier(.16,.84,.44,1); }
@@ -215,19 +236,22 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .room-card-arrows { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; opacity: 0; transition: opacity .3s; }
 .room-card:hover .room-card-arrows { opacity: 1; }
 .room-card-arrow { color: #fff; font-size: 24px; text-shadow: 0 1px 8px rgba(0,0,0,.4); cursor: pointer; }
-.room-card-body { padding: 40px 32px 44px; text-align: center; }
+.room-card-body { padding: 40px 32px 44px; text-align: left; }
 .room-card-name { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--green-lt); margin-bottom: 16px; }
-.room-card-desc { font-size: 14px; line-height: 1.7; color: var(--soft); max-width: 380px; margin: 0 auto 28px; }
-.room-card-actions { display: flex; align-items: center; justify-content: center; gap: 28px; }
+.room-card-desc { font-size: 14px; line-height: 1.7; color: var(--soft); max-width: 380px; margin: 0 0 28px; }
+.room-card-actions { display: flex; align-items: center; justify-content: flex-start; gap: 28px; }
 .rc-book { background: var(--ink); color: #fff; border: none; padding: 14px 28px; font-family: 'Jost',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background .3s; text-decoration: none; }
 .rc-book:hover { background: var(--green); }
 .rc-more { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 4px; transition: color .2s; }
 .rc-more:hover { color: var(--green); }
 
 /* ═══ FULL IMAGE BAND ═══ */
-.band { height: 78vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+/* Invierte el desplazamiento del statement: allí el texto va a la izquierda,
+   aquí a la derecha. Es el latido "invertido" del ritmo, y deja la mitad
+   izquierda de la fotografía despejada. */
+.band { height: 78vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; padding-right: 9vw; }
 .band::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.35); z-index: 1; }
-.band-in { position: relative; z-index: 2; text-align: center; }
+.band-in { position: relative; z-index: 2; text-align: right; max-width: 620px; }
 .band-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,64px); font-weight: 300; color: #fff; line-height: 1.2; }
 .band-in em { font-style: italic; }
 .band-link { display: inline-flex; align-items: center; gap: 12px; color: #fff; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; margin-top: 28px; border-bottom: 1px solid var(--gold); padding-bottom: 5px; }
@@ -282,7 +306,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-badge-n { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 400; color: var(--green); line-height: 1; }
 .loc-badge-t { font-size: 11px; line-height: 1.5; letter-spacing: .5px; color: var(--ink); text-transform: uppercase; }
 .loc-body { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
-.loc-head { text-align: center; margin-bottom: 64px; }
+.loc-head { text-align: left; margin-bottom: 64px; max-width: 620px; }
 .loc-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
 .loc-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px,4.5vw,60px); font-weight: 300; color: var(--ink); }
 .loc-head h2 em { font-style: italic; color: var(--green); }
@@ -348,6 +372,14 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .wc-img { position: relative; width: 100% !important; height: 240px !important; inset: auto !important; }
   .wc-center { position: relative; transform: none; top: auto; left: auto; margin: 20px 0; }
   .rooms-grid, .rv-body, .rv-row { grid-template-columns: 1fr; gap: 32px; }
+  /* En una sola columna el desfase y los desplazamientos no aportan ritmo,
+     solo desalinean. Se desactivan. */
+  .rooms-grid > :nth-child(even) { margin-top: 0; }
+  .statement { grid-template-columns: 1fr; padding-bottom: 110px; text-align: center; }
+  .statement .eye, .statement h2 { grid-column: 1; }
+  .band { justify-content: center; padding-right: 0; }
+  .band-in { text-align: center; max-width: none; }
+  .loc-head { text-align: center; max-width: none; }
   .avail { grid-template-columns: 1fr 1fr; }
   .menu-inner { grid-template-columns: 1fr; } .menu-side { display: none; }
   .ft-top { grid-template-columns: 1fr; }
