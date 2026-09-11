@@ -3,6 +3,12 @@
    Menú, navegación entre páginas (SPA falsa), revelado al hacer scroll,
    formulario de reservas y marcador para las fotos que aún faltan.
    ============================================================================= */
+
+// ⚠️ NÚMERO DE PRUEBAS — no es el del hotel. Piero lo usa para probar el flujo
+// de WhatsApp sin molestar la línea real. Antes de fusionar a master o de
+// mandarle el link a Carmen, volver a '51959344759'.
+const WA_NUMBER = '51948016484';
+
 const burger=document.getElementById('burger'), menu=document.getElementById('menu');
 let menuOpen=false;
 burger.addEventListener('click',()=>{ menuOpen=!menuOpen; burger.classList.toggle('open',menuOpen); menu.classList.toggle('open',menuOpen); });
@@ -51,7 +57,6 @@ window.addEventListener('scroll',navColor);
 /* ── Formulario de reservas → WhatsApp / correo ── */
 const rvForm = document.getElementById('reservaForm');
 if (rvForm) {
-  const WA_NUMBER = '51959344759';
   const HOTEL_EMAIL = 'lagruta@lagrutahotel.com';
   const val = n => (rvForm.elements[n]?.value || '').trim();
   function buildMessage(){
@@ -95,7 +100,6 @@ document.querySelectorAll('.avail-btn').forEach(btn => {
       checkout?.value && `Salida: ${checkout.value}`,
       guests && `Huéspedes: ${guests}`,
     ].filter(Boolean);
-    const WA_NUMBER = '51959344759';
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
   });
 });
