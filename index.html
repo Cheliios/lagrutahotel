@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hotel La Gruta — Arequipa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Dancing+Script:wght@500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
-<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js" defer></script>
+
+<!-- Leaflet va vendorizado en el repo, no en un CDN: el sitio debe poder
+     subirse tal cual a cualquier hosting sin depender de terceros.
+     site.css SIEMPRE después de leaflet.css: sobrescribe el estilo del
+     marcador y de los controles. -->
+<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+<script src="assets/vendor/leaflet/leaflet.js" defer></script>
 <link rel="stylesheet" href="assets/css/site.css">
 
 <!-- Todos con `defer`: se ejecutan en este orden, ya con el documento parseado.
@@ -196,8 +201,12 @@
 <!-- ═══ UBICACIÓN ═══ -->
 <div class="page" id="page-location">
   <div class="loc-map">
-    <div id="loc-mapbox" style="position:absolute;inset:0;"></div>
-    <div class="loc-badge"><span class="loc-badge-n">7</span><span class="loc-badge-t">minutos caminando<br>al centro histórico</span></div>
+    <div id="loc-map-canvas"></div>
+    <div class="loc-overlay">
+      <div class="loc-badge"><span class="loc-badge-n">7</span><span class="loc-badge-t">minutos caminando<br>al centro histórico</span></div>
+      <a class="loc-directions" target="_blank" rel="noopener"
+         href="https://www.google.com/maps/dir/?api=1&amp;destination=-16.387764,-71.530067">Cómo llegar &rsaquo;</a>
+    </div>
   </div>
   <div class="loc-body">
     <div class="loc-head rv-el"><p class="eye">Cómo llegar</p><h2>Nos encuentras <em>fácil.</em></h2></div>

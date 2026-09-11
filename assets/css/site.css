@@ -236,13 +236,45 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 
 /* ═══ LOCATION ═══ */
 .loc-map { height: 76vh; position: relative; overflow: hidden; background: var(--paper2); }
-.loc-map .mapboxgl-map { position: absolute; inset: 0; }
+#loc-map-canvas { position: absolute; inset: 0; background: var(--paper2); }
+
+/* Leaflet apila sus paneles internos hasta z-index 800. `.loc-map` tiene
+   z-index propio, así que esos valores quedan contenidos dentro de ella; pero
+   la insignia y el enlace, que son hermanos del mapa, hay que subirlos por
+   encima o el mapa se los come. */
+.loc-overlay {
+  position: absolute; left: 28px; bottom: 28px; z-index: 900;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+}
+.loc-directions {
+  background: var(--white); color: var(--ink); text-decoration: none;
+  padding: 13px 22px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  box-shadow: 0 2px 18px rgba(30,28,22,.12); transition: background .25s, color .25s;
+}
+.loc-directions:hover { background: var(--green); color: #fff; }
+
+/* Especificidad por encima de `.leaflet-marker-icon { display:block }`. */
+.leaflet-marker-icon.loc-marker { display: flex; background: none; border: none; }
+
+/* Controles y atribución, alineados con el resto del sitio. La atribución es
+   obligatoria por licencia de OpenStreetMap y CARTO: no se elimina. */
+.loc-map .leaflet-control-attribution {
+  background: rgba(251,250,246,.88); font-family: 'Jost', sans-serif;
+  font-size: 10px; color: var(--muted); padding: 4px 8px;
+}
+.loc-map .leaflet-control-attribution a { color: var(--soft); }
+.loc-map .leaflet-bar a {
+  background: var(--white); color: var(--ink);
+  border-bottom-color: var(--hair); width: 34px; height: 34px; line-height: 34px;
+}
+.loc-map .leaflet-bar a:hover { background: var(--paper2); color: var(--green); }
+.loc-map .leaflet-bar { border: none; box-shadow: 0 2px 18px rgba(30,28,22,.12); }
 .loc-marker { display: flex; flex-direction: column; align-items: center; }
 .loc-dot { width: 13px; height: 13px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 7px rgba(58,82,54,.18), 0 0 0 18px rgba(58,82,54,.08); animation: pulse 2s infinite; }
 .loc-line { width: 1px; height: 44px; background: linear-gradient(to bottom,var(--green),transparent); }
 .loc-tag { background: var(--green); color: #fff; padding: 9px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
 .loc-badge {
-  position: absolute; left: 28px; bottom: 28px; z-index: 5;
+  position: relative;
   background: var(--paper); box-shadow: 0 20px 50px rgba(0,0,0,.2);
   padding: 20px 26px; display: flex; align-items: center; gap: 16px; max-width: 280px;
 }
@@ -268,7 +300,9 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-nearby-list span { font-size: 14px; color: var(--soft); }
 @media (max-width: 900px) {
   .loc-dir-grid { grid-template-columns: 1fr; gap: 20px; }
-  .loc-badge { left: 16px; bottom: 16px; padding: 14px 18px; gap: 12px; max-width: 220px; }
+  .loc-overlay { left: 16px; bottom: 16px; gap: 10px; }
+  .loc-badge { padding: 14px 18px; gap: 12px; max-width: 220px; }
+  .loc-directions { padding: 11px 17px; font-size: 10px; }
   .loc-badge-n { font-size: 38px; }
   .loc-badge-t { font-size: 10px; }
 }

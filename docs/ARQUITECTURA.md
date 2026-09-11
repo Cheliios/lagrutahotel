@@ -18,10 +18,12 @@ assets/
     site.css               ← todos los estilos
   js/
     app.js                 ← menú, navegación, revelados, formularios, marcadores
-    map.js                 ← mapa de Mapbox (se inicializa bajo demanda)
+    map.js                 ← mapa de Leaflet (se inicializa bajo demanda)
     botanic-lib.js         ← biblioteca botánica: geometría y especies
     botanic.js             ← sección "El jardín" (grafito, vertical)
     vines.js               ← capa vegetal perimetral (dorada, toda la página)
+  vendor/
+    leaflet/               ← Leaflet 1.9.4 (BSD-2), vendorizado a propósito
   img/
     hero/                  ← cabeceras a sangre de cada página
     rooms/                 ← una foto por tipo de habitación publicado
@@ -44,9 +46,9 @@ separado por responsabilidad.
 
 ```html
 <link  ... fonts.googleapis.com>          tipografías
-<link  ... mapbox-gl.css>                 estilos del mapa
-<script ... mapbox-gl.js      defer>      librería del mapa
-<link  href="assets/css/site.css">        estilos propios
+<link  href="vendor/leaflet/leaflet.css"> estilos del mapa
+<script src="vendor/leaflet/leaflet.js" defer>
+<link  href="assets/css/site.css">        estilos propios ← SIEMPRE tras leaflet.css
 <script src="botanic-lib.js"  defer>      ← debe ir antes que sus consumidores
 <script src="botanic.js"      defer>
 <script src="vines.js"        defer>
@@ -115,6 +117,32 @@ aplica a las dos capas a la vez.
 
 `OFF` fija el orden biológico —una flor nunca antes que su rama— y `DUR` cuánto
 tarda cada etapa en dibujarse. Ambas se miden en "pantallas de scroll".
+
+## El mapa
+
+Leaflet 1.9.4 con tiles claras de CARTO. Dos decisiones que conviene no
+revertir sin pensarlo:
+
+- **Sin token.** Mapbox obligaba a meter una clave en el frontend; el escáner de
+  secretos de GitHub la bloqueaba en cada push y ataba el sitio a una cuenta y
+  una cuota. Leaflet con tiles públicas no necesita nada de eso, y pesa unas 20
+  veces menos que Mapbox GL.
+- **Vendorizado, no CDN.** La librería vive en `assets/vendor/leaflet/`. El sitio
+  tiene que poder subirse tal cual a cualquier hosting sin depender de que un
+  tercero siga sirviendo el archivo. `site.css` debe cargarse **después** de
+  `leaflet.css`, porque sobrescribe el marcador y los controles.
+
+La rueda del ratón nunca hace zoom y en táctil el arrastre está desactivado: un
+mapa que secuestra el scroll de la página es un fallo de usabilidad, no una
+función. Para acercar están los botones, y para navegar de verdad el enlace
+"Cómo llegar", que abre Google Maps con la ruta ya puesta.
+
+El proveedor de tiles está en la constante `TILES` de `map.js`. La atribución de
+OpenStreetMap y CARTO es obligatoria por licencia: no se quita.
+
+La barra de navegación va blanca sobre el hero oscuro y oscura en el resto.
+Ubicación no tiene hero —empieza con el mapa, que es claro—, así que `navColor()`
+la fuerza a oscura cuando la página activa no trae `.hero`.
 
 ## Navegación
 

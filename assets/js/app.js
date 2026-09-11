@@ -16,8 +16,10 @@ function goTo(page){
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
-    current=page; window.scrollTo(0,0); reAnim(page); window.gardenRefresh?.(); window.vinesRefresh?.();
-    if(page==='location'){ window.initLocMap?.(); setTimeout(()=>window.locMap?.resize(),560); }
+    current=page; window.scrollTo(0,0); reAnim(page); window.gardenRefresh?.(); window.vinesRefresh?.(); navColor();
+    // `invalidateSize` es el equivalente en Leaflet a un resize: el contenedor
+    // acaba de hacerse visible y el mapa se midió cuando aún valía 0.
+    if(page==='location'){ window.initLocMap?.(); setTimeout(()=>window.locMap?.invalidateSize(),560); }
     pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
   },520);
 }
@@ -35,7 +37,15 @@ function obs(){
 obs();
 
 const navEl=document.getElementById('nav');
-function navColor(){ navEl.classList.toggle('dark', window.scrollY > window.innerHeight*.82); }
+// La barra es blanca sobre la foto oscura del hero y se oscurece al pasarla.
+// Ubicación no tiene hero: arranca con el mapa, que es claro, así que ahí el
+// texto blanco quedaba ilegible. Si la página activa no trae hero, va oscura
+// desde el principio.
+function navColor(){
+  const activa = document.querySelector('.page.active');
+  const conHero = !!activa?.querySelector('.hero');
+  navEl.classList.toggle('dark', !conHero || window.scrollY > window.innerHeight*.82);
+}
 window.addEventListener('scroll',navColor);
 
 /* ── Formulario de reservas → WhatsApp / correo ── */
