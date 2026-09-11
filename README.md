@@ -25,9 +25,30 @@ Cada vez que se haga push a la rama publicada, el sitio se actualiza solo (unos 
 
 ```
 index.html                  → el sitio real (Inicio, Habitaciones, Ubicación, Reservas)
-crecimiento_persistente.html→ demo aislado de la animación de crecimiento botánico (referencia de diseño, no se publica)
+botanic.js                  → ilustración botánica vectorial dibujada por scroll (sección "El jardín")
+crecimiento_persistente.html→ demo aislado de la animación anterior (referencia de diseño, no se publica)
 *.jpg                       → imágenes del hotel (comprimidas; varias son placeholders temporales — ver abajo)
 ```
+
+### La sección "El jardín" (`botanic.js`)
+
+Composición botánica vertical en línea fina monocroma que se dibuja a medida que
+el usuario baja: tallo → ramas → ramillas → hojas → helechos → capullos →
+hortensias → rosas → zarcillos. No es un SVG exportado: la planta se genera por
+código con una semilla fija, de modo que es siempre la misma pero no es simétrica
+ni repetitiva.
+
+Notas para tocarlo:
+
+- La velocidad y el orden de aparición se controlan en la tabla `T` (una ventana
+  `{s, e}` de progreso de scroll por etapa). Es el único sitio donde hay que
+  tocar para recalibrar el ritmo.
+- La densidad se controla con los contadores de cada bloque (`perBranch`, `nH`,
+  `nR`, `pairs`, `nF`).
+- El largo del recorrido lo fija `.garden { height }` en el CSS de `index.html`
+  (380vh en escritorio, 320vh en móvil).
+- No tiene dependencias externas: es SVG + `requestAnimationFrame`. Se retiró
+  GSAP/ScrollTrigger del sitio porque ya no se usaba en ningún otro sitio.
 
 ### Estado de las imágenes
 
