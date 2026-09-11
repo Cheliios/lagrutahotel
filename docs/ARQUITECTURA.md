@@ -92,13 +92,47 @@ crecen hacia el interior a medida que se hace scroll. El crecimiento es
 rebobinara. Eso ata la animación al gesto del usuario y hace evidente que
 responde al scroll.
 
-Tiene un coste medido: bajando cuesta lo mismo que la versión persistente
-(33ms contra 32ms por frame con la CPU limitada a 1/4), pero subiendo pasa de
-17ms a 45ms, porque antes no hacía nada y ahora tiene que reescribir los
-trazos para desdibujarlos. Sin limitar la CPU son 16.6ms en ambas direcciones
-—el límite del refresco de pantalla— en escritorio y en móvil. Si algún día
-hay que recuperar ese margen en gama muy baja, `PERSISTENTE = true` en
-`vines.js` vuelve al comportamiento acumulativo.
+Tiene un coste: bajando cuesta lo mismo que la versión persistente, pero
+subiendo cuesta bastante más, porque antes no hacía nada y ahora tiene que
+reescribir los trazos para desdibujarlos. Si algún día hay que recuperar ese
+margen en gama muy baja, `PERSISTENTE = true` en `vines.js` vuelve al
+comportamiento acumulativo.
+
+### El scroll no alimenta directamente al dibujo
+
+La rueda del mouse entrega el scroll a saltos; el táctil, con inercia propia.
+Si el dibujo se ata al scroll crudo, en escritorio se siente a tirones y en
+móvil bien — el mismo código con dos sensaciones distintas. Por eso hay una
+capa intermedia:
+
+```
+scroll crudo → objetivo → mostrado (interpolado) → trazos
+```
+
+Cada frame, `mostrado` recorre una fracción de la distancia que le falta hasta
+`objetivo` (`SUAVIZADO`, 0.22). El paso se normaliza por tiempo real, así que
+en una pantalla de 120Hz tarda lo mismo que en una de 60Hz. Medido: tras un
+salto de rueda de 120px, el dibujo cubre el 70% del camino en ~6 frames y
+termina de asentarse en ~300ms.
+
+### Fino y denso, no grande y pesado
+
+La presencia de la capa sale de la CANTIDAD de elementos pequeños, no del
+tamaño de unos pocos grandes. La estructura (tallos y ramas) es apenas un 5%
+de los trazos: sostiene, no protagoniza. El resto es textura — hojas, brotes,
+helechos y flores chicas — con las rosas grandes reservadas como punto focal
+poco frecuente.
+
+Dos detalles que hacen que eso sea asequible:
+
+- Las nervaduras de las hojas escalan con el TAMAÑO de la hoja, no solo con el
+  nivel de detalle. En una hoja de 16px son sub-píxel: no se ven y cada una
+  cuesta un path que hay que redibujar en cada frame. Quitarlas bajó de 6357 a
+  4236 trazos sin que se note en pantalla.
+- La siembra NO es uniforme. Dos ondas lentas de distinta frecuencia y fase
+  aleatoria modulan la densidad a lo largo de la página: hay tramos densos,
+  tramos medios y tramos que respiran. Un reparto regular delata que la
+  vegetación está generada.
 
 Dibuja con `stroke-dasharray` + `stroke-dashoffset`. `getTotalLength()` se mide
 **una sola vez** por trazo al construir; durante el scroll solo se escribe el
@@ -120,9 +154,11 @@ hacer falta.
 
 | Qué | Dónde |
 |---|---|
-| Presencia de la capa | `INTENSIDAD` en `vines.js` (1 = base, 1.8 = actual) |
+| Presencia de la capa | `INTENSIDAD` en `vines.js` — multiplica TONE; vale 1, así que los números de `TONE` son las opacidades finales |
+| Suavidad del scroll | `SUAVIZADO` en `vines.js` (0.22; subirlo = más directo, bajarlo = más flotante) |
 | Reversible o acumulativa | `PERSISTENTE` en `vines.js` (false = se repliega al subir) |
-| Densidad de la capa | `bandH` y `P.detail` en `vines.js` |
+| Densidad de la capa | `bandH` (separación entre plantas) y `P.detail` en `vines.js` |
+| Variación de densidad | `densidad(u)` en `vines.js` |
 | Ritmo de aparición | tablas `OFF` y `DUR` en `vines.js` |
 
 `OFF` fija el orden biológico —una flor nunca antes que su rama— y `DUR` cuánto

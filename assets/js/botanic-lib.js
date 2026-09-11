@@ -153,7 +153,10 @@ window.Botanic = (function () {
     var mid = grow(P, x, y, ang, len, P.rnd(-0.55, 0.55), 0.035, 10);
     P.draw(g, bladeD(P, mid, wid, 0.07), 0.85, 'leaf',  win(sch, 0,    0.62), EASE.out);
     P.draw(g, catmull(mid),              0.62, 'vein',  win(sch, 0.22, 0.80), EASE.soft);
-    var nv = Math.max(2, Math.round(4 * P.detail));
+    // Las nervaduras laterales escalan con el TAMAÑO de la hoja, no solo con
+    // el nivel de detalle: en una hoja de 16px son sub-píxel — no se ven y
+    // cada una cuesta un path que hay que redibujar en cada frame de scroll.
+    var nv = Math.max(0, Math.round(4 * P.detail * Math.min(1, len / 45)));
     for (var v = 0; v < nv; v++) {
       var t = 0.22 + (0.62 / nv) * v + P.rnd(-0.03, 0.03);
       var pt = along(mid, t);
@@ -215,7 +218,8 @@ window.Botanic = (function () {
       var f0 = 0.05 + 0.70 * (i / nF) + P.rnd(0, 0.06);
       P.draw(g, floretD(P, cx, cy, fr, P.rand() < 0.45 ? 4 : 5, P.rnd(0, 6.28)),
              0.65, 'flower', win(sch, f0, f0 + 0.20), EASE.soft);
-      if (i % 2 === 0) {
+      // El corazón de cada florecilla solo se distingue en racimos grandes.
+      if (P.detail > 0.40 && i % 2 === 0) {
         P.draw(g, floretD(P, cx, cy, fr * 0.26, 3, P.rnd(0, 6.28)),
                0.45, 'detail', win(sch, f0 + 0.10, f0 + 0.24), EASE.soft);
       }
@@ -243,7 +247,12 @@ window.Botanic = (function () {
     //          radio  nº  semiapertura  recogido de puntas
     var all = [[0.16, 3, 1.52, 0.28], [0.30, 4, 1.38, 0.26], [0.46, 5, 1.26, 0.24],
                [0.64, 5, 1.16, 0.21], [0.84, 6, 1.04, 0.16], [1.00, 6, 0.92, 0.08]];
-    var rings = P.detail > 0.8 ? all : all.filter(function (_, i) { return i % 2 === 0 || i > 3; });
+    // Tres niveles de detalle. El más bajo existe para las rosas pequeñas:
+    // con 20 pétalos concéntricos, una flor de 10px de radio se convierte en
+    // un borrón. Con 3 anillos sigue leyéndose como rosa.
+    var rings = P.detail > 0.80 ? all
+              : P.detail > 0.45 ? all.filter(function (_, i) { return i % 2 === 0 || i > 3; })
+              :                   all.filter(function (_, i) { return i === 1 || i === 3 || i === 5; });
     var done = 0, tot = 0, i, k;
     for (i = 0; i < rings.length; i++) tot += rings[i][1];
 
