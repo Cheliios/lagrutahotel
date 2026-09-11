@@ -20,8 +20,7 @@ assets/
     app.js                 ← menú, navegación, revelados, formularios, marcadores
     map.js                 ← mapa de Leaflet (se inicializa bajo demanda)
     botanic-lib.js         ← biblioteca botánica: geometría y especies
-    botanic.js             ← sección "El jardín" (grafito, vertical)
-    vines.js               ← capa vegetal perimetral (dorada, toda la página)
+    vines.js               ← capa vegetal perimetral (oliva-dorado, toda la página)
   vendor/
     leaflet/               ← Leaflet 1.9.4 (BSD-2), vendorizado a propósito
   img/
@@ -31,7 +30,9 @@ assets/
     pendientes/            ← fotos que existen pero aún no se publican
 docs/
   ARQUITECTURA.md          ← este archivo
-  referencias/             ← prototipos y demos que NO se publican
+  referencias/             ← prototipos y demos que NO se publican, entre ellos
+                              botanic.js: la sección "El jardín" que sí llegó a
+                              estar en vivo (ver más abajo)
 ```
 
 ### Por qué `index.html` se queda en la raíz
@@ -49,8 +50,7 @@ separado por responsabilidad.
 <link  href="vendor/leaflet/leaflet.css"> estilos del mapa
 <script src="vendor/leaflet/leaflet.js" defer>
 <link  href="assets/css/site.css">        estilos propios ← SIEMPRE tras leaflet.css
-<script src="botanic-lib.js"  defer>      ← debe ir antes que sus consumidores
-<script src="botanic.js"      defer>
+<script src="botanic-lib.js"  defer>      ← debe ir antes que su consumidor
 <script src="vines.js"        defer>
 <script src="app.js"          defer>
 <script src="map.js"          defer>
@@ -84,36 +84,35 @@ una foto.
 > `translateY(0)`: ambos "no mueven nada", pero solo `none` disuelve el
 > contexto. Si alguien lo revierte, las fotos se van debajo de la vegetación.
 
-## Las dos capas botánicas
+## La capa botánica (`vines.js`)
 
-|  | `botanic.js` — "El jardín" | `vines.js` — capa perimetral |
-|---|---|---|
-| Papel | Pieza editorial: se mira de frente | Ambiente: se descubre de reojo |
-| Alcance | Una sección de 380vh | Toda la página |
-| Color | Grafito `#252525` / `#3A3A3A` / `#606060` | Dorado envejecido `#C5A059` |
-| Origen | Un tallo que sube desde abajo | Enredaderas desde los bordes |
-| Reloj | Progreso dentro de su sección | Posición de cada planta en el documento |
-| Al subir | Se repliega (scrub reversible) | **Se queda**: el jardín se acumula |
-| Trazos | 681 escritorio / 407 móvil | 1565 escritorio / 558 móvil |
+Enredaderas en línea fina que nacen desde los bordes izquierdo y derecho y
+crecen hacia el interior a medida que se hace scroll, acumulándose por toda la
+página (lo dibujado se queda, no se repliega).
 
-Ambas dibujan con `stroke-dasharray` + `stroke-dashoffset`. `getTotalLength()`
-se mide **una sola vez** por trazo al construir; durante el scroll solo se
-escribe el `strokeDashoffset` de los trazos que realmente cambiaron.
+Dibuja con `stroke-dasharray` + `stroke-dashoffset`. `getTotalLength()` se mide
+**una sola vez** por trazo al construir; durante el scroll solo se escribe el
+`strokeDashoffset` de los trazos que realmente cambiaron — y antes de eso, un
+atajo descarta sin calcular nada los trazos que ya terminaron de dibujarse o
+los que el scroll todavía no alcanza, que en cualquier frame dado son la
+inmensa mayoría (ver `render()` en `botanic-lib.js`).
 
-Las especies (hojas, helechos, hortensias, rosas, capullos, zarcillos) viven una
-sola vez en `botanic-lib.js`. Cada capa aporta su "pintor": color, opacidad,
-nivel de detalle y ventana de scroll. Un cambio en el dibujo de una rosa se
-aplica a las dos capas a la vez.
+Las especies (hojas, helechos, hortensias, rosas, capullos, zarcillos) viven en
+`botanic-lib.js`. Existió una segunda capa, `botanic.js` — la sección "El
+jardín", una ilustración de grafito que se miraba de frente en su propia
+sección de 380vh — pero quedó redundante en cuanto la capa perimetral cubría
+toda la página, así que se sacó del sitio. El código no se perdió: sigue
+funcionando tal cual en **`docs/referencias/jardin-botanico.html`**, cargando
+el mismo `botanic-lib.js` (no una copia congelada), por si algún día vuelve a
+hacer falta.
 
 ### Perillas de ajuste
 
 | Qué | Dónde |
 |---|---|
-| Presencia de la capa dorada | `INTENSIDAD` en `vines.js` (1 = base, 1.5 = actual) |
-| Densidad de la capa dorada | `bandH` y `P.detail` en `vines.js` |
-| Ritmo de la capa dorada | tablas `OFF` y `DUR` en `vines.js` |
-| Ritmo del jardín | tabla `T` en `botanic.js` |
-| Largo del recorrido del jardín | `.garden { height }` en `site.css` |
+| Presencia de la capa | `INTENSIDAD` en `vines.js` (1 = base, 1.8 = actual) |
+| Densidad de la capa | `bandH` y `P.detail` en `vines.js` |
+| Ritmo de aparición | tablas `OFF` y `DUR` en `vines.js` |
 
 `OFF` fija el orden biológico —una flor nunca antes que su rama— y `DUR` cuánto
 tarda cada etapa en dibujarse. Ambas se miden en "pantallas de scroll".

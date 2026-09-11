@@ -26,7 +26,7 @@ Cada vez que se haga push a la rama publicada, el sitio se actualiza solo (unos 
 ```
 index.html          → markup de las 4 páginas (único archivo en la raíz)
 assets/css/         → estilos
-assets/js/          → interfaz, mapa y las dos capas botánicas
+assets/js/          → interfaz, mapa y la capa vegetal perimetral
 assets/vendor/      → librerías de terceros (Leaflet, BSD-2)
 assets/img/         → fotos, separadas por uso (hero / rooms / hotel / pendientes)
 docs/               → documentación y prototipos que no se publican

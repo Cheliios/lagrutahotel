@@ -22,7 +22,7 @@ function goTo(page){
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
-    current=page; window.scrollTo(0,0); reAnim(page); window.gardenRefresh?.(); window.vinesRefresh?.(); navColor();
+    current=page; window.scrollTo(0,0); reAnim(page); window.vinesRefresh?.(); navColor();
     // `invalidateSize` es el equivalente en Leaflet a un resize: el contenedor
     // acaba de hacerse visible y el mapa se midió cuando aún valía 0.
     if(page==='location'){ window.initLocMap?.(); setTimeout(()=>window.locMap?.invalidateSize(),560); }

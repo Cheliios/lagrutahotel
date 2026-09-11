@@ -42,22 +42,6 @@ img { display: block; max-width: 100%; }
 .hero, .band { z-index: 6; }
 .wc-img, .room-card-media, .loc-map { z-index: 6; }
 
-/* ── SECCIÓN JARDÍN: ilustración botánica dibujada por scroll ── */
-.garden { position: relative; height: 380vh; background: var(--paper); }
-.garden-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; padding-top: 6vh; }
-#garden-svg { height: 86vh; width: auto; max-width: 100%; display: block; }
-#garden-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.garden-caption { position: absolute; left: 6vw; top: 50%; transform: translateY(-50%); max-width: 290px; pointer-events: none; }
-.garden-caption h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(24px,2.4vw,34px); font-weight: 300; font-style: italic; line-height: 1.32; color: var(--ink); }
-.garden-caption p.sub { font-size: 13px; line-height: 1.85; color: var(--soft); margin-top: 18px; }
-@media (max-width: 900px) {
-  .garden { height: 320vh; }
-  .garden-sticky { align-items: flex-start; padding-top: 11vh; }
-  #garden-svg { height: 64vh; }
-  .garden-caption { left: 0; right: 0; top: auto; bottom: 4vh; transform: none; max-width: none; padding: 0 28px; text-align: center; }
-  .garden-caption p.sub { margin-top: 12px; }
-}
-
 /* transition */
 .pt { position: fixed; inset: 0; z-index: 8000; background: var(--paper2); transform: scaleY(0); transform-origin: bottom; pointer-events: none; }
 .pt.in  { transform: scaleY(1); transition: transform .5s cubic-bezier(.76,0,.24,1); transform-origin: bottom; }

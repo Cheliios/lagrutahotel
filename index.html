@@ -15,9 +15,9 @@
 <link rel="stylesheet" href="assets/css/site.css">
 
 <!-- Todos con `defer`: se ejecutan en este orden, ya con el documento parseado.
-     botanic-lib debe ir antes que sus dos consumidores. -->
+     botanic-lib debe ir antes que vines.js, su único consumidor ahora que
+     "El jardín" se sacó del sitio (queda guardada en docs/referencias/). -->
 <script src="assets/js/botanic-lib.js" defer></script>
-<script src="assets/js/botanic.js"     defer></script>
 <script src="assets/js/vines.js"       defer></script>
 <script src="assets/js/app.js"         defer></script>
 <script src="assets/js/map.js"         defer></script>
@@ -92,18 +92,6 @@
     <p class="eye">Por qué La Gruta</p>
     <h2>A siete minutos caminando del centro histórico, pero rodeado de jardines y silencio. <em>Cerca de todo, lejos del ruido.</em></h2>
   </div>
-
-  <!-- ═══ JARDÍN: ilustración botánica que se dibuja con el scroll ═══ -->
-  <section class="garden" id="garden">
-    <div class="garden-sticky">
-      <svg id="garden-svg" viewBox="0 0 860 1520" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"></svg>
-      <div class="garden-caption rv-el">
-        <p class="eye">Selva Alegre</p>
-        <h2>Un jardín que tomó cuarenta años en crecer.</h2>
-        <p class="sub">Hortensias, helechos y rosales que rodean las habitaciones y amortiguan la ciudad. Baja para verlo crecer.</p>
-      </div>
-    </div>
-  </section>
 
   <!-- ROOM CARDS -->
   <section class="rooms-sec">
