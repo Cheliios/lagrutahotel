@@ -205,14 +205,61 @@
       return { x: x, y: y, w: el.offsetWidth, h: el.offsetHeight };
     }
 
+    /* ── ARCO NARRATIVO: CIUDAD → CALMA → JARDÍN → REFUGIO ──────────────────
+       La página no debe sentirse igual arriba que abajo. Arriba se entra a un
+       hotel: limpio, arquitectónico, contenido. Abajo se está dentro de su
+       jardín.
+
+       Antes esto estaba mal resuelto: las compuertas por profundidad estaban
+       todas entre u=0.06 y u=0.28, así que el vocabulario botánico completo
+       —flores incluidas— se desbloqueaba antes del primer tercio y luego solo
+       se repetía. Medido: el primer cuarto ya tenía un 38% de flores, y el
+       último cuarto tenía MENOS vegetación que el central.
+
+       Ahora cada parámetro sigue una curva a lo largo de toda la página. Se
+       INTERPOLA entre actos en vez de saltar de uno a otro: el brief pide que
+       no se noten las transiciones, y un salto en cualquiera de estos valores
+       se vería como una costura. */
+    var DENS = 1, ALCANCE = 2, FOLLAJE = 3, FLORES = 4, FOCAL = 5;
+    // El arco REDISTRIBUYE densidad, no la añade: el total de trazos se
+    // mantiene en el presupuesto de frame y lo que cambia es dónde está.
+    // El pico llega hacia u≈0.75 y se sostiene: el último cuarto de Inicio lo
+    // ocupa casi entero la banda fotográfica a sangre, que es zona dura, así
+    // que llevar el máximo más abajo sería sembrar donde no se ve.
+    var ACTOS = [
+      //  u     densidad  alcance  follaje  flores  focal
+      // CIUDAD no es vacío: es contenido. Tiene que haber un hilo de verde
+      // asomando desde el borde, o no hay nada de donde crezca el resto.
+      // El primer cuarto es además casi todo hero (zona dura), así que quedan
+      // pocas bandas sembrables y el sorteo puede dejarlo en cero si el valor
+      // es demasiado bajo.
+      [ 0.00,   0.32,     0.50,    0.32,    0.00,   0.00 ],  // CIUDAD  · un hilo
+      [ 0.28,   0.40,     0.66,    0.54,    0.05,   0.00 ],  // CALMA   · hojas, brotes
+      [ 0.56,   0.56,     0.88,    0.78,    0.45,   0.10 ],  // JARDÍN  · helechos, flores
+      [ 0.78,   0.72,     1.02,    0.90,    0.85,   0.60 ],
+      [ 1.00,   0.78,     1.10,    0.94,    1.10,   1.00 ]   // REFUGIO · envolvente
+    ];
+    function arco(u, i) {
+      for (var k = 1; k < ACTOS.length; k++) {
+        if (u <= ACTOS[k][0] || k === ACTOS.length - 1) {
+          var a = ACTOS[k - 1], b = ACTOS[k];
+          var t = clamp((u - a[0]) / (b[0] - a[0] || 1), 0, 1);
+          return a[i] + (b[i] - a[i]) * t;
+        }
+      }
+      return ACTOS[ACTOS.length - 1][i];
+    }
+
     function vine(y0, side, u, shy) {
-      // `rich` crece con la profundidad: arriba apenas un brote, abajo una mata.
-      var rich = clamp((u - 0.05) / 0.75, 0, 1);
+      // `rich` ya no es una rampa lineal genérica: es el arco de follaje, que
+      // arranca casi plano en CIUDAD y se dispara en REFUGIO.
+      var rich = clamp(arco(u, FOLLAJE), 0, 1.1);
+      var vFlor = arco(u, FLORES);
       var inward = side < 0 ? 1 : -1;
       var x0 = side < 0 ? -12 : W + 12;
       var down = rand() < 0.62;               // mayoría diagonal descendente
       var ang = inward * (down ? rnd(1.85, 2.45) : rnd(0.85, 1.35));
-      var reach = W * (MOBILE ? rnd(0.19, 0.34) : rnd(0.27, 0.50)) * (0.72 + 0.42 * rich);
+      var reach = W * (MOBILE ? rnd(0.19, 0.34) : rnd(0.27, 0.50)) * arco(u, ALCANCE);
       if (shy) reach *= 0.42;                 // zona suave: se queda en el borde
 
       var when = reloj(y0);
@@ -279,7 +326,7 @@
 
       // Helechos: más frecuentes y bastante más chicos. Algunos cuelgan.
       for (var nf = 0, maxf = MOBILE ? 1 : 2; nf < maxf; nf++) {
-        if (u < 0.14 || rand() > 0.34 + rich * 0.40) continue;
+        if (rand() > 0.50 * rich) continue;
         var cf = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var tf = rnd(0.30, 0.85), pf = B.along(cf.pts, tf);
         var af = rand() < 0.4 ? (Math.PI + rnd(-0.45, 0.45))
@@ -290,7 +337,7 @@
 
       // Brotes: pequeños y abundantes, rematando puntas de rama.
       for (var nb = 0, maxb = 2 + Math.round(rich * 3); nb < maxb; nb++) {
-        if (u < 0.06 || rand() > 0.56 + rich * 0.34) continue;
+        if (rand() > 0.30 + 0.55 * rich) continue;
         var cb = carriers[Math.floor(rand() * carriers.length)];
         var pb = B.along(cb.pts, rnd(0.60, 0.99));
         B.bud(P, groups.capullos, pb.x, pb.y, pb.a + rnd(-0.6, 0.6), rnd(7, 12) * scale,
@@ -305,7 +352,7 @@
       // a) Florecillas sueltas: racimos diminutos de 4-5 pétalos. Son las más
       //    numerosas y aparecen desde muy arriba de la página.
       for (var nm = 0, maxm = 2 + Math.round(rich * 3); nm < maxm; nm++) {
-        if (rand() > 0.40 + rich * 0.38) continue;
+        if (rand() > 0.62 * vFlor) continue;
         var cm = carriers[Math.floor(rand() * carriers.length)];
         var pm = B.along(cm.pts, rnd(0.45, 1.0));
         (function (pm, nm) {
@@ -317,7 +364,7 @@
       }
 
       // b) Hortensia: el racimo reconocible. Bastante más chica que antes.
-      if (u > 0.16 && rand() < 0.30 + rich * 0.42) {
+      if (rand() < 0.62 * vFlor) {
         var ch = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var ph = B.along(ch.pts, rnd(0.78, 1.0));
         B.hydrangea(P, groups.hortensias, ph.x, ph.y, rnd(13, 19) * scale,
@@ -326,7 +373,7 @@
 
       // c) Mini rosa: frecuente y pequeña, con menos anillos de pétalos para
       //    que a ese tamaño siga leyéndose como rosa.
-      if (u > 0.18 && rand() < 0.26 + rich * 0.34) {
+      if (rand() < 0.52 * vFlor) {
         var cr = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var pr = B.along(cr.pts, rnd(0.82, 1.0));
         conDetalle(0.35, function () {
@@ -337,7 +384,7 @@
 
       // d) Rosa protagonista: rara a propósito. Si aparecen muchas dejan de
       //    ser punto focal y se vuelven ruido.
-      if (u > 0.28 && rand() < 0.09 + rich * 0.11) {
+      if (rand() < 0.22 * arco(u, FOCAL)) {
         var cR = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var pR = B.along(cR.pts, rnd(0.85, 1.0));
         B.rose(P, groups.rosas, pR.x, pR.y, rnd(17, 24) * scale,
@@ -420,9 +467,15 @@
     // tramos que respiran, sin que se lea como un patrón regular. Un reparto
     // uniforme delata que la vegetación está generada.
     var fase1 = rnd(0, 6.28), fase2 = rnd(0, 6.28);
+    // Dos componentes: una TENDENCIA que crece con la profundidad (el arco
+    // narrativo) y una ONDULACIÓN local que mantiene tramos densos y tramos
+    // de respiro. Antes solo existía la ondulación, alrededor de un valor
+    // constante: variaba, pero no evolucionaba.
     function densidad(u) {
-      return clamp(0.55 + 0.36 * Math.sin(u * Math.PI * 3.1 + fase1)
-                        + 0.17 * Math.sin(u * Math.PI * 8.3 + fase2), 0.05, 1);
+      var tendencia = arco(u, DENS);
+      var onda = 0.26 * Math.sin(u * Math.PI * 3.1 + fase1)
+               + 0.14 * Math.sin(u * Math.PI * 8.3 + fase2);
+      return clamp(tendencia + onda, 0.03, 1);
     }
 
     for (var y = yStart; y < yEnd; y += bandH) {

@@ -139,6 +139,41 @@ en una pantalla de 120Hz tarda lo mismo que en una de 60Hz. Medido: tras un
 salto de rueda de 120px, el dibujo cubre el 70% del camino en ~6 frames y
 termina de asentarse en ~300ms.
 
+### El arco narrativo: CIUDAD → CALMA → JARDÍN → REFUGIO
+
+La página no se siente igual arriba que abajo, y es deliberado. Arriba se
+entra a un hotel: limpio, arquitectónico, contenido. Abajo se está dentro de
+su jardín.
+
+Lo gobierna la tabla `ACTOS` en `vines.js`, con cinco parámetros por tramo
+—densidad, alcance, follaje, flores y rosa focal— que se **interpolan** entre
+actos en vez de saltar. Un salto en cualquiera de esos valores se vería como
+una costura, y el brief pide que la evolución no se note.
+
+| | CIUDAD | CALMA | JARDÍN | REFUGIO |
+|---|---|---|---|---|
+| Trazos | 148 | 440 | 3486 | 1081 |
+| Flores | 0% | 3% | 13% | 25% |
+
+Antes esto estaba mal resuelto: las compuertas por profundidad estaban todas
+entre `u=0.06` y `u=0.28`, así que el vocabulario botánico completo —flores
+incluidas— se desbloqueaba antes del primer tercio y luego solo se repetía.
+Medido: el primer cuarto tenía un 38% de flores y el último cuarto tenía
+MENOS vegetación que el central. La historia se contaba entera en el primer
+tercio.
+
+Dos cosas a tener en cuenta al leer esos números:
+
+- REFUGIO tiene menos trazos que JARDÍN en bruto, pero su cuarto lo ocupa casi
+  entero la banda fotográfica a sangre, que es zona dura. Por píxel utilizable
+  es bastante más denso. Por eso el pico del arco se sitúa hacia `u≈0.75`:
+  llevarlo más abajo sería sembrar donde no se ve.
+- El arco REDISTRIBUYE densidad, no la añade. El total de trazos se mantiene
+  dentro del presupuesto de frame; lo que cambia es dónde está.
+
+Lo que de verdad vive el usuario, midiendo trazos ya dibujados al ir bajando:
+37 → 382 → 2279 → 4682.
+
 ### Dos subsistemas, no uno
 
 La capa tiene dos orígenes distintos, y la diferencia es conceptual, no técnica:
