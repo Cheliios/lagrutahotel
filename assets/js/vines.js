@@ -38,8 +38,11 @@
   // INTENSIDAD es la única perilla para subir o bajar TODA la capa de golpe.
   // 1 = los valores base de abajo. 1.5 = un 50% más de presencia.
   // Si algún día se quiere más discreta, se baja aquí y no en cinco sitios.
-  var INTENSIDAD = 1.5;
-  var GOLD = '#C5A059', GOLD_D = '#96762F';
+  var INTENSIDAD = 1.8;
+  // Verde oliva tirando a dorado: mezcla del dorado anterior (#C5A059) con el
+  // verde de marca del sitio (--green: #3A5236), 65% dorado / 35% verde para
+  // que siga leyéndose cálido y no se apague en caqui.
+  var GOLD = '#948550', GOLD_D = '#6E611F';
   var TONE = {
     stem:   { c: GOLD_D, o: 0.34 },
     leaf:   { c: GOLD,   o: 0.26 },
@@ -270,7 +273,9 @@
 
     /* ── Siembra por bandas ───────────────────────────────────────────────── */
     var Z      = zones(page);
-    var bandH  = MOBILE ? 560 : 430;
+    // Un tercio del espaciado anterior: nace una planta tres veces más
+    // seguido a lo largo del documento.
+    var bandH  = MOBILE ? 187 : 143;
     var hero   = page.querySelector('.hero');
     var yStart = hero ? hero.getBoundingClientRect().bottom + window.scrollY + 40 : 120;
     var yEnd   = Hdoc - 40;

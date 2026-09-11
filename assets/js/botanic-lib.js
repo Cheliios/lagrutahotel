@@ -316,12 +316,28 @@ window.Botanic = (function () {
   }
 
   // `persist`: una vez dibujado, el trazo se queda aunque se suba el scroll.
+  //
+  // Con capas de varios miles de trazos (la capa perimetral de enredaderas),
+  // este bucle corre en cada frame de scroll. En un momento dado, la inmensa
+  // mayoría de los trazos están o ya terminados (persistentes) o todavía muy
+  // por debajo del punto de scroll actual: ninguno de los dos casos necesita
+  // la división ni el easing, así que se descartan primero con comparaciones
+  // simples. Sin este atajo, tallar los mismos ~5000 trazos con división +
+  // función de easing en cada frame es lo que empuja el presupuesto de 16ms
+  // por frame en gama media.
   function render(items, p, persist) {
     for (var i = 0, it, k; i < items.length; i++) {
       it = items[i];
-      k = (p - it.s) / (it.e - it.s);
-      k = k <= 0 ? 0 : (k >= 1 ? 1 : it.ease(k));
-      k = Math.round(k * 400) / 400;            // evita escrituras inútiles
+      if (persist && it.k === 1) continue;
+      if (p <= it.s) {
+        if (it.k !== 0) { it.k = 0; it.el.style.strokeDashoffset = it.len.toFixed(2); }
+        continue;
+      }
+      if (p >= it.e) {
+        if (it.k !== 1) { it.k = 1; it.el.style.strokeDashoffset = '0.00'; }
+        continue;
+      }
+      k = Math.round(it.ease((p - it.s) / (it.e - it.s)) * 400) / 400;   // evita escrituras inútiles
       if (persist && k < it.k) continue;         // crecimiento persistente
       if (k === it.k) continue;
       it.k = k;
