@@ -120,13 +120,18 @@ tarda cada etapa en dibujarse. Ambas se miden en "pantallas de scroll".
 
 ## El mapa
 
-Leaflet 1.9.4 con tiles claras de CARTO. Dos decisiones que conviene no
-revertir sin pensarlo:
+Leaflet 1.9.4 con tiles claras de Esri (World Light Gray Canvas). Dos
+decisiones que conviene no revertir sin pensarlo:
 
 - **Sin token.** Mapbox obligaba a meter una clave en el frontend; el escáner de
   secretos de GitHub la bloqueaba en cada push y ataba el sitio a una cuenta y
   una cuota. Leaflet con tiles públicas no necesita nada de eso, y pesa unas 20
-  veces menos que Mapbox GL.
+  veces menos que Mapbox GL. Primero se probó con CARTO, pero en 2024 cerró el
+  acceso anónimo a sus tiles y empezó a exigir cuenta + API key —el mismo
+  problema que se quería evitar—, así que se pasó a Esri World Light Gray
+  Canvas, de uso libre sin cuenta desde hace más de una década. Si algún día
+  también deja de estar disponible, revisar primero que la URL siga
+  respondiendo antes de asumir que el código está roto.
 - **Vendorizado, no CDN.** La librería vive en `assets/vendor/leaflet/`. El sitio
   tiene que poder subirse tal cual a cualquier hosting sin depender de que un
   tercero siga sirviendo el archivo. `site.css` debe cargarse **después** de
@@ -138,7 +143,7 @@ función. Para acercar están los botones, y para navegar de verdad el enlace
 "Cómo llegar", que abre Google Maps con la ruta ya puesta.
 
 El proveedor de tiles está en la constante `TILES` de `map.js`. La atribución de
-OpenStreetMap y CARTO es obligatoria por licencia: no se quita.
+Esri y OpenStreetMap es obligatoria por licencia: no se quita.
 
 La barra de navegación va blanca sobre el hero oscuro y oscura en el resto.
 Ubicación no tiene hero —empieza con el mapa, que es claro—, así que `navColor()`

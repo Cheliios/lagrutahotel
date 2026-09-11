@@ -70,11 +70,11 @@ públicas y la librería va dentro del repo (`assets/vendor/leaflet/`).
 
 ## Pendientes conocidos
 
-- **Proveedor de tiles del mapa**: se usan las tiles gratuitas de CARTO, que
-  exigen atribución (ya está puesta) y tienen una política de uso pensada para
-  tráfico moderado. Para una landing de hotel va sobrada, pero si el sitio
-  crece conviene pasar a un proveedor de pago. El cambio es una constante:
-  `TILES` en `assets/js/map.js`.
+- **Proveedor de tiles del mapa**: se usa Esri World Light Gray Canvas, gratis
+  y sin cuenta desde hace más de una década (se probó primero con CARTO, que
+  en 2024 empezó a exigir cuenta + API key y dejó de servir tiles anónimas —
+  justo lo que se quería evitar al dejar Mapbox). Si algún día también lo
+  cierran, el cambio es una constante: `TILES` en `assets/js/map.js`.
 - **Foto de recepción**: falta `assets/img/hotel/recepcion.jpg`.
 - **Fotos en alta resolución**: los originales actuales llegan a 1448×1086, lo
   que se nota en pantallas grandes. Harían falta a partir de ~2500 px de ancho.

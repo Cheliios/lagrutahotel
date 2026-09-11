@@ -23,15 +23,27 @@
 
   var LAT = -16.387764, LNG = -71.530067;
 
-  // Proveedor de tiles en un solo sitio: cambiarlo (o pasar a uno de pago con
-  // clave el día que haga falta) es tocar este objeto y nada más.
-  // La atribución es obligatoria por licencia: no se quita.
+  // Proveedor de tiles en un solo sitio: cambiarlo es tocar este objeto y
+  // nada más.
+  //
+  // Se usó CARTO (basemaps.cartocdn.com) hasta que dejó de servir tiles
+  // anónimas y empezó a pedir cuenta + API key — exactamente lo que se quería
+  // evitar al dejar Mapbox. Esri World Light Gray Canvas es de uso libre sin
+  // cuenta desde hace más de una década (es el mapa "gris" que aparece en
+  // incontables ejemplos de Leaflet); si algún día también lo cierran, la
+  // alternativa sin key más robusta es el servidor oficial de OpenStreetMap
+  // (tile.openstreetmap.org), con un estilo más colorido y su propia
+  // política de uso — no pensada para tráfico alto sin tile server propio.
+  //
+  // OJO con el orden de {z}/{y}/{x}: Esri usa el esquema ArcGIS REST
+  // (nivel/fila/columna), NO el {z}/{x}/{y} habitual de XYZ.
   var TILES = {
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    subdomains: 'abcd',
-    maxZoom: 20,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &middot; ' +
-                 '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
+    base: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    // Capa de calles y nombres, semitransparente, por encima del gris base.
+    labels: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+    maxZoom: 16,
+    attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> &middot; ' +
+                 'Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
   };
 
   window.initLocMap = function () {
@@ -40,7 +52,9 @@
 
     var map = L.map(host, {
       center: [LAT, LNG],
-      zoom: 16,
+      // 15, no 16: el gris de Esri llega hasta z16 (ver TILES.maxZoom), así
+      // que si se arranca ya en el tope el botón "+" nace inservible.
+      zoom: 15,
       zoomControl: false,
       // La rueda NUNCA hace zoom: en una landing, un mapa que secuestra el
       // scroll de la página es un fallo de usabilidad, no una función.
@@ -54,12 +68,11 @@
       attributionControl: true
     });
 
-    L.tileLayer(TILES.url, {
-      subdomains: TILES.subdomains,
-      maxZoom: TILES.maxZoom,
-      attribution: TILES.attribution,
-      detectRetina: true
-    }).addTo(map);
+    // Dos capas: el canvas gris abajo, los nombres de calle encima. El
+    // esquema de tiles de Esri no soporta el {r} de retina de los CDN
+    // habituales, así que va sin detectRetina.
+    L.tileLayer(TILES.base, { maxZoom: TILES.maxZoom, attribution: TILES.attribution }).addTo(map);
+    L.tileLayer(TILES.labels, { maxZoom: TILES.maxZoom }).addTo(map);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
