@@ -5,278 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hotel La Gruta — Arequipa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Dancing+Script:wght@500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
-<style>
-:root {
-  --ink:    #2B2B26;
-  --soft:   #55554C;
-  --green:  #3A5236;
-  --green-lt:#5E7355;
-  --gold:   #3A5236;
-  --paper:  #FBFAF6;
-  --paper2: #F4F1E9;
-  --white:  #FFFFFF;
-  --muted:  #9A988C;
-  --hair:   rgba(43,43,38,0.1);
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: 'Jost', sans-serif;
-  font-weight: 300;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-img { display: block; max-width: 100%; }
-.imgc { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-#botanic path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js" defer></script>
+<link rel="stylesheet" href="assets/css/site.css">
 
-/* transition */
-.pt { position: fixed; inset: 0; z-index: 8000; background: var(--paper2); transform: scaleY(0); transform-origin: bottom; pointer-events: none; }
-.pt.in  { transform: scaleY(1); transition: transform .5s cubic-bezier(.76,0,.24,1); transform-origin: bottom; }
-.pt.out { transform: scaleY(0); transition: transform .5s cubic-bezier(.76,0,.24,1); transform-origin: top; }
-
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 500;
-  display: grid; grid-template-columns: 1fr auto 1fr;
-  align-items: center; padding: 26px 40px;
-}
-.burger {
-  justify-self: start; display: flex; flex-direction: column;
-  gap: 6px; cursor: pointer; padding: 6px;
-  opacity: 0; animation: fade 1s .4s forwards;
-}
-.burger span { display: block; width: 28px; height: 1.5px; background: #fff; transition: transform .45s cubic-bezier(.76,0,.24,1), opacity .3s, background .3s; }
-.burger.open span:nth-child(1){ transform: translateY(7.5px) rotate(45deg); }
-.burger.open span:nth-child(2){ opacity: 0; }
-.burger.open span:nth-child(3){ transform: translateY(-7.5px) rotate(-45deg); }
-.nav-logo {
-  justify-self: center; text-align: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 24px; font-weight: 500; letter-spacing: 7px;
-  text-transform: uppercase; color: #fff; text-decoration: none;
-  opacity: 0; animation: fade 1s .4s forwards;
-}
-.nav-logo small { display: block; font-size: 8px; letter-spacing: 4px; color: rgba(255,255,255,.7); margin-top: 4px; font-family: 'Jost',sans-serif; }
-.nav-book {
-  justify-self: end; display: flex; align-items: center; gap: 8px;
-  font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
-  color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.4);
-  padding: 12px 26px; transition: all .3s;
-  opacity: 0; animation: fade 1s .4s forwards;
-}
-.nav-book:hover { background: #fff; color: var(--ink); }
-nav.dark .burger span { background: var(--ink); }
-nav.dark .nav-logo { color: var(--ink); }
-nav.dark .nav-logo small { color: var(--soft); }
-nav.dark .nav-book { color: var(--ink); border-color: var(--hair); }
-nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
-
-/* ── MENU ── */
-.menu { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; }
-.menu-panel { position: absolute; inset: 0; background: var(--ink); clip-path: circle(0% at 60px 40px); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
-.menu.open { pointer-events: all; }
-.menu.open .menu-panel { clip-path: circle(150% at 60px 40px); }
-.menu-inner { position: relative; z-index: 1; height: 100%; display: grid; grid-template-columns: 1.2fr 1fr; opacity: 0; }
-.menu.open .menu-inner { opacity: 1; transition: opacity .5s .3s; }
-.menu-links { display: flex; flex-direction: column; justify-content: center; padding: 0 80px; gap: 2px; }
-.menu-item { overflow: hidden; padding: 4px 0; }
-.menu-index { font-size: 11px; color: var(--gold); letter-spacing: 2px; vertical-align: super; margin-right: 16px; }
-.menu-link {
-  font-family: 'Cormorant Garamond', serif; font-size: clamp(42px,6vw,80px);
-  font-weight: 300; color: rgba(255,255,255,.85); text-decoration: none;
-  display: inline-block; transform: translateY(120%);
-  transition: transform .7s cubic-bezier(.33,1,.68,1), color .3s, font-style .3s;
-  letter-spacing: -1px; line-height: 1.1;
-}
-.menu-link:hover { color: var(--gold); font-style: italic; }
-.menu.open .menu-link { transform: translateY(0); }
-.menu.open .menu-item:nth-child(1) .menu-link { transition-delay: .35s; }
-.menu.open .menu-item:nth-child(2) .menu-link { transition-delay: .42s; }
-.menu.open .menu-item:nth-child(3) .menu-link { transition-delay: .49s; }
-.menu.open .menu-item:nth-child(4) .menu-link { transition-delay: .56s; }
-.menu.open .menu-item:nth-child(5) .menu-link { transition-delay: .63s; }
-.menu-side { display: flex; flex-direction: column; justify-content: flex-end; padding: 100px 80px; gap: 40px; }
-.menu-prev { height: 300px; position: relative; overflow: hidden; }
-.menu-prev-tag { position: absolute; bottom: 16px; left: 16px; z-index:1; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
-.menu-contact { display: flex; flex-direction: column; gap: 10px; }
-.menu-contact a { font-size: 12px; letter-spacing: 2px; color: rgba(255,255,255,.4); text-decoration: none; text-transform: uppercase; transition: color .2s; }
-.menu-contact a:hover { color: var(--gold); }
-
-/* pages */
-.page { display: none; }
-.page.active { display: block; }
-
-/* ═══ HERO (fullscreen w/ availability bar, exact D'Angleterre) ═══ */
-.hero { position: relative; height: 100vh; min-height: 680px; overflow: hidden; }
-.hero-media { position: absolute; inset: 0; }
-.hero-media::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.28); }
-.hero-caption {
-  position: absolute; top: 46%; left: 50%; transform: translate(-50%,-50%);
-  z-index: 2; text-align: center; width: 100%;
-}
-.hero-eye { font-size: 11px; letter-spacing: 6px; text-transform: uppercase; color: #fff; margin-bottom: 14px; opacity: 0; animation: fadeUp .9s .6s forwards; }
-.hero-title {
-  font-family: 'Cormorant Garamond', serif; font-size: clamp(52px,7vw,104px);
-  font-weight: 400; color: #fff; line-height: .95; letter-spacing: 1px;
-  overflow: hidden;
-}
-.hero-title .hl { overflow: hidden; display: inline-block; }
-.hw { display: inline-block; transform: translateY(120%); animation: slideUp 1s cubic-bezier(.16,.84,.44,1) forwards; }
-.hw:nth-child(1){animation-delay:.5s} .hw:nth-child(2){animation-delay:.65s}
-.hero-title em { font-style: italic; }
-
-/* availability bar */
-.avail {
-  position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%);
-  z-index: 3; width: min(92%, 900px);
-  display: grid; grid-template-columns: 1fr 1fr 1fr auto;
-  background: rgba(255,255,255,.96); box-shadow: 0 20px 60px rgba(0,0,0,.15);
-  opacity: 0; animation: fade .9s 1.2s forwards;
-}
-.avail-f { padding: 20px 26px; border-right: 1px solid var(--hair); display: flex; flex-direction: column; gap: 5px; }
-.avail-l { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); }
-.avail-i, .avail-s { background: transparent; border: none; font-family: 'Jost',sans-serif; font-size: 14px; color: var(--ink); outline: none; appearance: none; width: 100%; cursor: pointer; }
-.avail-btn { background: var(--ink); color: #fff; border: none; padding: 0 40px; font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; transition: background .3s; white-space: nowrap; }
-.avail-btn:hover { background: var(--green); }
-.hero-down {
-  position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
-  z-index: 4; width: 52px; height: 52px; border-radius: 50%;
-  background: var(--white); box-shadow: 0 10px 30px rgba(0,0,0,.12);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--soft); font-size: 18px;
-  opacity: 0; animation: fade .9s 1.4s forwards;
-}
-
-/* ═══ WELCOME COLLAGE (asymmetric, image 3) ═══ */
-.welcome { position: relative; padding: 160px 40px; max-width: 1300px; margin: 0 auto; min-height: 90vh; }
-.welcome-grid { position: relative; height: 720px; }
-.wc-img { position: absolute; overflow: hidden; }
-.wc-1 { width: 300px; height: 240px; top: 20px; left: 130px; }
-.wc-2 { width: 300px; height: 360px; top: 150px; left: 0; }
-.wc-3 { width: 340px; height: 300px; top: 120px; right: 60px; }
-.wc-4 { width: 290px; height: 210px; bottom: 20px; left: 300px; }
-.wc-center {
-  position: absolute; top: 48%; left: 50%; transform: translate(-50%,-50%);
-  text-align: center; z-index: 3; background: var(--paper);
-  padding: 40px 48px;
-}
-.wc-script { font-family: 'Dancing Script', cursive; font-size: 40px; color: var(--soft); font-weight: 500; line-height: 1; }
-.wc-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4vw,52px); font-weight: 400; letter-spacing: 4px; color: var(--green); margin-top: 4px; }
-.wc-desc { font-size: 15px; line-height: 1.8; color: var(--soft); max-width: 300px; margin: 22px auto 0; }
-
-/* ═══ SPACIOUS STATEMENT ═══ */
-.statement { text-align: center; padding: 40px 40px 160px; max-width: 940px; margin: 0 auto; }
-.statement .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 28px; }
-.statement h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,3.8vw,52px); font-weight: 300; line-height: 1.3; color: var(--ink); }
-.statement h2 em { font-style: italic; color: var(--green); }
-
-/* ═══ ROOM CARDS (image 2 style) ═══ */
-.rooms-sec { background: var(--paper2); padding: 140px 40px; }
-.rooms-inner { max-width: 1240px; margin: 0 auto; }
-.rooms-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 56px; }
-.rooms-count { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft); font-weight: 500; }
-.rooms-head-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,52px); font-weight: 300; color: var(--ink); }
-.rooms-head-title em { font-style: italic; color: var(--green); }
-.rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-.room-card { background: var(--white); }
-.room-card-media { position: relative; aspect-ratio: 16/10; overflow: hidden; }
-.room-card-media .imgc { transition: transform .8s cubic-bezier(.16,.84,.44,1); }
-.room-card:hover .room-card-media .imgc { transform: scale(1.05); }
-.room-card-arrows { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; opacity: 0; transition: opacity .3s; }
-.room-card:hover .room-card-arrows { opacity: 1; }
-.room-card-arrow { color: #fff; font-size: 24px; text-shadow: 0 1px 8px rgba(0,0,0,.4); cursor: pointer; }
-.room-card-body { padding: 40px 32px 44px; text-align: center; }
-.room-card-name { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--green-lt); margin-bottom: 16px; }
-.room-card-desc { font-size: 14px; line-height: 1.7; color: var(--soft); max-width: 380px; margin: 0 auto 28px; }
-.room-card-actions { display: flex; align-items: center; justify-content: center; gap: 28px; }
-.rc-book { background: var(--ink); color: #fff; border: none; padding: 14px 28px; font-family: 'Jost',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background .3s; text-decoration: none; }
-.rc-book:hover { background: var(--green); }
-.rc-more { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 4px; transition: color .2s; }
-.rc-more:hover { color: var(--green); }
-
-/* ═══ FULL IMAGE BAND ═══ */
-.band { height: 78vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.band::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.35); z-index: 1; }
-.band-in { position: relative; z-index: 2; text-align: center; }
-.band-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,64px); font-weight: 300; color: #fff; line-height: 1.2; }
-.band-in em { font-style: italic; }
-.band-link { display: inline-flex; align-items: center; gap: 12px; color: #fff; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; margin-top: 28px; border-bottom: 1px solid var(--gold); padding-bottom: 5px; }
-
-/* ═══ ROOMS PAGE hero uses same .hero + avail ═══ */
-/* room list on rooms page — use same card grid */
-
-/* ═══ LOCATION ═══ */
-.loc-map { height: 76vh; position: relative; overflow: hidden; background: linear-gradient(160deg,#26301F,#3B4A32); }
-.loc-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(169,143,95,.06) 1px,transparent 1px), linear-gradient(90deg,rgba(169,143,95,.06) 1px,transparent 1px); background-size: 60px 60px; }
-.loc-pin { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-60%); display: flex; flex-direction: column; align-items: center; }
-.loc-dot { width: 13px; height: 13px; background: var(--gold); border-radius: 50%; box-shadow: 0 0 0 7px rgba(169,143,95,.2), 0 0 0 18px rgba(169,143,95,.08); animation: pulse 2s infinite; }
-.loc-line { width: 1px; height: 44px; background: linear-gradient(to bottom,var(--gold),transparent); }
-.loc-tag { background: var(--gold); color: #fff; padding: 9px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
-.loc-body { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
-.loc-head { text-align: center; margin-bottom: 64px; }
-.loc-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
-.loc-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px,4.5vw,60px); font-weight: 300; color: var(--ink); }
-.loc-head h2 em { font-style: italic; color: var(--green); }
-.loc-fact { display: flex; gap: 30px; padding: 34px 0; border-bottom: 1px solid var(--hair); }
-.loc-fact:first-of-type { border-top: 1px solid var(--hair); }
-.loc-fact-n { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--gold); min-width: 56px; }
-.loc-fact strong { display: block; font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 5px; }
-.loc-fact span { font-size: 14px; color: var(--soft); }
-
-/* ═══ RESERVAS ═══ */
-.rv-body { padding: 150px 40px; max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.3fr; gap: 90px; }
-.rv-info h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--ink); line-height: 1.25; margin-bottom: 28px; }
-.rv-info p { font-size: 15px; line-height: 1.8; color: var(--soft); margin-bottom: 32px; }
-.rv-contact { display: flex; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid var(--hair); }
-.rv-contact:first-of-type { border-top: 1px solid var(--hair); }
-.rv-cl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-.rv-cv { font-size: 15px; color: var(--ink); }
-.rv-form { display: flex; flex-direction: column; }
-.rv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
-.rv-field { padding-top: 26px; border-bottom: 1px solid var(--hair); display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
-.rv-field label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
-.rv-field input, .rv-field select, .rv-field textarea { background: transparent; border: none; font-family: 'Jost',sans-serif; font-size: 15px; color: var(--ink); outline: none; padding: 8px 0 16px; appearance: none; width: 100%; resize: none; }
-.rv-submit { margin-top: 40px; background: var(--ink); color: #fff; border: none; padding: 17px 46px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; align-self: flex-start; transition: background .3s; }
-.rv-submit:hover { background: var(--green); }
-
-/* footer */
-footer { background: var(--ink); padding: 90px 40px 40px; }
-.ft-top { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; padding-bottom: 56px; border-bottom: 1px solid rgba(255,255,255,.08); max-width: 1300px; margin: 0 auto; }
-.ft-logo { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 500; color: #fff; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 14px; display: block; }
-.ft-logo small { display:block; font-size:8px; letter-spacing:4px; color:var(--gold); margin-top:4px; font-family:'Jost',sans-serif; }
-.ft-col h4 { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; font-weight: 400; }
-.ft-col a, .ft-col p { display: block; font-size: 13px; color: rgba(255,255,255,.5); text-decoration: none; margin-bottom: 10px; line-height: 1.6; }
-.ft-col a:hover { color: var(--gold); }
-.ft-bottom { max-width: 1300px; margin: 0 auto; padding-top: 30px; display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.25); }
-
-/* reveal */
-.rv-el { opacity: 0; transform: translateY(30px); transition: opacity 1s, transform 1s cubic-bezier(.16,.84,.44,1); }
-.rv-el.on { opacity: 1; transform: translateY(0); }
-
-@keyframes fade { to { opacity: 1; } }
-@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-@keyframes slideUp { to { transform: translateY(0); } }
-@keyframes pulse { 0%,100%{box-shadow:0 0 0 7px rgba(169,143,95,.2),0 0 0 18px rgba(169,143,95,.08)} 50%{box-shadow:0 0 0 12px rgba(169,143,95,.12),0 0 0 26px rgba(169,143,95,.04)} }
-
-@media (max-width: 900px) {
-  .welcome-grid { height: auto; display: flex; flex-direction: column; gap: 16px; }
-  .wc-img { position: relative; width: 100% !important; height: 240px !important; inset: auto !important; }
-  .wc-center { position: relative; transform: none; top: auto; left: auto; margin: 20px 0; }
-  .rooms-grid, .rv-body, .rv-row { grid-template-columns: 1fr; gap: 32px; }
-  .avail { grid-template-columns: 1fr 1fr; }
-  .menu-inner { grid-template-columns: 1fr; } .menu-side { display: none; }
-  .ft-top { grid-template-columns: 1fr; }
-}
-</style>
+<!-- Todos con `defer`: se ejecutan en este orden, ya con el documento parseado.
+     botanic-lib debe ir antes que sus dos consumidores. -->
+<script src="assets/js/botanic-lib.js" defer></script>
+<script src="assets/js/botanic.js"     defer></script>
+<script src="assets/js/vines.js"       defer></script>
+<script src="assets/js/app.js"         defer></script>
+<script src="assets/js/map.js"         defer></script>
 </head>
 <body>
-
-<svg id="botanic" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;"></svg>
 
 <div class="pt" id="pt"></div>
 
@@ -297,7 +38,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
       <div class="menu-item"><a href="#" class="menu-link" data-page="home"><span class="menu-index">05</span>Experiencias</a></div>
     </div>
     <div class="menu-side">
-      <div class="menu-prev"><img class="imgc" src="jardin.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNUI2RTUyIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzg0NTJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5KYXJkw61uPC90ZXh0Pjwvc3ZnPg=='" alt=""><span class="menu-prev-tag">Selva Alegre · Arequipa</span></div>
+      <div class="menu-prev"><img class="imgc" src="assets/img/hotel/jardin.jpg" data-ph="Jardín" alt=""><span class="menu-prev-tag">Selva Alegre · Arequipa</span></div>
       <div class="menu-contact">
         <a href="tel:+51054289899">+(51) 054 289899</a>
         <a href="mailto:lagruta@lagrutahotel.com">lagruta@lagrutahotel.com</a>
@@ -309,19 +50,19 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 <!-- ═══ HOME ═══ -->
 <div class="page active" id="page-home">
   <section class="hero">
-    <div class="hero-media"><img class="imgc" src="hero-inicio.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNEE2MTQ2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkUzRTJCIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5KYXJkw61uIGRlbCBob3RlbDwvdGV4dD48L3N2Zz4='" alt=""></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-inicio.jpg" data-ph="Jardín del hotel" alt=""></div>
     <div class="hero-caption">
       <p class="hero-eye">Selva Alegre · Arequipa, Perú</p>
       <h1 class="hero-title">
-        <span class="hl"><span class="hw">Tu refugio</span></span><br>
-        <span class="hl"><span class="hw"><em>de calma</em></span></span>
+        <span class="hl"><span class="hw">Calma</span></span><br>
+        <span class="hl"><span class="hw"><em>a pasos del centro</em></span></span>
       </h1>
     </div>
     <div class="avail">
       <div class="avail-f"><span class="avail-l">Check In</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Check Out</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Huéspedes</span><select class="avail-s"><option>1 huésped</option><option>2 huéspedes</option><option>3 huéspedes</option><option>4+ huéspedes</option></select></div>
-      <button class="avail-btn" data-page="reservas">Consultar</button>
+      <button class="avail-btn" type="button">Consultar</button>
     </div>
     <div class="hero-down">⌄</div>
   </section>
@@ -329,10 +70,10 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   <!-- WELCOME COLLAGE -->
   <section class="welcome rv-el">
     <div class="welcome-grid">
-      <div class="wc-img wc-1"><img class="imgc" src="hero-reservas.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNDc1OTNGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkIzODI2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5SZWNlcGNpw7NuPC90ZXh0Pjwvc3ZnPg=='" alt=""></div>
-      <div class="wc-img wc-2"><img class="imgc" src="fachada.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNTU2QjRGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzM0MjJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5GYWNoYWRhPC90ZXh0Pjwvc3ZnPg=='" alt=""></div>
-      <div class="wc-img wc-3"><img class="imgc" src="cafeteria.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNEE2MTQ2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkUzRTJCIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5DYWZldGVyw61hPC90ZXh0Pjwvc3ZnPg=='" alt=""></div>
-      <div class="wc-img wc-4"><img class="imgc" src="jardin.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNUI2RTUyIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzg0NTJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5KYXJkw61uPC90ZXh0Pjwvc3ZnPg=='" alt=""></div>
+      <div class="wc-img wc-1"><img class="imgc" src="assets/img/hotel/recepcion.jpg" data-ph="Recepción" alt=""></div>
+      <div class="wc-img wc-2"><img class="imgc" src="assets/img/hotel/fachada.jpg" data-ph="Fachada" alt=""></div>
+      <div class="wc-img wc-3"><img class="imgc" src="assets/img/hotel/cafeteria.jpg" data-ph="Cafetería" alt=""></div>
+      <div class="wc-img wc-4"><img class="imgc" src="assets/img/hotel/jardin.jpg" data-ph="Jardín" alt=""></div>
       <div class="wc-center">
         <div class="wc-script">Bienvenido a</div>
         <div class="wc-name">LA GRUTA</div>
@@ -347,6 +88,18 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
     <h2>A siete minutos caminando del centro histórico, pero rodeado de jardines y silencio. <em>Cerca de todo, lejos del ruido.</em></h2>
   </div>
 
+  <!-- ═══ JARDÍN: ilustración botánica que se dibuja con el scroll ═══ -->
+  <section class="garden" id="garden">
+    <div class="garden-sticky">
+      <svg id="garden-svg" viewBox="0 0 860 1520" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"></svg>
+      <div class="garden-caption rv-el">
+        <p class="eye">Selva Alegre</p>
+        <h2>Un jardín que tomó cuarenta años en crecer.</h2>
+        <p class="sub">Hortensias, helechos y rosales que rodean las habitaciones y amortiguan la ciudad. Baja para verlo crecer.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ROOM CARDS -->
   <section class="rooms-sec">
     <div class="rooms-inner">
@@ -356,7 +109,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
       </div>
       <div class="rooms-grid">
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="suite.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjM0U1MjM4Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMjYzNTIxIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TdWl0ZTwvdGV4dD48L3N2Zz4='" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/rooms/suite.jpg" data-ph="Suite" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
           <div class="room-card-body">
             <div class="room-card-name">Suite</div>
             <p class="room-card-desc">Nuestra categoría superior: acceso directo al jardín, chimenea y sala de estar privada.</p>
@@ -364,7 +117,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="matrimonial.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNDc1OTNGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkIzODI2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NYXRyaW1vbmlhbDwvdGV4dD48L3N2Zz4='" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/rooms/matrimonial.jpg" data-ph="Matrimonial" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
           <div class="room-card-body">
             <div class="room-card-name">Matrimonial</div>
             <p class="room-card-desc">Cama king, ambiente acogedor y vista al jardín. Perfecta para una estadía especial.</p>
@@ -377,7 +130,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 
   <!-- BAND -->
   <div class="band rv-el">
-    <img class="imgc" src="panoramica.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNTU2QjRGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzM0MjJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5WaXN0YSBwYW5vcsOhbWljYTwvdGV4dD48L3N2Zz4='" alt="">
+    <img class="imgc" src="assets/img/hotel/panoramica.jpg" data-ph="Vista panorámica" alt="">
     <div class="band-in">
       <h2>Una ciudad que enamora.<br><em>Un hotel que te hace volver.</em></h2>
       <a href="#" class="band-link" data-page="reservas">Reservar tu estadía</a>
@@ -386,7 +139,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 
   <footer>
     <div class="ft-top">
-      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Tu refugio de calma a pasos del centro histórico de Arequipa.</p></div>
+      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
       <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
@@ -397,7 +150,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 <!-- ═══ HABITACIONES ═══ -->
 <div class="page" id="page-rooms">
   <section class="hero">
-    <div class="hero-media"><img class="imgc" src="hero-habitaciones.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNTU2QjRGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzM0MjJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5IYWJpdGFjacOzbjwvdGV4dD48L3N2Zz4='" alt=""></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-habitaciones.jpg" data-ph="Habitación" alt=""></div>
     <div class="hero-caption">
       <p class="hero-eye">Alojamiento</p>
       <h1 class="hero-title">
@@ -409,7 +162,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
       <div class="avail-f"><span class="avail-l">Check In</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Check Out</span><input type="date" class="avail-i"></div>
       <div class="avail-f"><span class="avail-l">Huéspedes</span><select class="avail-s"><option>1 huésped</option><option>2 huéspedes</option><option>3 huéspedes</option><option>4+ huéspedes</option></select></div>
-      <button class="avail-btn" data-page="reservas">Consultar</button>
+      <button class="avail-btn" type="button">Consultar</button>
     </div>
     <div class="hero-down">⌄</div>
   </section>
@@ -420,19 +173,19 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
         <span class="rooms-count">6 habitaciones disponibles</span>
       </div>
       <div class="rooms-grid">
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="suite.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjM0U1MjM4Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMjYzNTIxIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TdWl0ZTwvdGV4dD48L3N2Zz4='" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Suite</div><p class="room-card-desc">Nuestra mejor opción. Acceso al jardín privado, chimenea y sala de estar.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="semisuite.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNEE2MTQ2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkUzRTJCIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TZW1pIFN1aXRlPC90ZXh0Pjwvc3ZnPg=='" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Semi Suite</div><p class="room-card-desc">Amplia y confortable, con chimenea y área de estar independiente.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="matrimonial.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNDc1OTNGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkIzODI2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NYXRyaW1vbmlhbDwvdGV4dD48L3N2Zz4='" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Matrimonial</div><p class="room-card-desc">Cama king, ambiente acogedor y vista al jardín para parejas.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="triple.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNUI2RTUyIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzg0NTJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5UcmlwbGU8L3RleHQ+PC9zdmc+'" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Triple</div><p class="room-card-desc">Tres camas y espacio para familias o grupos que viajan juntos.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="doble.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNTU2QjRGIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzM0MjJGIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5Eb2JsZTwvdGV4dD48L3N2Zz4='" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Doble</div><p class="room-card-desc">Dos camas y todo lo esencial para dos personas que buscan calma.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="individual.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNEE2MTQ2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkUzRTJCIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JbmRpdmlkdWFsPC90ZXh0Pjwvc3ZnPg=='" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Individual</div><p class="room-card-desc">Compacta y bien pensada. La opción más accesible sin sacrificar confort.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/suite.jpg" data-ph="Suite" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Suite</div><p class="room-card-desc">Nuestra mejor opción. Acceso al jardín privado, chimenea y sala de estar.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/semisuite.jpg" data-ph="Semi Suite" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Semi Suite</div><p class="room-card-desc">Amplia y confortable, con chimenea y área de estar independiente.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/matrimonial.jpg" data-ph="Matrimonial" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Matrimonial</div><p class="room-card-desc">Cama king, ambiente acogedor y vista al jardín para parejas.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/triple.jpg" data-ph="Triple" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Triple</div><p class="room-card-desc">Tres camas y espacio para familias o grupos que viajan juntos.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/doble.jpg" data-ph="Doble" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Doble</div><p class="room-card-desc">Dos camas y todo lo esencial para dos personas que buscan calma.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/individual.jpg" data-ph="Individual" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Individual</div><p class="room-card-desc">Compacta y bien pensada. La opción más accesible sin sacrificar confort.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
       </div>
     </div>
   </section>
 
   <footer>
     <div class="ft-top">
-      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Tu refugio de calma a pasos del centro histórico de Arequipa.</p></div>
+      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
       <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
@@ -442,19 +195,32 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 
 <!-- ═══ UBICACIÓN ═══ -->
 <div class="page" id="page-location">
-  <div class="loc-map"><div class="loc-grid"></div><div class="loc-pin"><div class="loc-dot"></div><div class="loc-line"></div><div class="loc-tag">Hotel La Gruta</div></div></div>
+  <div class="loc-map">
+    <div id="loc-mapbox" style="position:absolute;inset:0;"></div>
+    <div class="loc-badge"><span class="loc-badge-n">7</span><span class="loc-badge-t">minutos caminando<br>al centro histórico</span></div>
+  </div>
   <div class="loc-body">
     <div class="loc-head rv-el"><p class="eye">Cómo llegar</p><h2>Nos encuentras <em>fácil.</em></h2></div>
     <div class="rv-el">
-      <div class="loc-fact"><div class="loc-fact-n">7'</div><div><strong>Del centro histórico</strong><span>Caminando, sin tráfico, sin complicaciones</span></div></div>
       <div class="loc-fact"><div class="loc-fact-n">📍</div><div><strong>Pasaje La Gruta 304</strong><span>Urbanización Selva Alegre, Arequipa, Perú</span></div></div>
       <div class="loc-fact"><div class="loc-fact-n">📞</div><div><strong>(054) 289899 / 224631</strong><span>Celular: +51 959 344 759</span></div></div>
       <div class="loc-fact"><div class="loc-fact-n">✉</div><div><strong>lagruta@lagrutahotel.com</strong><span>Respondemos en menos de 24 horas</span></div></div>
     </div>
+    <p class="loc-sub rv-el">Cómo llegar</p>
+    <div class="loc-dir-grid rv-el">
+      <div class="loc-dir-item"><span class="loc-dir-t">~20 min</span><strong>Desde el aeropuerto</strong><span>Aeropuerto Alfredo Rodríguez Ballón, en taxi</span></div>
+      <div class="loc-dir-item"><span class="loc-dir-t">~20 min</span><strong>Desde el terminal terrestre</strong><span>En taxi o auto particular</span></div>
+      <div class="loc-dir-item"><span class="loc-dir-t">7 min</span><strong>Desde la Plaza de Armas</strong><span>Caminando, sin complicaciones</span></div>
+    </div>
+    <p class="loc-sub rv-el">A pocos pasos del hotel</p>
+    <div class="loc-nearby-list rv-el">
+      <span>🌳 Parque Selva Alegre</span>
+      <span>🏦 Zona comercial y bancaria de Selva Alegre</span>
+    </div>
   </div>
   <footer>
     <div class="ft-top">
-      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Tu refugio de calma a pasos del centro histórico de Arequipa.</p></div>
+      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
       <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
@@ -465,7 +231,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 <!-- ═══ RESERVAS ═══ -->
 <div class="page" id="page-reservas">
   <section class="hero" style="height:56vh;min-height:440px;">
-    <div class="hero-media"><img class="imgc" src="hero-reservas.png" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjM0U1MjM4Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMjYzNTIxIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9InVybCgjZykiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSI0NiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5MYSBHcnV0YTwvdGV4dD48L3N2Zz4='" alt=""></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-reservas.jpg" data-ph="La Gruta" alt=""></div>
     <div class="hero-caption">
       <p class="hero-eye">Reservas</p>
       <h1 class="hero-title"><span class="hl"><span class="hw"><em>¿Cuándo nos visitas?</em></span></span></h1>
@@ -504,7 +270,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   </div>
   <footer>
     <div class="ft-top">
-      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Tu refugio de calma a pasos del centro histórico de Arequipa.</p></div>
+      <div class="ft-col"><span class="ft-logo">La Gruta<small>AREQUIPA · PERÚ</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
       <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
@@ -512,322 +278,5 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   </footer>
 </div>
 
-<script>
-const burger=document.getElementById('burger'), menu=document.getElementById('menu');
-let menuOpen=false;
-burger.addEventListener('click',()=>{ menuOpen=!menuOpen; burger.classList.toggle('open',menuOpen); menu.classList.toggle('open',menuOpen); });
-
-let current='home';
-const pt=document.getElementById('pt');
-function goTo(page){
-  if(page===current){ if(menuOpen){menuOpen=false;burger.classList.remove('open');menu.classList.remove('open');} return; }
-  menuOpen=false; burger.classList.remove('open'); menu.classList.remove('open');
-  pt.className='pt in';
-  setTimeout(()=>{
-    document.getElementById('page-'+current).classList.remove('active');
-    document.getElementById('page-'+page).classList.add('active');
-    current=page; window.scrollTo(0,0); reAnim(page); window.rebuildBotanicGrowth?.();
-    pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
-  },520);
-}
-document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();goTo(el.dataset.page);}));
-
-function reAnim(page){
-  document.querySelectorAll('#page-'+page+' .hw').forEach((el,i)=>{ el.style.animation='none'; el.offsetHeight; el.style.animation=''; el.style.animationDelay=(0.35+i*.15)+'s'; });
-  document.querySelectorAll('#page-'+page+' .rv-el').forEach(el=>el.classList.remove('on'));
-  setTimeout(obs,80);
-}
-function obs(){
-  const o=new IntersectionObserver(en=>{ en.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); o.unobserve(e.target);} }); },{threshold:.12});
-  document.querySelectorAll('.page.active .rv-el').forEach(el=>o.observe(el));
-}
-obs();
-
-const navEl=document.getElementById('nav');
-function navColor(){ navEl.classList.toggle('dark', window.scrollY > window.innerHeight*.82); }
-window.addEventListener('scroll',navColor);
-
-/* ── Formulario de reservas → WhatsApp / correo ── */
-const rvForm = document.getElementById('reservaForm');
-if (rvForm) {
-  const WA_NUMBER = '51959344759';
-  const HOTEL_EMAIL = 'lagruta@lagrutahotel.com';
-  const val = n => (rvForm.elements[n]?.value || '').trim();
-  function buildMessage(){
-    return [
-      'Hola, quisiera consultar disponibilidad en Hotel La Gruta:',
-      `Nombre: ${val('nombre')}`,
-      `Teléfono: ${val('telefono')}`,
-      val('correo') && `Correo: ${val('correo')}`,
-      `Habitación: ${val('habitacion') || 'Sin preferencia'}`,
-      `Huéspedes: ${val('huespedes') || '1'}`,
-      `Llegada: ${val('llegada')}`,
-      `Salida: ${val('salida')}`,
-      val('mensaje') && `Mensaje: ${val('mensaje')}`,
-    ].filter(Boolean).join('\n');
-  }
-  const note = document.getElementById('reservaNote');
-  rvForm.addEventListener('submit', e => {
-    e.preventDefault();
-    if (!rvForm.checkValidity()) { rvForm.reportValidity(); return; }
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(buildMessage())}`, '_blank');
-    if (note) note.textContent = 'Se abrió WhatsApp con tu solicitud lista para enviar.';
-  });
-  document.getElementById('reservaMailto')?.addEventListener('click', e => {
-    e.preventDefault();
-    if (!rvForm.checkValidity()) { rvForm.reportValidity(); return; }
-    const subject = encodeURIComponent(`Solicitud de reserva — ${val('nombre')}`);
-    location.href = `mailto:${HOTEL_EMAIL}?subject=${subject}&body=${encodeURIComponent(buildMessage())}`;
-    if (note) note.textContent = 'Se abrió tu cliente de correo con la solicitud lista para enviar.';
-  });
-}
-</script>
-
-<!-- ═══ Jardín de fondo: crecimiento botánico ligado al scroll ═══
-     Un brote crece a los costados de la pantalla a medida que se
-     avanza en la página, y se queda dibujado (no retrocede). Solo
-     asoma donde una sección no tiene fondo opaco encima — por eso
-     convive sin competir con fotos, tarjetas ni el formulario. -->
-<script>
-if (window.gsap && window.ScrollTrigger) (function(){
-  gsap.registerPlugin(ScrollTrigger);
-  const NS='http://www.w3.org/2000/svg';
-  const svg=document.getElementById('botanic');
-  const rnd=(a,b)=>a+Math.random()*(b-a);
-  const mk=tag=>document.createElementNS(NS,tag);
-
-  const WIN = {
-    stem: [0.00,0.42],
-    branch: ti => [0.28+ti*0.16, 0.62+ti*0.16],
-    leaf:   tb => [0.50+tb*0.16, 0.86+tb*0.16]
-  };
-  function windowProgress(tri,[a,b],extra=0){
-    const sp=(tri-a-extra)/(b-a);
-    return Math.max(0,Math.min(1,sp));
-  }
-
-  function smallLeaf(len,ang){
-    const g=mk('g'), w=len*0.42;
-    const p=mk('path');
-    p.setAttribute('d',`M0,0 C ${w*.6},${-len*.2} ${w*.5},${-len*.7} 0,${-len} C ${-w*.5},${-len*.7} ${-w*.6},${-len*.2} 0,0`);
-    g.appendChild(p);
-    const vein=mk('path'); vein.setAttribute('d',`M0,-3 L0,${-len*.9}`); g.appendChild(vein);
-    g.setAttribute('transform',`rotate(${ang})`);
-    return {g,paths:[p,vein]};
-  }
-  function floret(s){
-    const g=mk('g'), paths=[];
-    for(let p=0;p<4;p++){
-      const a=(p/4)*Math.PI*2+rnd(-.2,.2);
-      const path=mk('path');
-      const ex=Math.cos(a)*s, ey=Math.sin(a)*s, w=s*.6;
-      path.setAttribute('d',`M0,0 Q ${(Math.cos(a-.65)*w).toFixed(1)},${(Math.sin(a-.65)*w).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)} Q ${(Math.cos(a+.65)*w).toFixed(1)},${(Math.sin(a+.65)*w).toFixed(1)} 0,0`);
-      g.appendChild(path); paths.push(path);
-    }
-    return {g,paths};
-  }
-  function floretCluster(n,R){
-    const g=mk('g'), paths=[];
-    for(let i=0;i<n;i++){
-      const a=Math.random()*Math.PI*2, r=Math.pow(Math.random(),.6)*R;
-      const f=floret(rnd(5,9));
-      f.g.setAttribute('transform',`translate(${(Math.cos(a)*r).toFixed(1)} ${(Math.sin(a)*r).toFixed(1)})`);
-      g.appendChild(f.g); paths.push(...f.paths);
-    }
-    return {g,paths};
-  }
-  function miniRose(size,rot){
-    const g=mk('g'), paths=[];
-    g.setAttribute('transform',`rotate(${rot}) scale(${size})`);
-    const spiral=mk('path');
-    spiral.setAttribute('d','M0,0 C 3,-2 5,1 3,4 C 0,7 -5,4 -3,-1 C -1,-6 6,-6 7,0');
-    g.appendChild(spiral); paths.push(spiral);
-    for(let i=0;i<5;i++){
-      const a=(i/5)*Math.PI*2+rnd(-.15,.15), r=10+i*3;
-      const petal=mk('path');
-      const x1=Math.cos(a)*r,y1=Math.sin(a)*r;
-      petal.setAttribute('d',`M0,0 C ${(Math.cos(a-.5)*r*.7).toFixed(1)},${(Math.sin(a-.5)*r*.7).toFixed(1)} ${(x1*.9).toFixed(1)},${(y1*.9).toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} C ${(x1*.9).toFixed(1)},${(y1*.9).toFixed(1)} ${(Math.cos(a+.5)*r*.7).toFixed(1)},${(Math.sin(a+.5)*r*.7).toFixed(1)} 0,0`);
-      g.appendChild(petal); paths.push(petal);
-    }
-    return {g,paths};
-  }
-  function miniFern(len,ang){
-    const g=mk('g'), paths=[];
-    const stem=mk('path');
-    stem.setAttribute('d',`M0,0 Q ${len*.3},${-len*.1} ${len},${-len*.05}`);
-    g.appendChild(stem); paths.push(stem);
-    const n=5;
-    for(let i=1;i<=n;i++){
-      const p=i/n, sx=len*p, sy=-len*.05*Math.sin(p*Math.PI);
-      const s=(1-p*.5)*len*.22;
-      for(const side of [1,-1]){
-        const fol=mk('path');
-        const a=side*1.1;
-        const ex=sx+Math.cos(a)*s*.3, ey=sy+Math.sin(a)*s;
-        fol.setAttribute('d',`M${sx.toFixed(1)},${sy.toFixed(1)} Q ${(sx+Math.cos(a-.3)*s*.15).toFixed(1)},${(sy+Math.sin(a-.3)*s*.5).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
-        g.appendChild(fol); paths.push(fol);
-      }
-    }
-    g.setAttribute('transform',`rotate(${ang})`);
-    return {g,paths};
-  }
-  function buildStem(g,edgeX,y0,reach,dir,swing,angleBias){
-    angleBias=angleBias||0;
-    const ab=angleBias*reach;
-    const x1=edgeX+dir*reach*.28, y1=y0+swing*.9+ab*.2;
-    const x2=edgeX+dir*reach*.5,  y2=y0-swing*.15+ab*.4;
-    const xm=edgeX+dir*reach*.56, ym=y0-swing*.05+ab*.5;
-    const x3=edgeX+dir*reach*.62, y3=y0-swing*.85+ab*.6;
-    const x4=edgeX+dir*reach*.85, y4=y0+swing*.12+ab*.8;
-    const xe=edgeX+dir*reach,     ye=y0+swing*.05+ab;
-    const path=mk('path');
-    path.setAttribute('d',
-      `M${edgeX},${y0} C ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${xm.toFixed(1)},${ym.toFixed(1)} `+
-      `C ${x3.toFixed(1)},${y3.toFixed(1)} ${x4.toFixed(1)},${y4.toFixed(1)} ${xe.toFixed(1)},${ye.toFixed(1)}`);
-    g.appendChild(path);
-    return path;
-  }
-
-  function buildAll(){
-    // En pantallas angostas el margen lateral casi no existe y el jardín
-    // solo estorbaría — se omite en vez de forzarlo.
-    if (window.innerWidth < 760){ svg.innerHTML=''; ScrollTrigger.getAll().forEach(t=>t.kill()); return; }
-
-    const aspect=window.innerWidth/window.innerHeight;
-    const W=Math.round(1000*aspect);
-    svg.setAttribute('viewBox',`0 0 ${W} 1000`);
-    svg.innerHTML='';
-    const g=mk('g');
-    svg.appendChild(g);
-    const allSprouts=[];
-
-    const N_PER_SIDE=13;
-    for(let k=0;k<N_PER_SIDE;k++){
-      [0,1].forEach(sideIdx=>{
-        const edgeX=sideIdx===0?0:W;
-        const dir=sideIdx===0?1:-1;
-        const y=(k+0.5)/N_PER_SIDE*1000+rnd(-65,65);
-        const swingSign=k%2===0?-1:1;
-        const reach=Math.random()<0.22?rnd(160,220):rnd(75,130);
-        const swing=swingSign*rnd(35,85);
-        const angleBias=rnd(-0.22,0.22);
-        const young=Math.random()<0.22;
-        const stemPath=buildStem(g,edgeX,y,young?reach*0.45:reach,dir,swing,angleBias);
-        const stemLen=stemPath.getTotalLength();
-
-        const nBranch=young?Math.round(rnd(0,1)):Math.round(rnd(2,4));
-        const speciesPool=['hydrangea','rose','fern','leaf'];
-        const speciesOrder=[...speciesPool].sort(()=>Math.random()-.5);
-        const branches=[];
-        for(let i=0;i<nBranch;i++){
-          const ti=(i+1)/(nBranch+1)+rnd(-.05,.05);
-          const pt=stemPath.getPointAtLength(Math.max(0,Math.min(stemLen,ti*stemLen)));
-          const pt2=stemPath.getPointAtLength(Math.max(0,Math.min(stemLen,(ti+0.03)*stemLen)));
-          const tangent=Math.atan2(pt2.y-pt.y,pt2.x-pt.x);
-          const side=i%2===0?1:-1;
-          const outAngle=tangent+side*Math.PI/2*rnd(.65,1.15);
-          const len=rnd(18,36);
-          const bend=rnd(-.5,.5)*side;
-          const midx=Math.cos(outAngle+bend*.5)*len*.55, midy=Math.sin(outAngle+bend*.5)*len*.55;
-          const ex=Math.cos(outAngle+bend)*len, ey=Math.sin(outAngle+bend)*len;
-          const branchPath=mk('path');
-          branchPath.setAttribute('d',`M0,0 Q ${midx.toFixed(1)},${midy.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
-          branchPath.setAttribute('transform',`translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
-          g.appendChild(branchPath);
-
-          const tipAngDeg=(outAngle+bend)*180/Math.PI;
-          const leafWrap=mk('g');
-          leafWrap.setAttribute('transform',`translate(${(pt.x+ex).toFixed(1)} ${(pt.y+ey).toFixed(1)})`);
-          const kind=speciesOrder[i%speciesOrder.length];
-          let tip;
-          if(kind==='hydrangea') tip=floretCluster(Math.round(rnd(3,5)),rnd(9,14));
-          else if(kind==='rose')  tip=miniRose(rnd(0.5,0.72),rnd(-30,30));
-          else if(kind==='fern')  tip=miniFern(rnd(16,24),tipAngDeg);
-          else                    tip=smallLeaf(rnd(12,18),tipAngDeg+90);
-          leafWrap.appendChild(tip.g);
-          g.appendChild(leafWrap);
-          branches.push({branchPath,leafPaths:tip.paths,ti});
-        }
-        if(young){
-          const tipPt=stemPath.getPointAtLength(stemLen);
-          const tipWrap=mk('g');
-          tipWrap.setAttribute('transform',`translate(${tipPt.x.toFixed(1)} ${tipPt.y.toFixed(1)})`);
-          const tip=smallLeaf(rnd(11,16),dir>0?0:180);
-          tipWrap.appendChild(tip.g);
-          g.appendChild(tipWrap);
-          branches.push({branchPath:null,leafPaths:tip.paths,ti:0.9,skipBranch:true});
-        }
-        allSprouts.push({stemPath,branches});
-      });
-    }
-
-    const GREENS=['#3A5236','#5E7355'];
-    const allPaths=[...svg.querySelectorAll('path')];
-    allPaths.forEach(p=>{
-      p.setAttribute('stroke', GREENS[Math.random()<0.5?0:1]);
-      p.setAttribute('stroke-width',(0.9+Math.random()*0.3).toFixed(2));
-      p.setAttribute('opacity',(0.16+Math.random()*0.22).toFixed(2));
-    });
-    const prep=el=>{
-      let len; try{ len=el.getTotalLength(); }catch(e){ len=50; }
-      if(!len||!isFinite(len)) len=50;
-      el.style.strokeDasharray=len; el.style.strokeDashoffset=len;
-      return len;
-    };
-    allSprouts.forEach(sp=>{
-      sp.stemLen=prep(sp.stemPath);
-      sp.branches.forEach(b=>{
-        b.branchLen=b.branchPath?prep(b.branchPath):0;
-        b.leafLens=b.leafPaths.map(prep);
-      });
-    });
-
-    ScrollTrigger.getAll().forEach(t=>t.kill());
-
-    const N=allSprouts.length;
-    allSprouts.forEach((sp,i)=>{
-      sp.winStart=Math.max(0,i/N-0.03);
-      sp.winEnd=Math.min(1,(i+1)/N+0.05);
-    });
-
-    function applyGrowth(sp,tri){
-      const stemSp=windowProgress(tri,WIN.stem);
-      sp.stemPath.style.strokeDashoffset=sp.stemLen*(1-stemSp);
-      sp.branches.forEach(b=>{
-        if(b.branchPath){
-          const brSp=windowProgress(tri,WIN.branch(b.ti));
-          b.branchPath.style.strokeDashoffset=b.branchLen*(1-brSp);
-        }
-        const lfWin=WIN.leaf(b.ti);
-        b.leafLens.forEach((len,i)=>{
-          const lfSp=windowProgress(tri,lfWin,i*0.02);
-          b.leafPaths[i].style.strokeDashoffset=len*(1-lfSp);
-        });
-      });
-    }
-
-    ScrollTrigger.create({
-      trigger: document.body,
-      start:'top top', end:'bottom bottom',
-      scrub:0.8,
-      onUpdate:self=>{
-        const p=self.progress;
-        allSprouts.forEach(sp=>{
-          const span=sp.winEnd-sp.winStart;
-          const local=span>0?(p-sp.winStart)/span:1;
-          applyGrowth(sp, Math.max(0,Math.min(1,local)));
-        });
-      }
-    });
-    ScrollTrigger.refresh();
-  }
-
-  window.rebuildBotanicGrowth = () => setTimeout(buildAll, 30);
-  buildAll();
-  let resizeT;
-  window.addEventListener('resize',()=>{ clearTimeout(resizeT); resizeT=setTimeout(buildAll,300); });
-  if(document.fonts){ document.fonts.ready.then(()=>ScrollTrigger.refresh()); }
-})();
-</script>
 </body>
 </html>
