@@ -87,8 +87,18 @@ una foto.
 ## La capa botánica (`vines.js`)
 
 Enredaderas en línea fina que nacen desde los bordes izquierdo y derecho y
-crecen hacia el interior a medida que se hace scroll, acumulándose por toda la
-página (lo dibujado se queda, no se repliega).
+crecen hacia el interior a medida que se hace scroll. El crecimiento es
+**reversible**: al subir, la vegetación se repliega por donde vino, como si
+rebobinara. Eso ata la animación al gesto del usuario y hace evidente que
+responde al scroll.
+
+Tiene un coste medido: bajando cuesta lo mismo que la versión persistente
+(33ms contra 32ms por frame con la CPU limitada a 1/4), pero subiendo pasa de
+17ms a 45ms, porque antes no hacía nada y ahora tiene que reescribir los
+trazos para desdibujarlos. Sin limitar la CPU son 16.6ms en ambas direcciones
+—el límite del refresco de pantalla— en escritorio y en móvil. Si algún día
+hay que recuperar ese margen en gama muy baja, `PERSISTENTE = true` en
+`vines.js` vuelve al comportamiento acumulativo.
 
 Dibuja con `stroke-dasharray` + `stroke-dashoffset`. `getTotalLength()` se mide
 **una sola vez** por trazo al construir; durante el scroll solo se escribe el
@@ -111,6 +121,7 @@ hacer falta.
 | Qué | Dónde |
 |---|---|
 | Presencia de la capa | `INTENSIDAD` en `vines.js` (1 = base, 1.8 = actual) |
+| Reversible o acumulativa | `PERSISTENTE` en `vines.js` (false = se repliega al subir) |
 | Densidad de la capa | `bandH` y `P.detail` en `vines.js` |
 | Ritmo de aparición | tablas `OFF` y `DUR` en `vines.js` |
 

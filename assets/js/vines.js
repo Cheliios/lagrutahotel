@@ -20,8 +20,10 @@
       posición en el documento de cada trazo. Cada planta se dibuja cuando el
       usuario llega a su altura. Eso da el efecto "va creciendo conmigo" en vez
       de "todo crece a la vez en algún punto del scroll".
-   3. Crecimiento persistente: el motor compartido escribe con `persist=true`,
-      así que un trazo terminado nunca vuelve atrás aunque se suba el scroll.
+   3. El crecimiento es REVERSIBLE: al subir el scroll la vegetación se
+      repliega por donde vino. Es una decisión de diseño, no una limitación —
+      ver la perilla PERSISTENTE más abajo si algún día se quiere lo contrario
+      (que lo dibujado se quede acumulado).
    4. `pointer-events: none` en la capa: jamás debe bloquear un clic.
    ============================================================================= */
 (function () {
@@ -39,6 +41,12 @@
   // 1 = los valores base de abajo. 1.5 = un 50% más de presencia.
   // Si algún día se quiere más discreta, se baja aquí y no en cinco sitios.
   var INTENSIDAD = 1.8;
+
+  // false = reversible: al subir el scroll la planta se repliega por donde
+  //         vino, como si el crecimiento rebobinara. Ata la animación al
+  //         gesto del usuario y hace que se note que responde al scroll.
+  // true  = persistente: lo dibujado se queda y el jardín se acumula.
+  var PERSISTENTE = false;
   // Verde oliva tirando a dorado: mezcla del dorado anterior (#C5A059) con el
   // verde de marca del sitio (--green: #3A5236), 65% dorado / 35% verde para
   // que siga leyéndose cálido y no se apague en caqui.
@@ -310,8 +318,7 @@
 
   var running = false;
   function frame() {
-    // `persist = true`: lo dibujado se queda. El jardín se acumula.
-    B.render(items, progress(), true);
+    B.render(items, progress(), PERSISTENTE);
     running = false;
   }
   function kick() {
