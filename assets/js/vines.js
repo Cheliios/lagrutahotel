@@ -22,8 +22,9 @@
       de "todo crece a la vez en algún punto del scroll".
    3. El crecimiento es REVERSIBLE: al subir el scroll la vegetación se
       repliega por donde vino. Es una decisión de diseño, no una limitación —
-      ver la perilla PERSISTENTE más abajo si algún día se quiere lo contrario
-      (que lo dibujado se quede acumulado).
+      ver la perilla PERSISTENTE más abajo — hoy en true: el crecimiento se
+      acumula, y lo que da la sensación de scroll continuo en desktop es el
+      suavizado (raw → objetivo → mostrado → trazos), no el replegado.
    4. `pointer-events: none` en la capa: jamás debe bloquear un clic.
    ============================================================================= */
 (function () {
@@ -47,7 +48,7 @@
   //         vino, como si el crecimiento rebobinara. Ata la animación al
   //         gesto del usuario y hace que se note que responde al scroll.
   // true  = persistente: lo dibujado se queda y el jardín se acumula.
-  var PERSISTENTE = false;
+  var PERSISTENTE = true;
   // Dorado apagado / champagne. Se le quitó la carga verde que tenía antes:
   // más cálido y un punto más claro, pero desaturado — un champagne envejecido,
   // no un dorado metálico. El tono oscuro se mantiene profundo a propósito: a

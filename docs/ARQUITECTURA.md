@@ -112,15 +112,20 @@ ramas lo ocupen.
 
 Enredaderas en línea fina que nacen desde los bordes izquierdo y derecho y
 crecen hacia el interior a medida que se hace scroll. El crecimiento es
-**reversible**: al subir, la vegetación se repliega por donde vino, como si
-rebobinara. Eso ata la animación al gesto del usuario y hace evidente que
-responde al scroll.
+**persistente**: una vez dibujado un trazo, se queda, aunque se suba el
+scroll. El jardín se acumula en vez de rebobinar.
 
-Tiene un coste: bajando cuesta lo mismo que la versión persistente, pero
-subiendo cuesta bastante más, porque antes no hacía nada y ahora tiene que
-reescribir los trazos para desdibujarlos. Si algún día hay que recuperar ese
-margen en gama muy baja, `PERSISTENTE = true` en `vines.js` vuelve al
-comportamiento acumulativo.
+(El sistema soportó también un modo reversible —que se repliega al subir— en
+una ronda anterior, y volvió a pedirse persistente después. `PERSISTENTE` en
+`vines.js` es el interruptor entre los dos comportamientos; hoy vale `true`.
+El modo reversible cuesta más al subir, porque tiene que reescribir los
+trazos para desdibujarlos — con `true` esa dirección es casi gratis, ver más
+abajo.)
+
+Lo que hace que el scroll se sienta continuo en desktop **no** es el
+replegado ni su ausencia: es la capa de suavizado de la siguiente sección.
+Con `PERSISTENTE = true` esas dos cosas quedan desacopladas — el modo de
+crecimiento no afecta a qué tan fluido se ve el dibujo mientras se hace scroll.
 
 ### El scroll no alimenta directamente al dibujo
 
@@ -247,7 +252,7 @@ hacer falta.
 |---|---|
 | Presencia de la capa | `INTENSIDAD` en `vines.js` — multiplica TONE; vale 1, así que los números de `TONE` son las opacidades finales |
 | Suavidad del scroll | `SUAVIZADO` en `vines.js` (0.22; subirlo = más directo, bajarlo = más flotante) |
-| Reversible o acumulativa | `PERSISTENTE` en `vines.js` (false = se repliega al subir) |
+| Reversible o acumulativa | `PERSISTENTE` en `vines.js` (`true` = persiste, actual; `false` = se repliega al subir) |
 | Densidad de la capa | `bandH` (separación entre plantas) y `P.detail` en `vines.js` |
 | Variación de densidad | `densidad(u)` en `vines.js` |
 | Dónde nacen los acentos | la lista de anclas al final de `build()` en `vines.js` (selector + probabilidad) |
