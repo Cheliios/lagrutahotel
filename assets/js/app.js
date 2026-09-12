@@ -40,10 +40,13 @@ function hidePreloader(){
 
 // Primera pintura de la página: mínimo 1.4s en pantalla Y (evento `load` +
 // imagen del hero de la página activa cargada, lo que termine último), con
-// un techo duro de 3.5s por si algún recurso ajeno al hero se demora.
+// un techo duro de 6s por si algún recurso ajeno al hero se demora. Los
+// heroes se suben a resolución nativa a propósito (ver más abajo, y
+// ARQUITECTURA.md) — pueden pesar 2-3MB, y el preloader es justamente lo
+// que cubre esa carga en vez de comprimir la foto.
 if(preloaderEnabled){
   shellEl.classList.add('pre-reveal');
-  const MIN=1400, MAX=3500, start=Date.now();
+  const MIN=1400, MAX=6000, start=Date.now();
   let done=false;
   const revealFirstLoad=()=>{
     if(done) return;
@@ -109,14 +112,15 @@ function goTo(page){
     // El preloader se queda tapando un poco más si el hero de la página nueva
     // todavía no cargó (es lazy en las 3 páginas que no son Inicio): así el
     // "pop-in" del hero queda escondido detrás de la marca en vez de a la
-    // vista, con un techo de 900ms para no demorar de más en una conexión lenta.
+    // vista. Techo de 2.5s, no 900ms: los heroes van a resolución nativa
+    // (2-3MB) a propósito, sin comprimir, y necesitan más margen real.
     const heroImg = document.querySelector('#page-'+page+' .hero-media img');
     const heroReady = new Promise(res=>{
       if(!heroImg || heroImg.complete) return res();
       heroImg.addEventListener('load', res, {once:true});
       heroImg.addEventListener('error', res, {once:true});
     });
-    Promise.race([heroReady, new Promise(res=>setTimeout(res, 900))]).then(()=>{
+    Promise.race([heroReady, new Promise(res=>setTimeout(res, 2500))]).then(()=>{
       hidePreloader();
       pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
     });
@@ -297,6 +301,25 @@ document.querySelectorAll('.avail-btn').forEach(btn => {
       guests && `Huéspedes: ${guests}`,
     ].filter(Boolean);
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
+  });
+});
+
+/* ── Carrusel de fotos en las tarjetas de habitación ──
+   Las flechitas ya existían (con hover), pero no hacían nada — no había
+   más de una foto por habitación. Ahora que sí las hay (data-images, lista
+   separada por comas en el mismo <img>), esto solo cambia el `src`: no
+   hace falta montar varias <img> ni precargar nada de más. Las tarjetas
+   sin data-images (Experiencias) no tienen flechas, así que no aplica. */
+document.querySelectorAll('.room-card-arrow').forEach(arrow => {
+  arrow.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    const img = arrow.closest('.room-card-media')?.querySelector('img');
+    const list = img?.dataset.images?.split(',');
+    if (!list || list.length < 2) return;
+    const dir = arrow.textContent.trim() === '→' ? 1 : -1;
+    const current = list.indexOf(img.getAttribute('src'));
+    const base = current === -1 ? 0 : current;
+    img.src = list[((base + dir) % list.length + list.length) % list.length];
   });
 });
 

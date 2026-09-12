@@ -562,4 +562,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
      que la cascada la respete: dentro de un @media que aparece ANTES perdía
      contra esa regla sin condición. */
   footer { padding-bottom: 110px; }
+  /* Las flechas del carrusel de fotos dependían de :hover, que en touch no
+     existe de forma confiable — sin esto, en móvil nadie las ve ni las usa. */
+  .room-card-arrows { opacity: 1; }
 }

@@ -413,16 +413,12 @@ arranca casi de inmediato, no al scrollear). Es el trade-off correcto: mejorar
 la carga que **sí** le pasa a todo el mundo (Inicio) a costa de una espera
 puntual, solo la primera vez, en una navegación que no todos hacen.
 
-No se agregó `srcset`/`sizes` a ninguna imagen: **todo el set actual mide
-~1448px de ancho como máximo** (algunas verticales, 1086×1448), por debajo del
-umbral de 1600px que pediría una densidad de escritorio nítida en pantallas
-de alta densidad (retina/2x). Servir `srcset` con una sola resolución
-disponible no aporta nada — el navegador de todas formas pide ese único
-archivo. Antes de que valga la pena escribir `srcset`, hace falta lo que
-realmente falta: **fotos nuevas de ≥1600px de ancho**. Reemplazar por versiones
-HD (todo `assets/img/hero/`, `assets/img/hotel/`, `assets/img/rooms/`) es la
-tarea pendiente número uno de esta sección — ver el resumen de la ronda que
-lo señaló para el listado archivo por archivo.
+No se agregó `srcset`/`sizes` a ninguna imagen todavía. Los heroes y la banda
+ya tienen resolución de sobra para justificarlo (ver "Peso del archivo vs.
+tamaño de despliegue" más abajo), pero las miniaturas/tarjetas siguen topadas
+en 700-1100px por diseño (esas sí están pensadas para su caja chica, no para
+pantalla completa) — sería el próximo paso si se quiere una densidad más
+alta ahí también, pero hoy no es el cuello de botella.
 
 No hay ninguna imagen de fondo vía CSS `background-image` en el sitio (todas
 las fotos son `<img>` con `.imgc` `object-fit:cover`), así que la recomendación
@@ -443,12 +439,25 @@ Se corrigió redimensionando y recomprimiendo (Pillow, JPEG progresivo,
 |---|---|---|
 | Miniaturas del collage (`.wc-img`, cajas ≤340px) | 700px | 78 |
 | Tarjetas de habitación (`.room-card-media`, columnas ≤~590px) | 1100px | 78 |
-| Heroes y banda a sangre completa (`.hero-media`, `.band`) | se mantienen (ya ≤1600px), solo recompresión | 80 |
 
-Resultado: ~4.9MB → ~2.2MB en el set de fotos reales, sin pérdida visible al
-tamaño en que se muestran. **Al subir una foto nueva, conviene redimensionarla
-según esta tabla antes de subirla** — no hay ningún paso de build que lo haga
-automáticamente.
+**Los heroes y la banda a sangre completa (`.hero-media`, `.band`) son la
+excepción a propósito: van a resolución nativa, tal como llegan, sin
+redimensionar ni recomprimir.** Un `object-fit:cover` estirando una foto
+topada en ~1448px para cubrir un monitor de escritorio ancho (1920px+, más
+retina/2x) se nota borroso — no es un problema de compresión, es de
+resolución de origen, y no hay compresión que lo arregle. La solución no es
+bajarle más el peso: es el preloader (ver más abajo), que existe justamente
+para tapar la pantalla mientras un hero de 2-3MB termina de cargar, en vez
+de forzarlo a pesar menos a costa de nitidez. `MIN`/`MAX` del preloader y el
+techo de espera en `goTo()` están calibrados para heroes de ese peso — si
+algún día se comprimen, esos números pueden bajar de nuevo.
+
+Resultado en las miniaturas/tarjetas: ~4.9MB → ~2.2MB, sin pérdida visible al
+tamaño en que se muestran. **Al subir una foto nueva que NO sea un hero,
+conviene redimensionarla según esta tabla antes de subirla** — no hay ningún
+paso de build que lo haga automáticamente. Los heroes se suben tal cual,
+directo de cámara o Drive (no de WhatsApp, que recomprime agresivamente y
+tapa la resolución en origen).
 
 ## Preloader
 
