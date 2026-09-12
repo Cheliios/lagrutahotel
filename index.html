@@ -24,6 +24,21 @@
 </head>
 <body>
 
+<div id="preloader" class="preloader" aria-hidden="true">
+  <p class="preloader-mark">La Gruta</p>
+</div>
+<script>
+  // Única excepción a "nada de JS en línea" (ver ARQUITECTURA.md): tiene que
+  // correr antes de que el navegador pinte nada. app.js (defer) ya llegaría
+  // tarde — el preloader alcanzaría a pintarse una vez y el usuario que
+  // recarga en la misma sesión vería un parpadeo antes de que se ocultara.
+  if (sessionStorage.getItem('lg_preloaded') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('no-preload');
+  }
+</script>
+
+<div id="app-shell">
+
 <div class="pt" id="pt"></div>
 
 <nav id="nav">
@@ -43,7 +58,7 @@
       <div class="menu-item"><a href="#" class="menu-link" data-page="experiencias"><span class="menu-index">05</span>Experiencias</a></div>
     </div>
     <div class="menu-side">
-      <div class="menu-prev"><img class="imgc" src="assets/img/hotel/jardin.jpg" data-ph="Jardín" alt=""><span class="menu-prev-tag">Selva Alegre · Arequipa</span></div>
+      <div class="menu-prev"><img class="imgc" src="assets/img/hotel/jardin.jpg" data-ph="Jardín" alt="" loading="lazy"><span class="menu-prev-tag">Selva Alegre · Arequipa</span></div>
       <div class="menu-contact">
         <a href="tel:+51054289899">+(51) 054 289899</a>
         <a href="mailto:lagruta@lagrutahotel.com">lagruta@lagrutahotel.com</a>
@@ -55,7 +70,7 @@
 <!-- ═══ HOME ═══ -->
 <div class="page active" id="page-home">
   <section class="hero">
-    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-inicio.jpg" data-ph="Jardín del hotel" alt=""></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-inicio.jpg" data-ph="Jardín del hotel" alt="" loading="eager" fetchpriority="high"></div>
     <div class="hero-caption">
       <p class="hero-eye">Hotel familiar · Selva Alegre, Arequipa</p>
       <h1 class="hero-title">
@@ -76,14 +91,14 @@
   <!-- WELCOME COLLAGE -->
   <section class="welcome rv-el">
     <div class="welcome-grid">
-      <div class="wc-img wc-1"><img class="imgc" src="assets/img/hotel/recepcion.jpg" data-ph="Recepción" alt=""></div>
-      <div class="wc-img wc-2"><img class="imgc" src="assets/img/hotel/fachada.jpg" data-ph="Fachada" alt=""></div>
-      <div class="wc-img wc-3"><img class="imgc" src="assets/img/hotel/cafeteria.jpg" data-ph="Cafetería" alt=""></div>
-      <div class="wc-img wc-4"><img class="imgc" src="assets/img/hotel/jardin.jpg" data-ph="Jardín" alt=""></div>
+      <div class="wc-img wc-1"><img class="imgc" src="assets/img/hotel/recepcion.jpg" data-ph="Recepción" alt="" loading="lazy"></div>
+      <div class="wc-img wc-2"><img class="imgc" src="assets/img/hotel/fachada.jpg" data-ph="Fachada" alt="" loading="lazy"></div>
+      <div class="wc-img wc-3"><img class="imgc" src="assets/img/hotel/cafeteria.jpg" data-ph="Cafetería" alt="" loading="lazy"></div>
+      <div class="wc-img wc-4"><img class="imgc" src="assets/img/hotel/jardin.jpg" data-ph="Jardín" alt="" loading="lazy"></div>
       <div class="wc-center">
         <div class="wc-script">Bienvenido a</div>
         <div class="wc-name">LA GRUTA</div>
-        <p class="wc-desc">Detrás de una casona de Selva Alegre guardamos algo cada vez más raro: una casa donde el tiempo camina despacio. Hotel familiar de gestión propia, habitaciones amplias y alfombradas, y un jardín que lo abraza todo. Recomendados por Lonely Planet – Perú.</p>
+        <p class="wc-desc" data-reveal="fade">Detrás de una casona de Selva Alegre guardamos algo cada vez más raro: una casa donde el tiempo camina despacio. Hotel familiar de gestión propia, habitaciones amplias y alfombradas, y un jardín que lo abraza todo. Recomendados por Lonely Planet – Perú.</p>
       </div>
     </div>
   </section>
@@ -91,8 +106,8 @@
   <!-- STATEMENT -->
   <div class="statement rv-el">
     <p class="eye">Por qué La Gruta</p>
-    <h2>Todo cerca. <em>Nada de ruido.</em></h2>
-    <p>A siete minutos caminando de la Plaza de Armas, el ruido se queda atrás. Aquí conviven la Ciudad Blanca y la calma: la arquitectura de sillar cuando la buscas, el canto de los pájaros cuando no.</p>
+    <h2 data-reveal="words">Todo cerca. <em>Nada de ruido.</em></h2>
+    <p data-reveal="fade">A siete minutos caminando de la Plaza de Armas, el ruido se queda atrás. Aquí conviven la Ciudad Blanca y la calma: la arquitectura de sillar cuando la buscas, el canto de los pájaros cuando no.</p>
   </div>
 
   <!-- ROOM CARDS -->
@@ -104,7 +119,7 @@
       </div>
       <div class="rooms-grid">
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/rooms/suite.jpg" data-ph="Suite" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/rooms/suite.jpg" data-ph="Suite" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
           <div class="room-card-body">
             <div class="room-card-name">Suite</div>
             <p class="room-card-desc">Nuestra categoría superior: acceso directo al jardín, chimenea y sala de estar privada.</p>
@@ -112,7 +127,7 @@
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/rooms/matrimonial.jpg" data-ph="Matrimonial" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/rooms/matrimonial.jpg" data-ph="Matrimonial" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div>
           <div class="room-card-body">
             <div class="room-card-name">Matrimonial</div>
             <p class="room-card-desc">Cama king, ambiente acogedor y vista al jardín. Perfecta para una estadía especial.</p>
@@ -127,13 +142,13 @@
   <section class="jardin-sec rv-el">
     <div class="jardin-grid">
       <div class="jardin-media">
-        <div class="jardin-img jardin-img-1"><img class="imgc" src="assets/img/hotel/jardin-1.jpg" data-ph="Jardín" alt=""></div>
-        <div class="jardin-img jardin-img-2"><img class="imgc" src="assets/img/hotel/jardin-2.jpg" data-ph="Jardín" alt=""></div>
+        <div class="jardin-img jardin-img-1"><img class="imgc" src="assets/img/hotel/jardin-1.jpg" data-ph="Jardín" alt="" loading="lazy"></div>
+        <div class="jardin-img jardin-img-2"><img class="imgc" src="assets/img/hotel/jardin-2.jpg" data-ph="Jardín" alt="" loading="lazy"></div>
       </div>
       <div class="jardin-text">
         <p class="eye">El jardín</p>
-        <h2>Un jardín para quedarse</h2>
-        <p>Selva Alegre guarda un secreto: un jardín de árboles añosos donde solo se escuchan los pájaros. Toma el sol sobre el pasto, lee a la sombra o comparte un café al atardecer. El jardín no es un adorno del hotel: es el corazón de la casa.</p>
+        <h2 data-reveal="words">Un jardín para quedarse</h2>
+        <p data-reveal="fade">Selva Alegre guarda un secreto: un jardín de árboles añosos donde solo se escuchan los pájaros. Toma el sol sobre el pasto, lee a la sombra o comparte un café al atardecer. El jardín no es un adorno del hotel: es el corazón de la casa.</p>
       </div>
     </div>
   </section>
@@ -141,12 +156,12 @@
   <!-- GASTRONOMÍA -->
   <section class="gastro rv-el">
     <div class="gastro-media">
-      <div><img class="imgc" src="assets/img/hotel/comedor-1.jpg" data-ph="Comedor" alt=""></div>
-      <div><img class="imgc" src="assets/img/hotel/comida-1.jpg" data-ph="Desayuno" alt=""></div>
+      <div><img class="imgc" src="assets/img/hotel/comedor-1.jpg" data-ph="Comedor" alt="" loading="lazy"></div>
+      <div><img class="imgc" src="assets/img/hotel/comida-1.jpg" data-ph="Desayuno" alt="" loading="lazy"></div>
     </div>
     <div class="gastro-in">
-      <h2>La mesa de La Gruta</h2>
-      <p>El desayuno se sirve frente al jardín: pan artesanal, fruta fresca de la estación y café recién pasado. El comienzo perfecto antes de caminar siete minutos hasta la Plaza de Armas.</p>
+      <h2 data-reveal="words">La mesa de La Gruta</h2>
+      <p data-reveal="fade">El desayuno se sirve frente al jardín: pan artesanal, fruta fresca de la estación y café recién pasado. El comienzo perfecto antes de caminar siete minutos hasta la Plaza de Armas.</p>
     </div>
   </section>
 
@@ -154,7 +169,7 @@
   <section class="faq-sec rv-el">
     <div class="faq-head">
       <p class="eye">Ayuda</p>
-      <h2>Preguntas frecuentes</h2>
+      <h2 data-reveal="words">Preguntas frecuentes</h2>
     </div>
     <details class="faq-item">
       <summary><span class="faq-q">¿A qué hora es el check-in y el check-out?</span><span class="faq-chevron">⌄</span></summary>
@@ -184,9 +199,9 @@
 
   <!-- BAND -->
   <div class="band rv-el">
-    <img class="imgc" src="assets/img/hotel/panoramica.jpg" data-ph="Vista panorámica" alt="">
+    <img class="imgc" src="assets/img/hotel/panoramica.jpg" data-ph="Vista panorámica" alt="" loading="lazy">
     <div class="band-in">
-      <h2>Una ciudad que enamora.<br><em>Una casa que recibe.</em></h2>
+      <h2 data-reveal="words">Una ciudad que enamora.<br><em>Una casa que recibe.</em></h2>
       <a href="#" class="band-link" data-page="reservas">Reserva tu estadía</a>
     </div>
   </div>
@@ -204,7 +219,7 @@
 <!-- ═══ HABITACIONES ═══ -->
 <div class="page" id="page-rooms">
   <section class="hero">
-    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-habitaciones.jpg" data-ph="Habitación" alt=""></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-habitaciones.jpg" data-ph="Habitación" alt="" loading="eager" fetchpriority="high"></div>
     <div class="hero-caption">
       <p class="hero-eye">Alojamiento</p>
       <h1 class="hero-title">
@@ -227,12 +242,12 @@
         <span class="rooms-count">6 habitaciones disponibles</span>
       </div>
       <div class="rooms-grid">
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/suite.jpg" data-ph="Suite" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Suite</div><p class="room-card-desc">Nuestra mejor opción. Acceso al jardín privado, chimenea y sala de estar.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/semisuite.jpg" data-ph="Semi Suite" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Semi Suite</div><p class="room-card-desc">Amplia y confortable, con chimenea y área de estar independiente.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/matrimonial.jpg" data-ph="Matrimonial" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Matrimonial</div><p class="room-card-desc">Cama king, ambiente acogedor y vista al jardín para parejas.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/triple.jpg" data-ph="Triple" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Triple</div><p class="room-card-desc">Tres camas y espacio para familias o grupos que viajan juntos.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/doble.jpg" data-ph="Doble" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Doble</div><p class="room-card-desc">Dos camas y todo lo esencial para dos personas que buscan calma.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
-        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/individual.jpg" data-ph="Individual" alt=""><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Individual</div><p class="room-card-desc">Compacta y bien pensada. La opción más accesible sin sacrificar confort.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/suite.jpg" data-ph="Suite" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Suite</div><p class="room-card-desc">Nuestra mejor opción. Acceso al jardín privado, chimenea y sala de estar.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/semisuite.jpg" data-ph="Semi Suite" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Semi Suite</div><p class="room-card-desc">Amplia y confortable, con chimenea y área de estar independiente.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/matrimonial.jpg" data-ph="Matrimonial" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Matrimonial</div><p class="room-card-desc">Cama king, ambiente acogedor y vista al jardín para parejas.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/triple.jpg" data-ph="Triple" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Triple</div><p class="room-card-desc">Tres camas y espacio para familias o grupos que viajan juntos.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/doble.jpg" data-ph="Doble" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Doble</div><p class="room-card-desc">Dos camas y todo lo esencial para dos personas que buscan calma.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
+        <div class="room-card rv-el"><div class="room-card-media"><img class="imgc" src="assets/img/rooms/individual.jpg" data-ph="Individual" alt="" loading="lazy"><div class="room-card-arrows"><span class="room-card-arrow">←</span><span class="room-card-arrow">→</span></div></div><div class="room-card-body"><div class="room-card-name">Individual</div><p class="room-card-desc">Compacta y bien pensada. La opción más accesible sin sacrificar confort.</p><div class="room-card-actions"><a href="#" class="rc-book" data-page="reservas">Reservar</a><a href="#" class="rc-more">Ver más</a></div></div></div>
       </div>
     </div>
   </section>
@@ -258,7 +273,7 @@
     </div>
   </div>
   <div class="loc-body">
-    <div class="loc-head rv-el"><p class="eye">Cómo llegar</p><h2>Nos encuentras <em>fácil.</em></h2></div>
+    <div class="loc-head rv-el"><p class="eye">Cómo llegar</p><h2 data-reveal="words">Nos encuentras <em>fácil.</em></h2></div>
     <div class="rv-el">
       <div class="loc-fact"><div class="loc-fact-n">📍</div><div><strong>Pasaje La Gruta 304</strong><span>Urbanización Selva Alegre, Arequipa, Perú</span></div></div>
       <div class="loc-fact"><div class="loc-fact-n">📞</div><div><strong>(054) 289899 / 224631</strong><span>Celular: +51 959 344 759</span></div></div>
@@ -289,7 +304,7 @@
 <!-- ═══ RESERVAS ═══ -->
 <div class="page" id="page-reservas">
   <section class="hero" style="height:56vh;min-height:440px;">
-    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-reservas.jpg" data-ph="La Gruta" alt=""></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-reservas.jpg" data-ph="La Gruta" alt="" loading="eager" fetchpriority="high"></div>
     <div class="hero-caption">
       <p class="hero-eye">Reservas</p>
       <h1 class="hero-title"><span class="hl"><span class="hw"><em>¿Cuándo nos visitas?</em></span></span></h1>
@@ -297,8 +312,8 @@
   </section>
   <div class="rv-body">
     <div class="rv-info rv-el">
-      <h2>Te ayudamos a encontrar la habitación perfecta.</h2>
-      <p>Escríbenos con tus fechas y preferencias — respondemos a la brevedad y confirmamos disponibilidad directamente.</p>
+      <h2 data-reveal="words">Te ayudamos a encontrar la habitación perfecta.</h2>
+      <p data-reveal="fade">Escríbenos con tus fechas y preferencias — respondemos a la brevedad y confirmamos disponibilidad directamente.</p>
       <div class="rv-contact"><span class="rv-cl">WhatsApp</span><span class="rv-cv">+51 959 344 759</span></div>
       <div class="rv-contact"><span class="rv-cl">Teléfono</span><span class="rv-cv">(054) 289899</span></div>
       <div class="rv-contact"><span class="rv-cl">Email</span><span class="rv-cv">lagruta@lagrutahotel.com</span></div>
@@ -339,7 +354,7 @@
 <!-- ═══ EXPERIENCIAS ═══ -->
 <div class="page" id="page-experiencias">
   <section class="hero">
-    <div class="hero-media"><img class="imgc" src="assets/img/experiencias/hero.jpg" data-ph="Campiña arequipeña" alt=""></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/experiencias/hero.jpg" data-ph="Campiña arequipeña" alt="" loading="eager" fetchpriority="high"></div>
     <div class="hero-caption">
       <p class="hero-eye">Experiencias</p>
       <h1 class="hero-title">
@@ -352,14 +367,14 @@
 
   <section class="exp-intro rv-el">
     <p class="eye">Tours &amp; aventuras</p>
-    <p class="exp-intro-text">Nuestra recepción es tu agencia de viajes. Coordinamos por ti tours, traslados y aventuras con operadores locales de confianza, con recojo desde el hotel o desde puntos cercanos. Tú solo elige cómo vivir la Ciudad Blanca.</p>
+    <p class="exp-intro-text" data-reveal="fade">Nuestra recepción es tu agencia de viajes. Coordinamos por ti tours, traslados y aventuras con operadores locales de confianza, con recojo desde el hotel o desde puntos cercanos. Tú solo elige cómo vivir la Ciudad Blanca.</p>
   </section>
 
   <section class="rooms-sec" style="background:var(--paper)">
     <div class="rooms-inner">
       <div class="rooms-grid">
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/ciudad-campina.jpg" data-ph="Ciudad &amp; Campiña" alt=""></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/ciudad-campina.jpg" data-ph="Ciudad &amp; Campiña" alt="" loading="lazy"></div>
           <div class="room-card-body">
             <div class="room-card-name">Ciudad &amp; Campiña</div>
             <p class="room-card-desc">Yanahuara, el mirador de Carmen Alto, la Mansión del Fundador y el Molino de Sabandía en un solo recorrido por la campiña arequipeña.</p>
@@ -368,7 +383,7 @@
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/santa-catalina.jpg" data-ph="Monasterio de Santa Catalina" alt=""></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/santa-catalina.jpg" data-ph="Monasterio de Santa Catalina" alt="" loading="lazy"></div>
           <div class="room-card-body">
             <div class="room-card-name">Monasterio de Santa Catalina</div>
             <p class="room-card-desc">Una ciudad dentro de la ciudad: claustros de colores, patios de sillar y cuatro siglos de historia a pocos pasos de la Plaza de Armas.</p>
@@ -377,7 +392,7 @@
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/canteras-sillar.jpg" data-ph="Canteras de Sillar" alt=""></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/canteras-sillar.jpg" data-ph="Canteras de Sillar" alt="" loading="lazy"></div>
           <div class="room-card-body">
             <div class="room-card-name">Canteras de Sillar</div>
             <p class="room-card-desc">Desciende a la quebrada de Añashuayco, donde se extrajo la piedra blanca que construyó toda la Ciudad Blanca.</p>
@@ -386,7 +401,7 @@
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/rafting.jpg" data-ph="Rafting en el Río Chili" alt=""></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/rafting.jpg" data-ph="Rafting en el Río Chili" alt="" loading="lazy"></div>
           <div class="room-card-body">
             <div class="room-card-name">Rafting en el Río Chili</div>
             <p class="room-card-desc">Rápidos de nivel II–III a 20 minutos del centro. Sin experiencia previa: guía bilingüe y equipo completo incluido.</p>
@@ -395,7 +410,7 @@
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/pillones.jpg" data-ph="Catarata de Pillones" alt=""></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/pillones.jpg" data-ph="Catarata de Pillones" alt="" loading="lazy"></div>
           <div class="room-card-body">
             <div class="room-card-name">Catarata de Pillones</div>
             <p class="room-card-desc">Full day entre el Bosque de Piedras de Imata, vicuñas en la Reserva de Salinas y miradores de los tres volcanes.</p>
@@ -404,7 +419,7 @@
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/colca.jpg" data-ph="Cañón del Colca" alt=""></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/colca.jpg" data-ph="Cañón del Colca" alt="" loading="lazy"></div>
           <div class="room-card-body">
             <div class="room-card-name">Cañón del Colca</div>
             <p class="room-card-desc">El vuelo del cóndor en la Cruz del Cóndor, aguas termales en Chivay y pueblos coloniales. Full day o 2 días/1 noche.</p>
@@ -413,7 +428,7 @@
           </div>
         </div>
         <div class="room-card rv-el">
-          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/volcanes.jpg" data-ph="Volcán Misti &amp; Chachani" alt=""></div>
+          <div class="room-card-media"><img class="imgc" src="assets/img/experiencias/volcanes.jpg" data-ph="Volcán Misti &amp; Chachani" alt="" loading="lazy"></div>
           <div class="room-card-body">
             <div class="room-card-name">Volcán Misti &amp; Chachani</div>
             <p class="room-card-desc">Ascenso de 2 días/1 noche con guía oficial de montaña UIAGM. Para quienes buscan la cima.</p>
@@ -439,6 +454,8 @@
     <div class="ft-bottom"><span>© 2026 Hotel La Gruta</span><span>Desarrollado por Blanca Labz</span></div>
   </footer>
 </div>
+
+</div><!-- /#app-shell -->
 
 </body>
 </html>

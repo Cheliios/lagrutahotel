@@ -42,6 +42,32 @@ img { display: block; max-width: 100%; }
 .hero, .band { z-index: 6; }
 .wc-img, .room-card-media, .loc-map { z-index: 6; }
 
+/* ── PRELOADER ──
+   Por encima de todo, incluida .pt (8000): es lo primero que se pinta y lo
+   último en desaparecer. #app-shell es todo lo demás (nav, menú, páginas);
+   arranca en scale(1.03) mientras el preloader tapa la pantalla, y se asienta
+   a scale(1) en el mismo momento en que el overlay se desvanece — el
+   "zoom-out" de salida. */
+.preloader {
+  position: fixed; inset: 0; z-index: 9000;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--paper);
+  transition: opacity .7s cubic-bezier(.76,0,.24,1);
+}
+.preloader.hide { opacity: 0; pointer-events: none; }
+.preloader-mark {
+  font-family: 'Cormorant Garamond', serif; font-size: clamp(20px,2.6vw,30px);
+  letter-spacing: 9px; text-transform: uppercase; color: var(--ink);
+  opacity: 0; transform: scale(.95);
+  animation: preloaderMark .9s ease forwards;
+}
+@keyframes preloaderMark { to { opacity: 1; transform: scale(1); } }
+
+#app-shell.pre-reveal { transform: scale(1.03); }
+#app-shell { transition: transform .7s cubic-bezier(.76,0,.24,1); }
+
+html.no-preload .preloader { display: none; }
+
 /* transition */
 .pt { position: fixed; inset: 0; z-index: 8000; background: var(--paper2); transform: scaleY(0); transform-origin: bottom; pointer-events: none; }
 .pt.in  { transform: scaleY(1); transition: transform .5s cubic-bezier(.76,0,.24,1); transform-origin: bottom; }
@@ -427,6 +453,25 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 /* reveal */
 .rv-el { opacity: 0; transform: translateY(30px); transition: opacity 1s, transform 1s cubic-bezier(.16,.84,.44,1); }
 .rv-el.on { opacity: 1; transform: none; }   /* `none`, no translateY(0): así la card deja de ser stacking context y su foto puede subir sobre la vegetación */
+
+/* ── Revelado de texto al hacer scroll (títulos por palabra, párrafos en bloque) ──
+   [data-reveal="words"] llega con su texto normal en el HTML; app.js lo
+   envuelve palabra por palabra en tiempo de ejecución (.rw exterior con
+   overflow:hidden de máscara, .rw-in interior es el que se traslada), igual
+   truco que .hero-title .hl/.hw pero disparado por scroll en vez de por
+   carga de página — por eso el <h1> del hero queda fuera de este sistema. */
+.rw { display: inline-block; overflow: hidden; }
+.rw-in { display: inline-block; transform: translateY(110%); opacity: 0; transition: transform .7s cubic-bezier(.16,.84,.44,1), opacity .7s cubic-bezier(.16,.84,.44,1); }
+.rw-in.on { transform: translateY(0); opacity: 1; }
+
+[data-reveal="fade"] { opacity: 0; transform: translateY(24px); transition: opacity .8s cubic-bezier(.16,.84,.44,1), transform .8s cubic-bezier(.16,.84,.44,1); }
+[data-reveal="fade"].on { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rw-in { opacity: 1; transform: none; transition: none; }
+  [data-reveal="fade"] { opacity: 1; transform: none; transition: none; }
+  .preloader, .preloader-mark, #app-shell { animation: none !important; transition: none !important; }
+}
 
 @keyframes fade { to { opacity: 1; } }
 @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }

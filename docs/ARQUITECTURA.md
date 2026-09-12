@@ -60,7 +60,10 @@ separado por responsabilidad.
 Todos con `defer`: se ejecutan en el orden en que aparecen, ya con el documento
 parseado. Es importante y ya costó un fallo en producción: un script con `defer`
 **no** está disponible para un `<script>` en línea al final del `<body>`,
-porque el de la línea se ejecuta antes. Por eso ya no queda JavaScript en línea.
+porque el de la línea se ejecuta antes. Por eso ya no queda JavaScript en línea
+— salvo una excepción puntual, el chequeo de `sessionStorage`/reduced-motion
+del preloader, que por su naturaleza tiene que correr antes que cualquier
+script `defer` (ver "Preloader" más abajo).
 
 ## Capas y orden de apilamiento
 
@@ -352,8 +355,84 @@ basta con dejar el archivo en su carpeta; el marcador desaparece solo.
 publican (habitación cuádruple, tomas alternativas). No están enlazadas desde
 ninguna página.
 
+### Carga: eager vs. lazy, y por qué no hay `srcset` todavía
+
+Las 4 fotos de `.hero-media` (una por página con hero: Inicio, Habitaciones,
+Reservas, Experiencias — Ubicación no tiene) llevan `loading="eager"
+fetchpriority="high"`: son el LCP de su página, y como las 5 páginas conviven
+siempre en el DOM (ver "Navegación" más abajo), si su hero fuera lazy se
+quedaría sin pedir hasta que el usuario navegara ahí, mostrando el marcador
+placeholder un instante de más en cada cambio de página. Las demás ~25 `<img>`
+del sitio llevan `loading="lazy"`.
+
+No se agregó `srcset`/`sizes` a ninguna imagen: **todo el set actual mide
+~1448px de ancho como máximo** (algunas verticales, 1086×1448), por debajo del
+umbral de 1600px que pediría una densidad de escritorio nítida en pantallas
+de alta densidad (retina/2x). Servir `srcset` con una sola resolución
+disponible no aporta nada — el navegador de todas formas pide ese único
+archivo. Antes de que valga la pena escribir `srcset`, hace falta lo que
+realmente falta: **fotos nuevas de ≥1600px de ancho**. Reemplazar por versiones
+HD (todo `assets/img/hero/`, `assets/img/hotel/`, `assets/img/rooms/`) es la
+tarea pendiente número uno de esta sección — ver el resumen de la ronda que
+lo señaló para el listado archivo por archivo.
+
+No hay ninguna imagen de fondo vía CSS `background-image` en el sitio (todas
+las fotos son `<img>` con `.imgc` `object-fit:cover`), así que la recomendación
+de `background-size:cover` del brief original no aplicaba a este código.
+
+## Preloader
+
+`#preloader` es un overlay fijo (z-index 9000, por encima de `.pt`) con el
+texto "La Gruta" en Cormorant Garamond, que tapa toda la pantalla mientras el
+hero de la página activa (y el resto de recursos "eager") terminan de cargar.
+Se muestra un mínimo de 1.4s y un máximo forzado de 3.5s, y espera a que el
+evento `load` **y** la imagen del hero de la página activa estén listos
+(lo que termine último) — así una carga rápida no se siente instantánea y
+brusca, pero una lenta tampoco deja al visitante mirando la marca de agua más
+de 3.5s. Al ocultarse, el overlay se desvanece (.7s) mientras `#app-shell`
+(todo lo demás: nav, menú, las 5 páginas) pasa de `scale(1.03)` a `scale(1)`
+en el mismo tramo — el "asentamiento" de salida.
+
+Solo se muestra una vez por pestaña (`sessionStorage`) y se salta por
+completo con `prefers-reduced-motion: reduce`. Ambas condiciones se resuelven
+en un `<script>` **inline**, colocado antes que `#app-shell` en el `<body>`
+— la única excepción a "nada de JavaScript en línea" que queda en el
+código (ver "Orden de carga" más arriba). Es deliberada: app.js corre
+`defer`, es decir, después de parsear todo el documento, y para cuando
+llegara a decidir si ocultar el preloader ya lo habría pintado una vez —
+quien recarga en la misma sesión vería un parpadeo de fracción de segundo
+antes de que desapareciera. El inline script no hace nada más que eso: dos
+condiciones de una línea, sin lógica de temporizado ni de red.
+
+## Revelado de texto al hacer scroll
+
+Complementa a `.rv-el` (que revela bloques enteros) con un segundo sistema,
+más propio de sitios editoriales de lujo, pensado para titulares y su párrafo
+principal:
+
+- `[data-reveal="words"]` en un `<h2>` — app.js lo envuelve palabra por
+  palabra (`.rw` exterior con `overflow:hidden` de máscara, `.rw-in` interior
+  es el que se traslada) la primera vez que se observa el DOM, conservando
+  cualquier `<em>`/`<br>` que el titular ya traía (una recursión sobre los
+  nodos hijos, no un `textContent` a secas, que los habría perdido). Al
+  entrar en viewport (`IntersectionObserver`, threshold .2), cada palabra
+  gana `.on` con 40ms de diferencia respecto a la anterior.
+- `[data-reveal="fade"]` en un `<p>` — el párrafo principal de la sección
+  entra completo con fade + `translateY(24px→0)`.
+
+El `<h1>` de cada hero queda fuera a propósito: ya tiene su propio sistema de
+palabra-por-palabra (`.hl`/`.hw`), pero disparado por el cambio de página
+(`reAnim()`), no por scroll — aplicarle también este segundo sistema
+duplicaría el envoltorio de spans sobre el mismo texto. Por la misma razón de
+"una sola vez por visita" que ya rige a `.rv-el`, `reAnim()` también resetea
+`.rw-in`/`[data-reveal="fade"]` al cambiar de página, así que revisitar una
+página vuelve a revelar su titular — coherente con el resto de la capa de
+scroll-reveal del sitio, en vez de una excepción nueva.
+
 ## Accesibilidad
 
 Ambas capas botánicas respetan `prefers-reduced-motion: reduce`: se muestran
 completas y sin motor de scroll. La vegetación lleva `aria-hidden="true"` y
-`pointer-events: none`.
+`pointer-events: none`. El preloader y el revelado de texto por palabra
+(sección anterior) hacen lo mismo: se saltan enteros y el contenido aparece
+ya visible.
