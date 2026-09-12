@@ -28,9 +28,10 @@
 <script>
   // Única excepción a "nada de JS en línea" (ver ARQUITECTURA.md): tiene que
   // correr antes de que el navegador pinte nada. app.js (defer) ya llegaría
-  // tarde — el preloader alcanzaría a pintarse una vez y el usuario que
-  // recarga en la misma sesión vería un parpadeo antes de que se ocultara.
-  if (sessionStorage.getItem('lg_preloaded') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  // tarde y el preloader alcanzaría a pintarse una vez antes de ocultarse.
+  // A propósito NO mira sessionStorage: el preloader se ve en cada carga,
+  // no solo la primera vez por sesión.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.documentElement.classList.add('no-preload');
   }
 </script>

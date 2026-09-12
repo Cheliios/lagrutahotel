@@ -55,6 +55,11 @@ img { display: block; max-width: 100%; }
   transition: opacity .7s cubic-bezier(.76,0,.24,1);
 }
 .preloader.hide { opacity: 0; pointer-events: none; }
+/* al reaparecer en cada cambio de página, sin transición: tiene que
+   sincronizar con la cortina .pt, que cubre la pantalla de una, no con un
+   fundido de por medio (showPreloader() en app.js saca esta clase en el
+   frame siguiente, así que el fundido de salida de .hide no se pierde) */
+.preloader.instant { transition: none; }
 .preloader-mark {
   font-family: 'Cormorant Garamond', serif; font-size: clamp(20px,2.6vw,30px);
   letter-spacing: 9px; text-transform: uppercase; color: var(--ink);

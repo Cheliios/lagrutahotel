@@ -8,6 +8,66 @@
 // Experiencias y de los botones flotante/CTA del sitio.
 const WA_NUMBER = '51959344759';
 
+/* ── Preloader ──
+   Se ve en TODA carga o recarga del sitio, no solo la primera vez (a
+   propósito no mira sessionStorage) — y también se reutiliza en cada
+   cambio de página dentro de la SPA (ver goTo() más abajo), sincronizado
+   con la cortina .pt: aparece instantáneo cuando la cortina empieza a
+   cubrir y se desvanece cuando termina de descubrir. Con
+   prefers-reduced-motion, el <script> inline del <head> del body ya marcó
+   <html class="no-preload"> antes de que esto corriera — acá solo hace
+   falta sacar el nodo del DOM y no volver a tocarlo nunca. */
+const preEl = document.getElementById('preloader');
+const shellEl = document.getElementById('app-shell');
+const preloaderEnabled = !!preEl && !document.documentElement.classList.contains('no-preload');
+if(!preloaderEnabled && preEl) preEl.remove();
+
+function showPreloader(){
+  if(!preloaderEnabled) return;
+  // sin transición al aparecer: tiene que sincronizar con la cortina .pt,
+  // que cubre la pantalla de una (no con un fundido de por medio)
+  preEl.classList.add('instant');
+  preEl.classList.remove('hide');
+  void preEl.offsetWidth; // fuerza reflow antes de sacar el "instant"
+  preEl.classList.remove('instant');
+  // reinicia la animación de entrada de la marca (mismo truco que .hw en reAnim)
+  const mark = preEl.querySelector('.preloader-mark');
+  if(mark){ mark.style.animation='none'; mark.offsetHeight; mark.style.animation=''; }
+}
+function hidePreloader(){
+  if(preloaderEnabled) preEl.classList.add('hide'); // .7s de fundido, ver CSS
+}
+
+// Primera pintura de la página: mínimo 1.4s en pantalla Y (evento `load` +
+// imagen del hero de la página activa cargada, lo que termine último), con
+// un techo duro de 3.5s por si algún recurso ajeno al hero se demora.
+if(preloaderEnabled){
+  shellEl.classList.add('pre-reveal');
+  const MIN=1400, MAX=3500, start=Date.now();
+  let done=false;
+  const revealFirstLoad=()=>{
+    if(done) return;
+    done=true;
+    hidePreloader();
+    shellEl.classList.remove('pre-reveal'); // scale(1.03) → scale(1) en sincro con el fundido del overlay
+  };
+  const armWhenReady=()=>setTimeout(revealFirstLoad, Math.max(0, MIN-(Date.now()-start)));
+  const heroImg = document.querySelector('.page.active .hero-media img');
+  const loadReady = new Promise(res=>{
+    if(document.readyState==='complete') return res();
+    window.addEventListener('load', res, {once:true});
+  });
+  const heroReady = new Promise(res=>{
+    if(!heroImg || heroImg.complete) return res();
+    heroImg.addEventListener('load', res, {once:true});
+    heroImg.addEventListener('error', res, {once:true}); // el placeholder también cuenta como "ya está"
+  });
+  Promise.race([
+    Promise.all([loadReady, heroReady]),
+    new Promise(res=>setTimeout(res, MAX)),
+  ]).then(armWhenReady);
+}
+
 const burger=document.getElementById('burger'), menu=document.getElementById('menu');
 let menuOpen=false;
 burger.addEventListener('click',()=>{ menuOpen=!menuOpen; burger.classList.toggle('open',menuOpen); menu.classList.toggle('open',menuOpen); });
@@ -26,6 +86,7 @@ function goTo(page){
   if(page===current){ if(menuOpen){menuOpen=false;burger.classList.remove('open');menu.classList.remove('open');} return; }
   menuOpen=false; burger.classList.remove('open'); menu.classList.remove('open');
   pt.className='pt in';
+  showPreloader(); // sincronizado con la cortina: aparece instantáneo mientras cubre
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
@@ -44,7 +105,21 @@ function goTo(page){
     // `invalidateSize` es el equivalente en Leaflet a un resize: el contenedor
     // acaba de hacerse visible y el mapa se midió cuando aún valía 0.
     if(page==='location'){ ensureLocMap(); setTimeout(()=>window.locMap?.invalidateSize(),560); }
-    pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
+
+    // El preloader se queda tapando un poco más si el hero de la página nueva
+    // todavía no cargó (es lazy en las 3 páginas que no son Inicio): así el
+    // "pop-in" del hero queda escondido detrás de la marca en vez de a la
+    // vista, con un techo de 900ms para no demorar de más en una conexión lenta.
+    const heroImg = document.querySelector('#page-'+page+' .hero-media img');
+    const heroReady = new Promise(res=>{
+      if(!heroImg || heroImg.complete) return res();
+      heroImg.addEventListener('load', res, {once:true});
+      heroImg.addEventListener('error', res, {once:true});
+    });
+    Promise.race([heroReady, new Promise(res=>setTimeout(res, 900))]).then(()=>{
+      hidePreloader();
+      pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
+    });
   },520);
 }
 document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();goTo(el.dataset.page);}));
@@ -174,56 +249,6 @@ if(current==='location') ensureLocMap();
 // Atrás/adelante del navegador, o alguien que edita el hash a mano estando ya
 // en la página: se sigue igual que un click en el menú.
 window.addEventListener('hashchange', () => goTo(pageFromHash() || 'home'));
-
-/* ── Preloader ──
-   Mínimo 1.4s en pantalla Y (evento `load` + imagen del hero de la página
-   activa cargada, lo que termine último), con un techo duro de 3.5s por si
-   algún recurso ajeno al hero se demora. Si ya se mostró en esta pestaña
-   (sessionStorage) o hay prefers-reduced-motion, el <script> inline del
-   <head> del body ya marcó <html class="no-preload"> antes de que esto
-   corriera — acá solo hace falta sacar el nodo del DOM sin animar nada. */
-(function preloader(){
-  const pre = document.getElementById('preloader');
-  const shell = document.getElementById('app-shell');
-  if(!pre) return;
-
-  if(document.documentElement.classList.contains('no-preload')){
-    pre.remove();
-    return;
-  }
-
-  sessionStorage.setItem('lg_preloaded','1');
-  shell.classList.add('pre-reveal');
-
-  const MIN=1400, MAX=3500, start=Date.now();
-  let done=false;
-  function reveal(){
-    if(done) return;
-    done=true;
-    pre.classList.add('hide');
-    shell.classList.remove('pre-reveal'); // scale(1.03) → scale(1) en sincro con el fundido del overlay
-    setTimeout(()=>pre.remove(),700);
-  }
-  function armWhenReady(){
-    setTimeout(reveal, Math.max(0, MIN-(Date.now()-start)));
-  }
-
-  const heroImg = document.querySelector('.page.active .hero-media img');
-  const loadReady = new Promise(res=>{
-    if(document.readyState==='complete') return res();
-    window.addEventListener('load', res, {once:true});
-  });
-  const heroReady = new Promise(res=>{
-    if(!heroImg || heroImg.complete) return res();
-    heroImg.addEventListener('load', res, {once:true});
-    heroImg.addEventListener('error', res, {once:true}); // el placeholder también cuenta como "ya está"
-  });
-
-  Promise.race([
-    Promise.all([loadReady, heroReady]),
-    new Promise(res=>setTimeout(res, MAX)),
-  ]).then(armWhenReady);
-})();
 
 /* ── Formulario de reservas → WhatsApp / correo ── */
 const rvForm = document.getElementById('reservaForm');
