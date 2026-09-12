@@ -309,7 +309,7 @@
          Las hojas ya no se reparten uniformemente — cada rama tiene un punto
          caliente donde se agrupan y el resto queda aireado. Un reparto regular
          se lee como patrón; uno agrupado, como planta. */
-      var scale = (MOBILE ? 0.80 : 1) * (0.74 + 0.40 * rich);
+      var scale = (MOBILE ? 0.74 : 0.86) * (0.72 + 0.38 * rich);
 
       function puntoEn(c, k, n) {
         return rand() < 0.55
@@ -318,31 +318,31 @@
       }
 
       carriers.forEach(function (c, ci) {
-        var n = Math.max(3, Math.round((c.main ? 3 : 5) * (0.66 + 0.66 * rich) * (MOBILE ? 0.62 : 1)));
+        var n = Math.max(4, Math.round((c.main ? 4 : 7) * (0.70 + 0.70 * rich) * (MOBILE ? 0.62 : 1)));
         for (var k = 0; k < n; k++) {
           var t = puntoEn(c, k, n);
           var pt = B.along(c.pts, t);
           var sd = ((k + ci) % 2) ? 1 : -1;
-          var len = rnd(12, 25) * scale;
+          var len = rnd(10, 21) * scale;
           B.leaf(P, groups.hojas, pt.x, pt.y, pt.a + sd * rnd(0.55, 1.20),
                  len, len * rnd(0.24, 0.34),
                  when(pt.y, OFF.leaf + t * 0.10, DUR.leaf));
         }
       });
 
-      // Helechos: más frecuentes y bastante más chicos. Algunos cuelgan.
-      for (var nf = 0, maxf = MOBILE ? 2 : 3; nf < maxf; nf++) {
+      // Helechos: frecuentes y chicos. Algunos cuelgan.
+      for (var nf = 0, maxf = MOBILE ? 3 : 4; nf < maxf; nf++) {
         if (rand() > 0.72 * rich) continue;
         var cf = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var tf = rnd(0.30, 0.85), pf = B.along(cf.pts, tf);
         var af = rand() < 0.4 ? (Math.PI + rnd(-0.45, 0.45))
                               : pf.a + (rand() < 0.5 ? 1 : -1) * rnd(0.40, 0.90);
-        B.fern(P, groups.helechos, pf.x, pf.y, af, rnd(19, 37) * scale,
+        B.fern(P, groups.helechos, pf.x, pf.y, af, rnd(16, 30) * scale,
                when(pf.y, OFF.fern + nf * 0.04, DUR.fern));
       }
 
       // Brotes: pequeños y abundantes, rematando puntas de rama.
-      for (var nb = 0, maxb = 3 + Math.round(rich * 5); nb < maxb; nb++) {
+      for (var nb = 0, maxb = 4 + Math.round(rich * 7); nb < maxb; nb++) {
         if (rand() > 0.46 + 0.62 * rich) continue;
         var cb = carriers[Math.floor(rand() * carriers.length)];
         var pb = B.along(cb.pts, rnd(0.60, 0.99));
@@ -357,7 +357,7 @@
 
       // a) Florecillas sueltas: racimos diminutos de 4-5 pétalos. Son las más
       //    numerosas y aparecen desde muy arriba de la página.
-      for (var nm = 0, maxm = 3 + Math.round(rich * 5); nm < maxm; nm++) {
+      for (var nm = 0, maxm = 4 + Math.round(rich * 6); nm < maxm; nm++) {
         if (rand() > 0.80 * vFlor) continue;
         var cm = carriers[Math.floor(rand() * carriers.length)];
         var pm = B.along(cm.pts, rnd(0.45, 1.0));
@@ -393,12 +393,12 @@
       if (rand() < 0.22 * arco(u, FOCAL)) {
         var cR = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var pR = B.along(cR.pts, rnd(0.85, 1.0));
-        B.rose(P, groups.rosas, pR.x, pR.y, rnd(15, 21) * scale,
+        B.rose(P, groups.rosas, pR.x, pR.y, rnd(13, 18) * scale,
                when(pR.y, OFF.rose + 0.04, DUR.rose));
       }
 
       // Zarcillos: baratos en trazos, carísimos en sensación de vida.
-      var nT = Math.max(2, Math.round(3 + rich * 4));
+      var nT = Math.max(3, Math.round(4 + rich * 5));
       for (var z = 0; z < nT; z++) {
         var cz = carriers[Math.floor(rand() * carriers.length)];
         var tz = rnd(0.55, 1.0), pz = B.along(cz.pts, tz);
@@ -528,7 +528,7 @@
 
     svg.appendChild(frag);
     B.measure(items);
-    objetivo = mostrado = REDUCED ? 1 : progress();
+    objetivo = mostrado = crudo = REDUCED ? 1 : progress();
     B.render(items, mostrado, false);
   }
 
@@ -542,33 +542,44 @@
 
   // La rueda del mouse entrega el scroll a saltos; el táctil, con inercia
   // propia. Para que el dibujo se sienta igual de continuo en los dos, el
-  // progreso del scroll NO alimenta directamente a los trazos: alimenta un
-  // objetivo, y el dibujo persigue ese objetivo un poco en cada frame.
+  // progreso del scroll NO alimenta directamente a los trazos: pasa por DOS
+  // etapas de persecución en cadena, cada una un poco más flotante que la
+  // anterior:
   //
-  //   scroll crudo → objetivo → mostrado (interpolado) → trazos
+  //   scroll crudo → objetivo (rápido, absorbe los saltos de rueda)
+  //                → mostrado (interpolado, dibuja los trazos)
   //
-  // SUAVIZADO es la fracción de la distancia restante que se recorre en un
-  // frame de 60Hz. 0.22 ≈ 95% del camino en unos 200ms: continuo, sin lag
-  // perceptible. Subirlo lo hace más directo; bajarlo, más flotante.
-  var SUAVIZADO = 0.22;
+  // ETAPA_1 (0.4) absorbe el escalón brusco del wheel en un par de frames;
+  // SUAVIZADO (0.22) es la fracción de la distancia restante que se recorre
+  // por frame en 60Hz y le da a la vegetación su glide final. Subir cualquiera
+  // lo hace más directo; bajarlo, más flotante. Con dos etapas el gesto queda
+  // rápido y fluido pero con un residuo orgánico que una sola curva no da.
+  var ETAPA_1 = 0.4, SUAVIZADO = 0.22;
 
-  var objetivo = 0, mostrado = 0, corriendo = false, ultimo = 0;
+  var crudo = 0, objetivo = 0, mostrado = 0, corriendo = false, ultimo = 0;
 
   function frame(ahora) {
-    // El paso se normaliza por tiempo real: en una pantalla de 120Hz el
+    // Ambos pasos se normalizan por tiempo real: en una pantalla de 120Hz el
     // suavizado debe tardar lo mismo que en una de 60Hz, no la mitad.
     var dt = ultimo ? Math.min(64, ahora - ultimo) : 16.7;
     ultimo = ahora;
+    objetivo += (crudo - objetivo) * (1 - Math.pow(1 - ETAPA_1, dt / 16.7));
+    if (Math.abs(crudo - objetivo) < 0.0002) objetivo = crudo;
     mostrado += (objetivo - mostrado) * (1 - Math.pow(1 - SUAVIZADO, dt / 16.7));
     if (Math.abs(objetivo - mostrado) < 0.0002) mostrado = objetivo;
     B.render(items, mostrado, PERSISTENTE);
-    if (mostrado !== objetivo) requestAnimationFrame(frame);
+    if (mostrado !== objetivo || objetivo !== crudo) requestAnimationFrame(frame);
     else { corriendo = false; ultimo = 0; }
   }
   function kick() {
     if (REDUCED) return;
-    objetivo = progress();
-    if (!corriendo) { corriendo = true; ultimo = 0; requestAnimationFrame(frame); }
+    crudo = progress();
+    if (!corriendo) {
+      corriendo = true; ultimo = 0;
+      // primera llamada: arranca ya casi en el punto actual (sin lag inicial)
+      objetivo = crudo;
+      requestAnimationFrame(frame);
+    }
   }
 
   window.addEventListener('scroll', kick, { passive: true });
