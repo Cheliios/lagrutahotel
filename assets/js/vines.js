@@ -234,11 +234,11 @@
       // El primer cuarto es además casi todo hero (zona dura), así que quedan
       // pocas bandas sembrables y el sorteo puede dejarlo en cero si el valor
       // es demasiado bajo.
-      [ 0.00,   0.32,     0.50,    0.32,    0.00,   0.00 ],  // CIUDAD  · un hilo
-      [ 0.28,   0.40,     0.66,    0.54,    0.05,   0.00 ],  // CALMA   · hojas, brotes
-      [ 0.56,   0.56,     0.88,    0.78,    0.45,   0.10 ],  // JARDÍN  · helechos, flores
-      [ 0.78,   0.72,     1.02,    0.90,    0.85,   0.60 ],
-      [ 1.00,   0.78,     1.10,    0.94,    1.10,   1.00 ]   // REFUGIO · envolvente
+      [ 0.00,   0.32,     0.36,    0.32,    0.00,   0.00 ],  // CIUDAD  · un hilo
+      [ 0.28,   0.40,     0.50,    0.54,    0.05,   0.00 ],  // CALMA   · hojas, brotes
+      [ 0.56,   0.56,     0.66,    0.78,    0.45,   0.10 ],  // JARDÍN  · helechos, flores
+      [ 0.78,   0.72,     0.76,    0.90,    0.85,   0.60 ],
+      [ 1.00,   0.78,     0.80,    0.94,    1.10,   1.00 ]   // REFUGIO · envolvente
     ];
     function arco(u, i) {
       for (var k = 1; k < ACTOS.length; k++) {
@@ -260,7 +260,11 @@
       var x0 = side < 0 ? -12 : W + 12;
       var down = rand() < 0.62;               // mayoría diagonal descendente
       var ang = inward * (down ? rnd(1.85, 2.45) : rnd(0.85, 1.35));
-      var reach = W * (MOBILE ? rnd(0.19, 0.34) : rnd(0.27, 0.50)) * arco(u, ALCANCE);
+      // Alcance base 25-30% más corto que la ronda anterior: ahí estaba el
+      // exceso de "rama grande" — un tallo llegaba a ocupar el 44% del ancho
+      // del viewport desde un solo lado. La cobertura perdida se recupera con
+      // MÁS ramas y follaje, no con tallos más largos.
+      var reach = W * (MOBILE ? rnd(0.14, 0.25) : rnd(0.19, 0.35)) * arco(u, ALCANCE);
       if (shy) reach *= 0.42;                 // zona suave: se queda en el borde
 
       var when = reloj(y0);
@@ -269,21 +273,22 @@
          El tallo es soporte, no protagonista: corto y fino. El peso visual se
          lo lleva lo que cuelga de él, no él mismo. */
       var stem = B.growS(P, x0, y0, ang, reach, rnd(0.45, 0.90), 16);
-      P.draw(groups.tallos, B.catmull(stem), 0.82, 'stem',
+      P.draw(groups.tallos, B.catmull(stem), 0.62, 'stem',
              when(y0, OFF.stem, DUR.stem), E.inout);
 
       var carriers = [{ pts: stem, main: true, hot: rnd(0.35, 0.80) }];
 
-      // De 3 a 5 ramas cortas en vez de 1 o 2 largas: la misma cobertura
-      // repartida en más puntos de anclaje para el follaje.
-      var nB = Math.max(3, Math.round(3 + rich * (MOBILE ? 1.4 : 2.4)));
+      // Más puntos de anclaje que antes (hasta 7-8 en vez de 5-7): con el
+      // tallo más corto, cada rama tiene que hacer menos trabajo de cobertura
+      // por sí sola.
+      var nB = Math.max(3, Math.round(3 + rich * (MOBILE ? 1.8 : 3.2)));
       for (var i = 0; i < nB; i++) {
         var ti = 0.16 + (0.72 / nB) * i + rnd(-0.05, 0.05);
         var bp = B.along(stem, ti);
         var bs = (i % 2) ? 1 : -1;
         var blen = reach * rnd(0.20, 0.40);
         var bpts = B.growS(P, bp.x, bp.y, bp.a + bs * rnd(0.45, 1.05), blen, rnd(0.35, 0.80), 10);
-        P.draw(groups.ramas, B.catmull(bpts), 0.56, 'stem',
+        P.draw(groups.ramas, B.catmull(bpts), 0.42, 'stem',
                when(bp.y, OFF.branch + ti * 0.10, DUR.branch), E.out);
         carriers.push({ pts: bpts, main: false, hot: rnd(0.40, 0.90) });
 
@@ -293,7 +298,7 @@
           var tj = rnd(0.35, 0.75), sp = B.along(bpts, tj);
           var spts = B.growS(P, sp.x, sp.y, sp.a + (rand() < 0.5 ? 1 : -1) * rnd(0.40, 0.95),
                              blen * rnd(0.35, 0.60), rnd(0.30, 0.75), 8);
-          P.draw(groups.ramillas, B.catmull(spts), 0.42, 'leaf',
+          P.draw(groups.ramillas, B.catmull(spts), 0.32, 'leaf',
                  when(sp.y, OFF.twig, DUR.twig), E.out);
           carriers.push({ pts: spts, main: false, hot: rnd(0.40, 0.92) });
         }
@@ -313,12 +318,12 @@
       }
 
       carriers.forEach(function (c, ci) {
-        var n = Math.max(2, Math.round((c.main ? 2 : 3) * (0.66 + 0.66 * rich) * (MOBILE ? 0.62 : 1)));
+        var n = Math.max(3, Math.round((c.main ? 3 : 5) * (0.66 + 0.66 * rich) * (MOBILE ? 0.62 : 1)));
         for (var k = 0; k < n; k++) {
           var t = puntoEn(c, k, n);
           var pt = B.along(c.pts, t);
           var sd = ((k + ci) % 2) ? 1 : -1;
-          var len = rnd(16, 34) * scale;
+          var len = rnd(12, 25) * scale;
           B.leaf(P, groups.hojas, pt.x, pt.y, pt.a + sd * rnd(0.55, 1.20),
                  len, len * rnd(0.24, 0.34),
                  when(pt.y, OFF.leaf + t * 0.10, DUR.leaf));
@@ -326,22 +331,22 @@
       });
 
       // Helechos: más frecuentes y bastante más chicos. Algunos cuelgan.
-      for (var nf = 0, maxf = MOBILE ? 1 : 2; nf < maxf; nf++) {
-        if (rand() > 0.50 * rich) continue;
+      for (var nf = 0, maxf = MOBILE ? 2 : 3; nf < maxf; nf++) {
+        if (rand() > 0.72 * rich) continue;
         var cf = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var tf = rnd(0.30, 0.85), pf = B.along(cf.pts, tf);
         var af = rand() < 0.4 ? (Math.PI + rnd(-0.45, 0.45))
                               : pf.a + (rand() < 0.5 ? 1 : -1) * rnd(0.40, 0.90);
-        B.fern(P, groups.helechos, pf.x, pf.y, af, rnd(26, 50) * scale,
+        B.fern(P, groups.helechos, pf.x, pf.y, af, rnd(19, 37) * scale,
                when(pf.y, OFF.fern + nf * 0.04, DUR.fern));
       }
 
       // Brotes: pequeños y abundantes, rematando puntas de rama.
-      for (var nb = 0, maxb = 2 + Math.round(rich * 3); nb < maxb; nb++) {
-        if (rand() > 0.30 + 0.55 * rich) continue;
+      for (var nb = 0, maxb = 3 + Math.round(rich * 5); nb < maxb; nb++) {
+        if (rand() > 0.46 + 0.62 * rich) continue;
         var cb = carriers[Math.floor(rand() * carriers.length)];
         var pb = B.along(cb.pts, rnd(0.60, 0.99));
-        B.bud(P, groups.capullos, pb.x, pb.y, pb.a + rnd(-0.6, 0.6), rnd(7, 12) * scale,
+        B.bud(P, groups.capullos, pb.x, pb.y, pb.a + rnd(-0.6, 0.6), rnd(5, 9) * scale,
               when(pb.y, OFF.bud + nb * 0.04, DUR.bud));
       }
 
@@ -352,33 +357,33 @@
 
       // a) Florecillas sueltas: racimos diminutos de 4-5 pétalos. Son las más
       //    numerosas y aparecen desde muy arriba de la página.
-      for (var nm = 0, maxm = 2 + Math.round(rich * 3); nm < maxm; nm++) {
-        if (rand() > 0.62 * vFlor) continue;
+      for (var nm = 0, maxm = 3 + Math.round(rich * 5); nm < maxm; nm++) {
+        if (rand() > 0.80 * vFlor) continue;
         var cm = carriers[Math.floor(rand() * carriers.length)];
         var pm = B.along(cm.pts, rnd(0.45, 1.0));
         (function (pm, nm) {
           conDetalle(0.32, function () {
-            B.hydrangea(P, groups.hortensias, pm.x, pm.y, rnd(8, 13) * scale,
+            B.hydrangea(P, groups.hortensias, pm.x, pm.y, rnd(6, 10) * scale,
                         when(pm.y, OFF.hyd + nm * 0.04, DUR.hyd));
           });
         })(pm, nm);
       }
 
       // b) Hortensia: el racimo reconocible. Bastante más chica que antes.
-      if (rand() < 0.62 * vFlor) {
+      if (rand() < 0.74 * vFlor) {
         var ch = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var ph = B.along(ch.pts, rnd(0.78, 1.0));
-        B.hydrangea(P, groups.hortensias, ph.x, ph.y, rnd(13, 19) * scale,
+        B.hydrangea(P, groups.hortensias, ph.x, ph.y, rnd(10, 15) * scale,
                     when(ph.y, OFF.hyd, DUR.hyd));
       }
 
       // c) Mini rosa: frecuente y pequeña, con menos anillos de pétalos para
       //    que a ese tamaño siga leyéndose como rosa.
-      if (rand() < 0.52 * vFlor) {
+      if (rand() < 0.62 * vFlor) {
         var cr = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var pr = B.along(cr.pts, rnd(0.82, 1.0));
         conDetalle(0.35, function () {
-          B.rose(P, groups.rosas, pr.x, pr.y, rnd(10, 15) * scale,
+          B.rose(P, groups.rosas, pr.x, pr.y, rnd(8, 12) * scale,
                  when(pr.y, OFF.rose, DUR.rose));
         });
       }
@@ -388,12 +393,12 @@
       if (rand() < 0.22 * arco(u, FOCAL)) {
         var cR = carriers[1 + Math.floor(rand() * (carriers.length - 1))] || carriers[0];
         var pR = B.along(cR.pts, rnd(0.85, 1.0));
-        B.rose(P, groups.rosas, pR.x, pR.y, rnd(17, 24) * scale,
+        B.rose(P, groups.rosas, pR.x, pR.y, rnd(15, 21) * scale,
                when(pR.y, OFF.rose + 0.04, DUR.rose));
       }
 
       // Zarcillos: baratos en trazos, carísimos en sensación de vida.
-      var nT = Math.max(2, Math.round(2 + rich * 3));
+      var nT = Math.max(2, Math.round(3 + rich * 4));
       for (var z = 0; z < nT; z++) {
         var cz = carriers[Math.floor(rand() * carriers.length)];
         var tz = rnd(0.55, 1.0), pz = B.along(cz.pts, tz);

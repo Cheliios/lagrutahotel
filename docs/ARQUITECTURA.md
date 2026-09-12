@@ -219,6 +219,17 @@ de los trazos: sostiene, no protagoniza. El resto es textura — hojas, brotes,
 helechos y flores chicas — con las rosas grandes reservadas como punto focal
 poco frecuente.
 
+Una regresión real que costó una ronda entera detectar: el arco narrativo (ver
+más abajo) subía el alcance del tallo hasta ×1.10 en REFUGIO para dar
+cobertura envolvente, y eso convirtió al tallo en protagonista sin querer —
+medido, llegaba a 634px en un viewport de 1440 (44% del ancho, desde un solo
+lado); dos plantas de costados opuestos podían comerse el centro entero. Se
+bajó el techo del arco de alcance a ×0.80 y el rango base de 0.27–0.50 a
+0.19–0.35 de W, con el stroke del tallo de 0.82 a 0.62 y el de las ramas de
+0.56 a 0.42. La cobertura perdida se recupera con más ramas (hasta 7-8 en vez
+de 5-7) y más follaje por rama, no con tallos más largos: máximo medido bajó a
+335px (23% del ancho).
+
 Dos detalles que hacen que eso sea asequible:
 
 - Las nervaduras de las hojas escalan con el TAMAÑO de la hoja, no solo con el
