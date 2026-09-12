@@ -364,6 +364,27 @@ basta con dejar el archivo en su carpeta; el marcador desaparece solo.
 publican (habitación cuádruple, tomas alternativas). No están enlazadas desde
 ninguna página.
 
+### El logo
+
+`assets/img/logos/` guarda el logo oficial del hotel en tres tamaños
+(`lagruta-logo-{512,1024,2048}.png`, verde sobre transparente) tal como lo
+entregó Carmen — esos tres se dejan intactos, sin usar directamente en el
+sitio. De ahí salen dos recortes que sí se usan, generados una sola vez con
+Pillow a partir del de 2048px (no hay paso de build que los regenere: si el
+logo cambia, hay que rehacerlos a mano con el mismo recorte):
+
+- **`lagruta-wordmark.png`** — solo "LA GRUTA" (sin "HOTEL" ni las 3
+  estrellas). Para espacios angostos: menú superior y footer.
+- **`lagruta-seal.png`** — el sello completo. Para espacios con más aire:
+  el preloader y "Bienvenido a ▢" en la sección de bienvenida de Inicio.
+
+El logo es de un solo color (verde `#1b5e20`-ish sobre transparente). En vez
+de pedir una segunda versión en blanco, el menú superior y el footer lo
+invierten con `filter: brightness(0) invert(1)` cuando el fondo es oscuro
+(`nav.dark` lo saca cuando el fondo ya es claro) — un solo archivo sirve para
+los dos contextos, mismo criterio que ya usaba el `color` del texto que
+reemplazó.
+
 ### Carga: eager vs. lazy, y por qué no hay `srcset` todavía
 
 Solo el hero de **Inicio** (la página `active` por defecto en el HTML) lleva
