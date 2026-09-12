@@ -1,34 +1,34 @@
 /* =============================================================================
-   botanic-lib.js — Biblioteca botánica vectorial compartida
-   Hotel La Gruta · Arequipa
+  botanic-lib.js — Biblioteca botánica vectorial compartida
+  Hotel La Gruta · Arequipa
 
-   Por qué existe
-   --------------
-   El sitio tiene DOS sistemas vegetales distintos que dibujan las mismas
-   especies con estéticas diferentes:
+  Por qué existe
+  --------------
+  El sitio tiene DOS sistemas vegetales distintos que dibujan las mismas
+  especies con estéticas diferentes:
 
-     · botanic.js → la sección "El jardín": una composición vertical en grafito,
-                    es una pieza editorial y se mira de frente.
-     · vines.js   → la capa perimetral: enredaderas doradas muy tenues que
-                    crecen desde los bordes a lo largo de toda la página.
+    · botanic.js → la sección "El jardín": una composición vertical en grafito,
+                   es una pieza editorial y se mira de frente.
+    · vines.js   → la capa perimetral: enredaderas doradas muy tenues que
+                   crecen desde los bordes a lo largo de toda la página.
 
-   Duplicar el generador de hojas, helechos, hortensias y rosas en los dos
-   archivos sería el camino corto y el error caro: cualquier ajuste al dibujo
-   habría que hacerlo dos veces y acabarían divergiendo. Así que la geometría
-   vive aquí una sola vez, y cada capa aporta su "pintor" (color, opacidad,
-   nivel de detalle y ventana de scroll).
+  Duplicar el generador de hojas, helechos, hortensias y rosas en los dos
+  archivos sería el camino corto y el error caro: cualquier ajuste al dibujo
+  habría que hacerlo dos veces y acabarían divergiendo. Así que la geometría
+  vive aquí una sola vez, y cada capa aporta su "pintor" (color, opacidad,
+  nivel de detalle y ventana de scroll).
 
-   Contrato del pintor (P)
-   -----------------------
-     P.rnd(a, b)   → aleatorio con la semilla de esa capa
-     P.rand()      → aleatorio 0..1
-     P.detail      → 0..1, escala la cantidad de nervaduras, folíolos, flores
-     P.draw(g, d, width, tone, sch, ease)
-                   → crea el path; `tone` es semántico ('stem' | 'leaf' |
-                     'vein' | 'flower' | 'detail') y cada capa decide qué
-                     color y qué opacidad le corresponde.
-     sch           → { s, e } ventana de progreso de scroll de ese trazo
-   ============================================================================= */
+  Contrato del pintor (P)
+  -----------------------
+    P.rnd(a, b)   → aleatorio con la semilla de esa capa
+    P.rand()      → aleatorio 0..1
+    P.detail      → 0..1, escala la cantidad de nervaduras, folíolos, flores
+    P.draw(g, d, width, tone, sch, ease)
+                  → crea el path; `tone` es semántico ('stem' | 'leaf' |
+                    'vein' | 'flower' | 'detail') y cada capa decide qué
+                    color y qué opacidad le corresponde.
+    sch           → { s, e } ventana de progreso de scroll de ese trazo
+  ============================================================================= */
 window.Botanic = (function () {
   'use strict';
 
@@ -117,8 +117,20 @@ window.Botanic = (function () {
   }
 
   // Ventana derivada: fracción [f0,f1] de la ventana del elemento padre.
+  //
+  // El recorte a 1 no es defensivo por gusto: es el contrato. Varios llamantes
+  // componen el final como `f0 + constante` y se pasan del padre — el corazón
+  // de la florecilla más tardía de una hortensia llega a 1.05 y el último
+  // pétalo de una rosa a 1.03. Mientras sobra scroll por delante no se nota,
+  // pero en las plantas del pie de página la ventana del padre ya termina en
+  // 0.995, así que esos trazos tenían su fin MÁS ALLÁ del progreso máximo y no
+  // acababan de dibujarse nunca: la flor que no llega a abrirse. Se corrige
+  // aquí, en el ayudante, y no en cada llamante, para que ningún trazo futuro
+  // pueda volver a escaparse de su padre.
   function win(sch, f0, f1) {
     var d = sch.e - sch.s;
+    if (f1 > 1) f1 = 1;
+    if (f0 > f1) f0 = f1;
     return { s: sch.s + d * f0, e: sch.s + d * f1 };
   }
 
@@ -315,6 +327,12 @@ window.Botanic = (function () {
      ========================================================================= */
 
   // getTotalLength() se llama UNA vez por trazo, aquí y solo aquí.
+  //
+  // Al terminar deja `items` ORDENADO por inicio de ventana. No es cosmético:
+  // el render persistente se apoya en ese orden para no recorrer en cada frame
+  // los miles de trazos que aún no han empezado (ver render). El orden del
+  // array no afecta al dibujo — cada trazo es independiente y el apilado lo
+  // decide el DOM, no este array.
   function measure(items) {
     for (var i = 0; i < items.length; i++) {
       var it = items[i], L = it.el.getTotalLength();
@@ -322,24 +340,55 @@ window.Botanic = (function () {
       it.el.style.strokeDasharray  = L.toFixed(2);
       it.el.style.strokeDashoffset = L.toFixed(2);
     }
+    items.sort(function (a, b) { return a.s - b.s; });
+    items._h = 0; items._t = 0;
   }
 
   // `persist`: una vez dibujado, el trazo se queda aunque se suba el scroll.
   //
-  // Con capas de varios miles de trazos (la capa perimetral de enredaderas),
-  // este bucle corre en cada frame de scroll. En un momento dado, la inmensa
-  // mayoría de los trazos están o ya terminados (persistentes) o todavía muy
-  // por debajo del punto de scroll actual: ninguno de los dos casos necesita
-  // la división ni el easing, así que se descartan primero con comparaciones
-  // simples. Sin este atajo, tallar los mismos ~5000 trazos con división +
-  // función de easing en cada frame es lo que empuja el presupuesto de 16ms
-  // por frame en gama media.
+  // Con capas de varios miles de trazos (la capa perimetral de enredaderas
+  // ronda los 16.000), este bucle corre en cada frame de scroll, y el coste
+  // del frame no es un detalle de rendimiento: es una cuestión de SENSACIÓN.
+  // Un frame largo obliga al suavizado a dar un paso proporcionalmente largo,
+  // y eso se ve como un salto. Por eso el recorrido se acota a la ventana de
+  // trazos realmente en crecimiento.
   function render(items, p, persist) {
-    for (var i = 0, it, k; i < items.length; i++) {
+    var n = items.length, i = 0, hasta = n, it, k;
+
+    if (persist) {
+      // VENTANA ACTIVA. Bajo persistencia el dibujo sólo avanza, así que basta
+      // con dos cursores que también sólo avanzan:
+      //
+      //   _t (cola)   → primer trazo cuya ventana todavía no ha empezado.
+      //                 De ahí en adelante no hay nada que escribir.
+      //   _h (cabeza) → primer trazo aún sin terminar. Lo anterior ya está al
+      //                 100% y ahí se queda.
+      //
+      // Sólo se recorre [_h, _t): los trazos realmente en crecimiento, unas
+      // decenas o pocos cientos, en lugar de los ~16.000 de cada frame.
+      //
+      // Honestidad sobre qué arregla esto y qué no: los frames LARGOS que se
+      // midieron durante el crecimiento (33-51ms frente a 17ms en reposo) NO
+      // los causaba este bucle. Se comprobó ocultando la capa con
+      // `visibility:hidden` —el JS sigue corriendo igual— y los frames bajaban
+      // a 17ms limpios: el coste está en rasterizar el SVG, no en recorrer el
+      // array. Rebajarlo sigue valiendo la pena en gama media (era ~1 millón
+      // de iteraciones por segundo para tocar unos cientos de trazos), pero el
+      // techo de frame se defiende en vines.js con PASO_MAX, no aquí.
+      if (items._t == null) { items._t = 0; items._h = 0; }
+      while (items._t < n && items[items._t].s < p) items._t++;
+      while (items._h < items._t && items[items._h].k === 1) items._h++;
+      i = items._h; hasta = items._t;
+    }
+
+    for (; i < hasta; i++) {
       it = items[i];
       if (persist && it.k === 1) continue;
       if (p <= it.s) {
-        if (it.k !== 0) { it.k = 0; it.el.style.strokeDashoffset = it.len.toFixed(2); }
+        // Con persistencia no se rebobina NUNCA: un trazo a medio dibujar que
+        // queda por detrás del scroll (porque se subió) conserva lo crecido.
+        // Reiniciarlo producía el parpadeo aparece → desaparece → aparece.
+        if (!persist && it.k !== 0) { it.k = 0; it.el.style.strokeDashoffset = it.len.toFixed(2); }
         continue;
       }
       if (p >= it.e) {
