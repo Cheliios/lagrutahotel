@@ -364,6 +364,27 @@ basta con dejar el archivo en su carpeta; el marcador desaparece solo.
 publican (habitación cuádruple, tomas alternativas). No están enlazadas desde
 ninguna página.
 
+### El logo
+
+`assets/img/logos/` guarda el logo oficial del hotel en tres tamaños
+(`lagruta-logo-{512,1024,2048}.png`, verde sobre transparente) tal como lo
+entregó Carmen — esos tres se dejan intactos, sin usar directamente en el
+sitio. De ahí salen dos recortes que sí se usan, generados una sola vez con
+Pillow a partir del de 2048px (no hay paso de build que los regenere: si el
+logo cambia, hay que rehacerlos a mano con el mismo recorte):
+
+- **`lagruta-wordmark.png`** — solo "LA GRUTA" (sin "HOTEL" ni las 3
+  estrellas). Para espacios angostos: menú superior y footer.
+- **`lagruta-seal.png`** — el sello completo. Para espacios con más aire:
+  el preloader y "Bienvenido a ▢" en la sección de bienvenida de Inicio.
+
+El logo es de un solo color (verde `#1b5e20`-ish sobre transparente). En vez
+de pedir una segunda versión en blanco, el menú superior y el footer lo
+invierten con `filter: brightness(0) invert(1)` cuando el fondo es oscuro
+(`nav.dark` lo saca cuando el fondo ya es claro) — un solo archivo sirve para
+los dos contextos, mismo criterio que ya usaba el `color` del texto que
+reemplazó.
+
 ### Carga: eager vs. lazy, y por qué no hay `srcset` todavía
 
 Solo el hero de **Inicio** (la página `active` por defecto en el HTML) lleva
@@ -432,26 +453,48 @@ automáticamente.
 ## Preloader
 
 `#preloader` es un overlay fijo (z-index 9000, por encima de `.pt`) con el
-texto "La Gruta" en Cormorant Garamond, que tapa toda la pantalla mientras el
-hero de la página activa (y el resto de recursos "eager") terminan de cargar.
-Se muestra un mínimo de 1.4s y un máximo forzado de 3.5s, y espera a que el
-evento `load` **y** la imagen del hero de la página activa estén listos
-(lo que termine último) — así una carga rápida no se siente instantánea y
-brusca, pero una lenta tampoco deja al visitante mirando la marca de agua más
-de 3.5s. Al ocultarse, el overlay se desvanece (.7s) mientras `#app-shell`
-(todo lo demás: nav, menú, las 5 páginas) pasa de `scale(1.03)` a `scale(1)`
-en el mismo tramo — el "asentamiento" de salida.
+texto "La Gruta" en Cormorant Garamond. Se ve en dos momentos distintos, con
+dos comportamientos distintos — no son el mismo código con dos disfraces,
+son dos necesidades distintas que comparten el mismo elemento visual:
 
-Solo se muestra una vez por pestaña (`sessionStorage`) y se salta por
-completo con `prefers-reduced-motion: reduce`. Ambas condiciones se resuelven
-en un `<script>` **inline**, colocado antes que `#app-shell` en el `<body>`
-— la única excepción a "nada de JavaScript en línea" que queda en el
-código (ver "Orden de carga" más arriba). Es deliberada: app.js corre
-`defer`, es decir, después de parsear todo el documento, y para cuando
-llegara a decidir si ocultar el preloader ya lo habría pintado una vez —
-quien recarga en la misma sesión vería un parpadeo de fracción de segundo
-antes de que desapareciera. El inline script no hace nada más que eso: dos
-condiciones de una línea, sin lógica de temporizado ni de red.
+- **Primera pintura de la página** (`if(preloaderEnabled){...}` al principio
+  de `app.js`): tapa la pantalla mientras el hero de la página activa (y el
+  resto de recursos "eager") terminan de cargar. Mínimo 1.4s, máximo forzado
+  de 3.5s, y espera a que el evento `load` **y** la imagen del hero estén
+  listos (lo que termine último) — así una carga rápida no se siente
+  instantánea y brusca, pero una lenta tampoco deja al visitante mirando la
+  marca más de 3.5s. Al ocultarse, `#app-shell` (nav, menú, las 5 páginas)
+  pasa de `scale(1.03)` a `scale(1)` en sincro — el "asentamiento" de salida.
+  Esto pasa en **cada** carga o recarga, no solo la primera vez por sesión:
+  no hay ningún `sessionStorage` de por medio a propósito.
+- **Cada cambio de página dentro de la SPA** (`showPreloader()`/
+  `hidePreloader()`, llamadas desde `goTo()`): acá no hay nada que esperar
+  del `load` event, así que es más simple y más corto. `showPreloader()`
+  aparece **sin transición** (clase `.instant`, saca la de golpe en el mismo
+  frame que la cortina `.pt` empieza a cubrir) — tiene que sincronizar con
+  algo que cubre la pantalla de una, no con un fundido de por medio.
+  `hidePreloader()` sí se desvanece con el `.7s` normal, justo antes de que
+  la cortina descubra. De paso resuelve un problema real: los heroes de
+  Habitaciones/Reservas/Experiencias son `loading="lazy"` (ver "Carga: eager
+  vs. lazy" más abajo), así que la primera vez que se navega a esa página su
+  foto puede no estar lista todavía — `goTo()` espera a que cargue (con un
+  techo de 900ms) antes de ocultar el preloader, así el "pop-in" de la foto
+  queda escondido detrás de la marca en vez de a la vista.
+
+`showPreloader()` también reinicia la animación de entrada de la marca cada
+vez (mismo truco que `.hw` en `reAnim()`: `animation='none'` → reflow →
+`animation=''`), así el fade-in+scale se repite en cada aparición en vez de
+quedarse "gastado" tras la primera.
+
+Se salta por completo con `prefers-reduced-motion: reduce` — ni la primera
+pintura ni los cambios de página muestran nada, `#preloader` se saca del DOM
+apenas arranca el script y `showPreloader()`/`hidePreloader()` quedan como
+no-ops (`preloaderEnabled` en `false`). Esa condición se resuelve en un
+`<script>` **inline**, colocado antes que `#app-shell` en el `<body>` — la
+única excepción a "nada de JavaScript en línea" que queda en el código (ver
+"Orden de carga" más arriba). Es deliberada: `app.js` corre `defer`, es
+decir, después de parsear todo el documento, y para cuando llegara a decidir
+si mostrar el preloader ya habría pintado el contenido real una vez.
 
 ## Revelado de texto al hacer scroll
 

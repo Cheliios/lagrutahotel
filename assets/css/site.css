@@ -55,9 +55,13 @@ img { display: block; max-width: 100%; }
   transition: opacity .7s cubic-bezier(.76,0,.24,1);
 }
 .preloader.hide { opacity: 0; pointer-events: none; }
+/* al reaparecer en cada cambio de página, sin transición: tiene que
+   sincronizar con la cortina .pt, que cubre la pantalla de una, no con un
+   fundido de por medio (showPreloader() en app.js saca esta clase en el
+   frame siguiente, así que el fundido de salida de .hide no se pierde) */
+.preloader.instant { transition: none; }
 .preloader-mark {
-  font-family: 'Cormorant Garamond', serif; font-size: clamp(20px,2.6vw,30px);
-  letter-spacing: 9px; text-transform: uppercase; color: var(--ink);
+  width: clamp(150px, 20vw, 230px); height: auto;
   opacity: 0; transform: scale(.95);
   animation: preloaderMark .9s ease forwards;
 }
@@ -116,12 +120,14 @@ nav {
 .burger.open span:nth-child(3){ transform: translateY(-7.5px) rotate(-45deg); }
 .nav-logo {
   justify-self: center; text-align: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 24px; font-weight: 500; letter-spacing: 7px;
-  text-transform: uppercase; color: #fff; text-decoration: none;
+  text-decoration: none;
   opacity: 0; animation: fade 1s .4s forwards;
 }
-.nav-logo small { display: block; font-size: 8px; letter-spacing: 4px; color: rgba(255,255,255,.7); margin-top: 4px; font-family: 'Jost',sans-serif; }
+/* El logo es verde sobre transparente; sobre el hero oscuro se fuerza a
+   blanco con un filtro (nav.dark lo saca) — mismo criterio de color que ya
+   usaba el texto, un solo archivo sirve para los dos fondos. */
+.nav-logo-img { height: 34px; width: auto; display: block; margin: 0 auto; filter: brightness(0) invert(1); transition: filter .3s; }
+.nav-logo small { display: block; font-size: 8px; letter-spacing: 4px; color: rgba(255,255,255,.7); margin-top: 6px; font-family: 'Jost',sans-serif; }
 .nav-book {
   justify-self: end; display: flex; align-items: center; gap: 8px;
   font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
@@ -139,7 +145,7 @@ nav.dark {
   box-shadow: 0 1px 0 rgba(43,43,38,.07);
 }
 nav.dark .burger span { background: var(--ink); }
-nav.dark .nav-logo { color: var(--ink); }
+nav.dark .nav-logo-img { filter: none; }
 nav.dark .nav-logo small { color: var(--soft); }
 nav.dark .nav-book { color: var(--ink); border-color: var(--hair); }
 nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
@@ -244,7 +250,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   padding: 40px 48px;
 }
 .wc-script { font-family: 'Dancing Script', cursive; font-size: 40px; color: var(--soft); font-weight: 500; line-height: 1; }
-.wc-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4vw,52px); font-weight: 400; letter-spacing: 4px; color: var(--green); margin-top: 4px; }
+.wc-logo { width: clamp(210px, 20vw, 320px); height: auto; margin: 4px auto 0; display: block; }
 .wc-desc { font-size: 15px; line-height: 1.8; color: var(--soft); max-width: 300px; margin: 22px auto 0; }
 
 /* ═══ SPACIOUS STATEMENT ═══ */
@@ -478,7 +484,10 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 /* footer */
 footer { background: var(--ink); padding: 90px 40px 40px; }
 .ft-top { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; padding-bottom: 56px; border-bottom: 1px solid rgba(255,255,255,.08); max-width: 1300px; margin: 0 auto; }
-.ft-logo { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 500; color: #fff; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 14px; display: block; }
+.ft-logo { display: block; margin-bottom: 14px; }
+/* Fondo del footer siempre oscuro (var(--ink)): el logo se fuerza a blanco,
+   a diferencia del nav que alterna según el fondo. */
+.ft-logo-img { height: 38px; width: auto; filter: brightness(0) invert(1); }
 .ft-logo small { display:block; font-size:8px; letter-spacing:4px; color:var(--gold); margin-top:4px; font-family:'Jost',sans-serif; }
 .ft-col h4 { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; font-weight: 400; }
 .ft-col a, .ft-col p { display: block; font-size: 13px; color: rgba(255,255,255,.5); text-decoration: none; margin-bottom: 10px; line-height: 1.6; }
