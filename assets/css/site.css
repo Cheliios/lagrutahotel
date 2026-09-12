@@ -58,7 +58,7 @@ img { display: block; max-width: 100%; }
 /* al reaparecer en cada cambio de página, sin transición: tiene que
    sincronizar con la cortina .pt, que cubre la pantalla de una, no con un
    fundido de por medio (showPreloader() en app.js saca esta clase en el
-   frame siguiente, así que el fundido de salida de .hide no se pierde) */
+   frame siguiente, así que el fundido de salida de .hide no se pierda) */
 .preloader.instant { transition: none; }
 .preloader-mark {
   width: clamp(150px, 20vw, 230px); height: auto;
@@ -185,10 +185,22 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .page { display: none; }
 .page.active { display: block; }
 
-/* ═══ HERO (fullscreen w/ availability bar, exact D'Angleterre) ═══ */
+/* ═══ SCRIM DE LEGIBILIDAD SOBRE FOTOGRAFÍA (sistema global) ═══
+   Regla para TODA sección con texto sobre foto: nada de velo plano (apaga la
+   foto entera) ni text-shadow fuerte (mancha). El scrim se concentra donde
+   está el texto y se disuelve progresivamente hacia la imagen: la foto sigue
+   siendo protagonista en el resto del encuadre. Tres variantes según dónde
+   cae el texto: centrado (.hero, .gastro), a la derecha (.band). */
+.hero-media::after {
+  content: ''; position: absolute; inset: 0;
+  /* base suave arriba (nav) y abajo (buscador) + foco central donde cae el
+     titular: la mitad superior e inferior de la foto conservan su brillo */
+  background:
+    radial-gradient(ellipse 95% 44% at 50% 46%, rgba(30,28,22,.42), rgba(30,28,22,0) 72%),
+    linear-gradient(to bottom, rgba(30,28,22,.44) 0%, rgba(30,28,22,.10) 30%, rgba(30,28,22,.10) 66%, rgba(30,28,22,.42) 100%);
+}
 .hero { position: relative; height: 100vh; min-height: 680px; overflow: hidden; }
 .hero-media { position: absolute; inset: 0; }
-.hero-media::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.28); }
 .hero-caption {
   position: absolute; top: 46%; left: 50%; transform: translate(-50%,-50%);
   z-index: 2; text-align: center; width: 100%;
@@ -203,7 +215,13 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .hw { display: inline-block; transform: translateY(120%); animation: slideUp 1s cubic-bezier(.16,.84,.44,1) forwards; }
 .hw:nth-child(1){animation-delay:.5s} .hw:nth-child(2){animation-delay:.65s}
 .hero-title em { font-style: italic; }
+/* en 390px el título a 52px roza los bordes laterales: un escalón menos */
+@media (max-width: 480px) {
+  .hero-title { font-size: clamp(40px, 11vw, 52px); }
+}
 .hero-sub { font-size: 15px; line-height: 1.7; color: rgba(255,255,255,.85); max-width: 480px; margin: 22px auto 0; opacity: 0; animation: fadeUp .9s .85s forwards; }
+/* apoyo mínimo, solo para el pixel del borde de letra que cae fuera del foco */
+.hero-sub { text-shadow: 0 1px 18px rgba(0,0,0,.22); }
 
 /* availability bar */
 .avail {
@@ -353,11 +371,19 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .gastro { position: relative; height: 78vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .gastro-media { position: absolute; inset: 0; display: flex; }
 .gastro-media > div { position: relative; flex: 1; overflow: hidden; }
-.gastro::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.35); z-index: 1; }
+/* texto centrado: elipse oscura detrás del bloque, bordes de la foto limpios */
+.gastro::after {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  /* la foto de desayuno (mitad izquierda) es la de mayor detalle visual: la
+     elipse cubre todo el ancho del bloque de texto, no solo su centro */
+  background:
+    radial-gradient(ellipse 76% 64% at 50% 50%, rgba(30,28,22,.62), rgba(30,28,22,.26) 58%, rgba(30,28,22,.08) 90%),
+    linear-gradient(rgba(30,28,22,.12), rgba(30,28,22,.12));
+}
 .gastro-in { position: relative; z-index: 2; text-align: center; max-width: 620px; padding: 0 24px; }
-.gastro-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,60px); font-weight: 300; color: #fff; line-height: 1.2; margin-bottom: 20px; }
-.gastro-in p { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,.85); }
-.gastro-note { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 20px; }
+.gastro-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,60px); font-weight: 300; color: #fff; line-height: 1.2; margin-bottom: 20px; text-shadow: 0 1px 20px rgba(0,0,0,.22); }
+.gastro-in p { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,.88); max-width: 540px; margin: 0 auto; text-shadow: 0 1px 14px rgba(0,0,0,.22); }
+.gastro-note { font-size: 12px; color: rgba(255,255,255,.65); margin-top: 20px; text-shadow: 0 1px 12px rgba(0,0,0,.25); }
 
 /* ═══ PREGUNTAS FRECUENTES (home) ═══
    Acordeón nativo: <details>/<summary>, sin una línea de JS. El marcador
@@ -383,9 +409,13 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    aquí a la derecha. Es el latido "invertido" del ritmo, y deja la mitad
    izquierda de la fotografía despejada. */
 .band { height: 78vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; padding-right: 9vw; }
-.band::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.35); z-index: 1; }
+/* texto a la derecha: oscuro del lado del texto, la foto respira a la izquierda */
+.band::after {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(to left, rgba(30,28,22,.55) 18%, rgba(30,28,22,.26) 52%, rgba(30,28,22,.05) 100%);
+}
 .band-in { position: relative; z-index: 2; text-align: right; max-width: 620px; }
-.band-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,64px); font-weight: 300; color: #fff; line-height: 1.2; }
+.band-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,64px); font-weight: 300; color: #fff; line-height: 1.2; text-shadow: 0 1px 22px rgba(0,0,0,.25); }
 .band-in em { font-style: italic; }
 .band-link { display: inline-flex; align-items: center; gap: 12px; color: #fff; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; margin-top: 28px; border-bottom: 1px solid var(--gold); padding-bottom: 5px; }
 
@@ -456,6 +486,8 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-dir-item span:not(.loc-dir-t) { font-size: 13px; line-height: 1.6; color: var(--soft); }
 .loc-nearby-list { display: flex; flex-wrap: wrap; gap: 14px 32px; }
 .loc-nearby-list span { font-size: 14px; color: var(--soft); }
+/* párrafo de contexto bajo el headline editorial (misma voz que .statement p) */
+.loc-head > p { font-size: 16px; line-height: 1.85; color: var(--soft); max-width: 560px; margin-top: 22px; }
 @media (max-width: 900px) {
   .loc-dir-grid { grid-template-columns: 1fr; gap: 20px; }
   .loc-overlay { left: 16px; bottom: 16px; gap: 10px; }
@@ -481,6 +513,23 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .rv-submit { margin-top: 40px; background: var(--ink); color: #fff; border: none; padding: 17px 46px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; align-self: flex-start; transition: background .3s; }
 .rv-submit:hover { background: var(--green); }
 
+/* flujo 01-03 del cierre de reservas: mismo lenguaje que .loc-dir-item */
+.rv-steps { margin: 36px 0 8px; }
+.rv-step { display: flex; gap: 22px; padding: 22px 0; border-bottom: 1px solid var(--hair); }
+.rv-step:first-child { border-top: 1px solid var(--hair); }
+.rv-step > span { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--gold); min-width: 40px; line-height: 1.2; }
+.rv-step strong { display: block; font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--ink); margin-bottom: 6px; font-weight: 400; }
+.rv-step p { font-size: 13px; line-height: 1.6; color: var(--soft); margin: 0; }
+.rv-q { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin: 44px 0 4px; }
+
+/* cierre emocional de reservas: pequeño, centrado, con aire — es la última
+   nota del sitio, no otra sección. Mucho espacio alrededor, a propósito. */
+.rv-close { text-align: center; padding: 150px 40px 170px; background: var(--paper2); }
+.rv-close .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 24px; }
+.rv-close h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4.2vw,54px); font-weight: 300; color: var(--ink); line-height: 1.25; margin-bottom: 40px; }
+.rv-close h2 em { font-style: italic; color: var(--green); }
+.rv-close .rc-book { display: inline-block; }
+
 /* footer */
 footer { background: var(--ink); padding: 90px 40px 40px; }
 .ft-top { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; padding-bottom: 56px; border-bottom: 1px solid rgba(255,255,255,.08); max-width: 1300px; margin: 0 auto; }
@@ -497,6 +546,24 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 /* reveal */
 .rv-el { opacity: 0; transform: translateY(30px); transition: opacity 1s, transform 1s cubic-bezier(.16,.84,.44,1); }
 .rv-el.on { opacity: 1; transform: none; }   /* `none`, no translateY(0): así la card deja de ser stacking context y su foto puede subir sobre la vegetación */
+
+/* ═══ INTRO DE HABITACIONES (rooms page) ═══
+   Mismo lenguaje que .jardin-text/.loc-head: eye + h2 + párrafo. Vive dentro
+   de .rooms-inner, apoyado a la izquierda: el aire a la derecha es por donde
+   entra la vegetación, igual que en .statement. */
+.rooms-intro { max-width: 640px; margin-bottom: 80px; }
+.rooms-intro .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; }
+.rooms-intro h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,52px); font-weight: 300; color: var(--ink); line-height: 1.25; }
+.rooms-intro h2 em { font-style: italic; color: var(--green); }
+.rooms-intro p { margin-top: 24px; font-size: 16px; line-height: 1.85; color: var(--soft); }
+
+/* ═══ FRANJA DE SERVICIOS (rooms) ═══ */
+.svc-strip { margin-top: 100px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px 40px; }
+.svc-strip span { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--soft); border-top: 1px solid var(--hair); padding-top: 14px; }
+@media (max-width: 900px) {
+  .rooms-intro { margin-bottom: 56px; }
+  .svc-strip { grid-template-columns: 1fr 1fr; margin-top: 64px; }
+}
 
 /* ── Revelado de texto al hacer scroll (títulos por palabra, párrafos en bloque) ──
    [data-reveal="words"] llega con su texto normal en el HTML; app.js lo
@@ -544,6 +611,23 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .faq-a { max-width: none; }
   .band { justify-content: center; padding-right: 0; }
   .band-in { text-align: center; max-width: none; }
+  /* móvil: los crops ponen textura distinta detrás del texto y el foco del
+     scrim de escritorio ya no coincide con el bloque — se refuerzan de forma
+     general (más oscuros y más amplios), no se achica la tipografía */
+  /* gastro en móvil: las dos fotos se apilan y el texto cae sobre la costura
+     entre ambas — banda horizontal oscura justo detrás del bloque, más el
+     foco radial, y la foto conserva su brillo arriba y abajo */
+  .gastro::after {
+    background:
+      linear-gradient(to bottom, rgba(30,28,22,0) 16%, rgba(30,28,22,.52) 40%, rgba(30,28,22,.52) 62%, rgba(30,28,22,0) 86%),
+      radial-gradient(ellipse 96% 60% at 50% 50%, rgba(30,28,22,.4), rgba(30,28,22,0) 78%);
+  }
+  .hero-media::after {
+    background:
+      radial-gradient(ellipse 130% 52% at 50% 46%, rgba(30,28,22,.5), rgba(30,28,22,0) 80%),
+      linear-gradient(to bottom, rgba(30,28,22,.56) 0%, rgba(30,28,22,.16) 30%, rgba(30,28,22,.16) 64%, rgba(30,28,22,.5) 100%);
+  }
+  .band::after { background: linear-gradient(to top, rgba(30,28,22,.5) 0%, rgba(30,28,22,.3) 55%, rgba(30,28,22,.18) 100%); }
   .loc-head { text-align: center; max-width: none; }
   .avail { grid-template-columns: 1fr 1fr; }
   .menu-inner { grid-template-columns: 1fr; } .menu-side { display: none; }
