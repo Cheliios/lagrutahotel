@@ -295,8 +295,17 @@ decisiones que conviene no revertir sin pensarlo:
   respondiendo antes de asumir que el código está roto.
 - **Vendorizado, no CDN.** La librería vive en `assets/vendor/leaflet/`. El sitio
   tiene que poder subirse tal cual a cualquier hosting sin depender de que un
-  tercero siga sirviendo el archivo. `site.css` debe cargarse **después** de
-  `leaflet.css`, porque sobrescribe el marcador y los controles.
+  tercero siga sirviendo el archivo.
+- **Carga bajo demanda, no en `<head>`.** `leaflet.js` + `leaflet.css` pesan
+  ~164KB juntos, y hasta hace poco se cargaban en las 5 páginas aunque solo
+  Ubicación usa el mapa — puro peso perdido en cada visita a Inicio,
+  Habitaciones, Reservas o Experiencias. `loadLeaflet()` en `app.js` los
+  inyecta la primera vez que hace falta (memoizado: solo una vez por carga
+  de página, sin importar cuántas veces se entre y salga de Ubicación).
+  El `<link>` de Leaflet se inserta **antes** que `site.css` en el `<head>`
+  al inyectarlo (no al final): `site.css` sobrescribe el estilo del
+  marcador y los controles, y esa cascada depende del orden — insertarlo
+  después invertiría la prioridad y esos estilos dejarían de aplicar.
 
 La rueda del ratón nunca hace zoom y en táctil el arrastre está desactivado: un
 mapa que secuestra el scroll de la página es un fallo de usabilidad, no una
@@ -357,13 +366,31 @@ ninguna página.
 
 ### Carga: eager vs. lazy, y por qué no hay `srcset` todavía
 
-Las 4 fotos de `.hero-media` (una por página con hero: Inicio, Habitaciones,
-Reservas, Experiencias — Ubicación no tiene) llevan `loading="eager"
-fetchpriority="high"`: son el LCP de su página, y como las 5 páginas conviven
-siempre en el DOM (ver "Navegación" más abajo), si su hero fuera lazy se
-quedaría sin pedir hasta que el usuario navegara ahí, mostrando el marcador
-placeholder un instante de más en cada cambio de página. Las demás ~25 `<img>`
-del sitio llevan `loading="lazy"`.
+Solo el hero de **Inicio** (la página `active` por defecto en el HTML) lleva
+`loading="eager" fetchpriority="high"`: es el LCP de la inmensa mayoría de
+las visitas. Los otros 3 heroes (Habitaciones, Reservas, Experiencias) llevan
+`loading="lazy"`, igual que el resto de las ~28 `<img>` del sitio.
+
+**Esto no siempre fue así, y el porqué del cambio importa.** La primera
+versión marcaba los 4 heroes como eager+high-priority, con el argumento de
+que las 5 páginas conviven siempre en el DOM (ver "Navegación" más abajo) y
+un hero lazy se quedaría sin pedir hasta que el usuario navegara ahí. Medido
+con red móvil simulada (Slow 4G, CDP `Network.emulateNetworkConditions`), el
+efecto real era el opuesto al buscado: **cargar Inicio bajaba también los
+heroes de Habitaciones, Reservas y Experiencias** —tres fotos de ~180-260KB
+que nadie estaba mirando todavía—, compitiendo por el ancho de banda
+disponible con el propio hero de Inicio y con todo lo demás. El evento
+`load` tardaba 8.3s; solo con este cambio bajó a 5.85s y el peso total
+transferido cayó de 1273KB a 833KB.
+
+El costo que sí queda, y es un costo real: la primera vez que alguien navega
+a Habitaciones/Reservas/Experiencias con una conexión lenta, ese hero recién
+empieza a pedirse en ese momento (aunque el `<div class="page">` esté en
+`display:none`, el swap de `goTo()`/la carga inicial por hash lo hace visible
+antes de que el navegador evalúe si el `lazy` aplica, así que en la práctica
+arranca casi de inmediato, no al scrollear). Es el trade-off correcto: mejorar
+la carga que **sí** le pasa a todo el mundo (Inicio) a costa de una espera
+puntual, solo la primera vez, en una navegación que no todos hacen.
 
 No se agregó `srcset`/`sizes` a ninguna imagen: **todo el set actual mide
 ~1448px de ancho como máximo** (algunas verticales, 1086×1448), por debajo del
@@ -379,6 +406,28 @@ lo señaló para el listado archivo por archivo.
 No hay ninguna imagen de fondo vía CSS `background-image` en el sitio (todas
 las fotos son `<img>` con `.imgc` `object-fit:cover`), así que la recomendación
 de `background-size:cover` del brief original no aplicaba a este código.
+
+### Peso del archivo vs. tamaño de despliegue
+
+Las fotos de habitaciones y del collage de bienvenida se subieron todas a
+~1448px de ancho (300-550KB cada una) sin importar en qué caja terminaban
+mostrándose — algunas, como las del collage (`.wc-img`), se despliegan en
+cajas de apenas 300-340px. Eso es 4-5x más resolución (y bastante más peso)
+del que la pantalla llega a pintar, incluso en retina/2x.
+
+Se corrigió redimensionando y recomprimiendo (Pillow, JPEG progresivo,
+`optimize=True`) según dónde vive cada foto:
+
+| Uso | Ancho objetivo | Calidad |
+|---|---|---|
+| Miniaturas del collage (`.wc-img`, cajas ≤340px) | 700px | 78 |
+| Tarjetas de habitación (`.room-card-media`, columnas ≤~590px) | 1100px | 78 |
+| Heroes y banda a sangre completa (`.hero-media`, `.band`) | se mantienen (ya ≤1600px), solo recompresión | 80 |
+
+Resultado: ~4.9MB → ~2.2MB en el set de fotos reales, sin pérdida visible al
+tamaño en que se muestran. **Al subir una foto nueva, conviene redimensionarla
+según esta tabla antes de subirla** — no hay ningún paso de build que lo haga
+automáticamente.
 
 ## Preloader
 
