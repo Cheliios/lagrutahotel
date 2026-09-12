@@ -1,32 +1,32 @@
 /* =============================================================================
-   vines.js — Capa vegetal perimetral
-   Hotel La Gruta · Arequipa
+  vines.js — Capa vegetal perimetral
+  Hotel La Gruta · Arequipa
 
-   Idea
-   ----
-   La página empieza limpia. A medida que se baja, enredaderas doradas muy
-   tenues nacen desde los bordes izquierdo y derecho y se van metiendo hacia el
-   interior de la interfaz. Lo que se dibuja SE QUEDA: el jardín se acumula, no
-   se recicla. Al final del recorrido la página está envuelta en vegetación.
+  Idea
+  ----
+  La página empieza limpia. A medida que se baja, enredaderas doradas muy
+  tenues nacen desde los bordes izquierdo y derecho y se van metiendo hacia el
+  interior de la interfaz. Lo que se dibuja SE QUEDA: el jardín se acumula, no
+  se recicla. Al final del recorrido la página está envuelta en vegetación.
 
-   Decisiones que conviene entender antes de tocar esto
-   ---------------------------------------------------
-   1. El SVG es ABSOLUTO sobre el documento entero (no `fixed`), y sus unidades
-      de usuario son píxeles CSS (viewBox = 0 0 anchoViewport altoDocumento).
-      Así la vegetación está anclada al contenido: una rama que bordea un título
-      sigue bordeándolo al hacer scroll. Con `position: fixed` la capa sería un
-      marco estático y se perdería justamente la sensación de crecimiento.
-   2. El reloj de la animación NO es un porcentaje global de la página, sino la
-      posición en el documento de cada trazo. Cada planta se dibuja cuando el
-      usuario llega a su altura. Eso da el efecto "va creciendo conmigo" en vez
-      de "todo crece a la vez en algún punto del scroll".
-   3. El crecimiento es REVERSIBLE: al subir el scroll la vegetación se
-      repliega por donde vino. Es una decisión de diseño, no una limitación —
-      ver la perilla PERSISTENTE más abajo — hoy en true: el crecimiento se
-      acumula, y lo que da la sensación de scroll continuo en desktop es el
-      suavizado (raw → objetivo → mostrado → trazos), no el replegado.
-   4. `pointer-events: none` en la capa: jamás debe bloquear un clic.
-   ============================================================================= */
+  Decisiones que conviene entender antes de tocar esto
+  ---------------------------------------------------
+  1. El SVG es ABSOLUTO sobre el documento entero (no `fixed`), y sus unidades
+     de usuario son píxeles CSS (viewBox = 0 0 anchoViewport altoDocumento).
+     Así la vegetación está anclada al contenido: una rama que bordea un título
+     sigue bordeándolo al hacer scroll. Con `position: fixed` la capa sería un
+     marco estático y se perdería justamente la sensación de crecimiento.
+  2. El reloj de la animación NO es un porcentaje global de la página, sino la
+     posición en el documento de cada trazo. Cada planta se dibuja cuando el
+     usuario llega a su altura. Eso da el efecto "va creciendo conmigo" en vez
+     de "todo crece a la vez en algún punto del scroll".
+  3. El crecimiento es REVERSIBLE: al subir el scroll la vegetación se
+     repliega por donde vino. Es una decisión de diseño, no una limitación —
+     ver la perilla PERSISTENTE más abajo — hoy en true: el crecimiento se
+     acumula, y lo que da la sensación de scroll continuo en desktop es el
+     suavizado (raw → objetivo → mostrado → trazos), no el replegado.
+  4. `pointer-events: none` en la capa: jamás debe bloquear un clic.
+  ============================================================================= */
 (function () {
   'use strict';
 
@@ -76,7 +76,7 @@
   var items = [], W = 0, Hdoc = 0, vh = 0, scrollMax = 1, U = 0.1;
   var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ── Zonas donde no se siembra ──────────────────────────────────────────── */
+  /* ── Zonas donde no se siembra ──────────────────────────────────────── */
   // Las fotos a sangre y el mapa van SIEMPRE por encima de la vegetación, así
   // que dibujar debajo de ellas sería gastar trazos invisibles. Y la sección
   // "El jardín" ya tiene su propia ilustración: meterle enredaderas encima
@@ -175,11 +175,41 @@
 
     // Orden biológico: una flor nunca antes que su rama. En "pantallas de
     // scroll" (U), contadas desde que la planta asoma por el borde inferior.
-    var OFF = { stem: 0, branch: 0.12, twig: 0.20, leaf: 0.28, fern: 0.36,
-                bud: 0.44, hyd: 0.50, rose: 0.58, ten: 0.66 };
-    var DUR = { stem: 0.34, branch: 0.24, twig: 0.18, leaf: 0.16, fern: 0.24,
-                bud: 0.14, hyd: 0.28, rose: 0.30, ten: 0.18 };
-    var SPAN = (OFF.ten + DUR.ten) * U;      // lo que tarda una planta entera
+    // Estas ventanas están en "pantallas de scroll" (U), y la medida que las
+    // fija es ésta: una muesca de rueda de ratón avanza ~0.14 U. Con las
+    // duraciones anteriores (la más corta, el capullo, duraba 0.14 U) UNA
+    // muesca completaba el trazo entero: por mucho que se interpolase el
+    // progreso global, cada hoja nacía de golpe. Ahora la ventana más corta es
+    // 0.34 U —unas 2,5 muescas— así que ningún gesto normal de scroll puede
+    // terminar un trazo de una vez, y el suavizado tiene algo real que suavizar.
+    //
+    // Los OFF se estiraron menos que los DUR a propósito: al solaparse más, la
+    // planta crece como un organismo —tallo, hoja y flor avanzando a la vez— en
+    // lugar de recitar una secuencia por partes.
+    var OFF = { stem: 0, branch: 0.16, twig: 0.27, leaf: 0.38, fern: 0.49,
+                bud: 0.60, hyd: 0.68, rose: 0.78, ten: 0.89 };
+    var DUR = { stem: 0.58, branch: 0.46, twig: 0.38, leaf: 0.36, fern: 0.46,
+                bud: 0.34, hyd: 0.52, rose: 0.54, ten: 0.38 };
+    // Dispersión del arranque de cada trazo, en unidades U. Sube de 0.03 a
+    // 0.09 para descorrelacionar los trazos hermanos: un grupo que arranca en
+    // el mismo frame se lee como un parpadeo, no como crecimiento.
+    var JIT = 0.09;
+
+    // Lo que tarda una planta entera, de su primer trazo al último.
+    //
+    // Antes se calculaba como OFF.ten + DUR.ten dando por hecho que el zarcillo
+    // era el último en terminar. No lo es: la rosa acaba más tarde
+    // (0.78 + 0.54 = 1.32 frente a 0.89 + 0.38 = 1.27), y con la dispersión
+    // JIT encima, aún más. SPAN quedaba corto, `reloj` no comprimía bastante y
+    // las últimas flores de las plantas más bajas tenían su fin por encima de
+    // 0.995: nunca llegaban a dibujarse del todo. Se detectó midiendo con
+    // prefers-reduced-motion, donde TODO debe salir dibujado y salían 46
+    // trazos sin terminar. Ahora se toma el máximo real de la tabla.
+    var SPAN = (function () {
+      var m = 0;
+      for (var k in DUR) if (DUR[k] > 0) m = Math.max(m, OFF[k] + JIT + DUR[k]);
+      return m * U;
+    })();
 
     /* ── Una enredadera ───────────────────────────────────────────────────── */
     // Reloj de una planta: se ancla a la planta ENTERA, no a cada trazo, para
@@ -191,8 +221,20 @@
       var sq = clamp((0.995 - s0) / SPAN, 0.28, 1);
       s0 = Math.min(s0, 0.995 - SPAN * sq);
       return function (_y, off, dur) {
-        var st = s0 + (off + rnd(0, 0.03)) * U * sq;
-        return { s: st, e: st + dur * U * sq };
+        var d  = dur * U * sq;
+        var st = s0 + (off + rnd(0, JIT)) * U * sq;
+        // GARANTÍA DURA: ninguna ventana puede terminar más allá del progreso
+        // máximo. No basta con dimensionar SPAN: los llamantes añaden sus
+        // propios desplazamientos sobre la tabla (`OFF.rose + 0.04`,
+        // `OFF.hyd + nm * 0.04`, `OFF.leaf + t * 0.10`…), así que el máximo
+        // real no se puede deducir de OFF y DUR. Sin este tope, las últimas
+        // hortensias del pie de página tenían su fin por encima de 1 y se
+        // quedaban al 97%: flores que nunca acababan de abrirse — visible
+        // sobre todo con prefers-reduced-motion, donde todo debería salir ya
+        // dibujado. Se DESLIZA la ventana en lugar de comprimirla: así el
+        // trazo conserva su velocidad de dibujo y sólo empieza antes.
+        if (st + d > 0.995) st = 0.995 - d;
+        return { s: st, e: st + d };
       };
     }
 
@@ -206,7 +248,7 @@
       return { x: x, y: y, w: el.offsetWidth, h: el.offsetHeight };
     }
 
-    /* ── ARCO NARRATIVO: CIUDAD → CALMA → JARDÍN → REFUGIO ──────────────────
+    /* ── ARCO NARRATIVO: CIUDAD → CALMA → JARDÍN → REFUGIO ──────────────
        La página no debe sentirse igual arriba que abajo. Arriba se entra a un
        hotel: limpio, arquitectónico, contenido. Abajo se está dentro de su
        jardín.
@@ -407,7 +449,7 @@
       }
     }
 
-    /* ── Acentos anclados al contenido ──────────────────────────────────────
+    /* ── Acentos anclados al contenido ──────────────────────────────────
        Esto es lo que separa "una capa decorativa detrás" de "el jardín está
        entrando en la interfaz". Las enredaderas de los costados se siembran a
        ciegas, solo por altura. Estos acentos, en cambio, CONSULTAN EL DOM:
@@ -532,7 +574,7 @@
     B.render(items, mostrado, false);
   }
 
-  /* ── Motor de scroll ────────────────────────────────────────────────────── */
+  /* ── Motor de scroll ────────────────────────────────────────────────── */
 
   function progress() {
     // Se cierra en 1 un poco antes del tope real: las últimas plantas deben
@@ -542,30 +584,61 @@
 
   // La rueda del mouse entrega el scroll a saltos; el táctil, con inercia
   // propia. Para que el dibujo se sienta igual de continuo en los dos, el
-  // progreso del scroll NO alimenta directamente a los trazos: pasa por DOS
-  // etapas de persecución en cadena, cada una un poco más flotante que la
-  // anterior:
+  // progreso del scroll NO alimenta directamente a los trazos: alimenta un
+  // objetivo, y el dibujo persigue ese objetivo con techos de paso y retraso
+  // (PASO_VISUAL / RETRASO_MAX) que garantizan continuidad sin lag.
   //
-  //   scroll crudo → objetivo (rápido, absorbe los saltos de rueda)
-  //                → mostrado (interpolado, dibuja los trazos)
+  //   scroll crudo → objetivo → mostrado (interpolado) → trazos
   //
-  // ETAPA_1 (0.4) absorbe el escalón brusco del wheel en un par de frames;
-  // SUAVIZADO (0.22) es la fracción de la distancia restante que se recorre
-  // por frame en 60Hz y le da a la vegetación su glide final. Subir cualquiera
-  // lo hace más directo; bajarlo, más flotante. Con dos etapas el gesto queda
-  // rápido y fluido pero con un residuo orgánico que una sola curva no da.
-  var ETAPA_1 = 0.4, SUAVIZADO = 0.22;
+  // SUAVIZADO es la fracción de la distancia restante que se recorre en un
+  // frame de 60Hz. 0.15 ≈ 95% del camino en ~310ms: se lee como crecimiento,
+  // no como una animación que se reproduce. Subirlo lo hace más directo (y más
+  // brusco); bajarlo, más flotante (y con sensación de retraso).
+  var SUAVIZADO = 0.15;
+
+  // TECHO DE RETRASO. El seguimiento exponencial tiene un efecto secundario
+  // desagradable: en un recorrido largo y rápido —arrastrar la barra, un
+  // flick— el dibujo se queda atrás en proporción a la velocidad y la página
+  // entera se siente "retrasada". Este tope corta esa acumulación: la
+  // vegetación nunca va más de RETRASO_MAX por detrás del objetivo. En
+  // progreso global, 0.045 son unos 300px de scroll —un tercio de pantalla—:
+  // suficiente para que el crecimiento se lea, imperceptible como lag.
+  var RETRASO_MAX = 0.045;
+
+  // TECHO DEL PASO VISUAL. El suavizado exponencial reparte bien el tiempo,
+  // pero el término dt/16.7 —necesario para que dure lo mismo a 60 y a 120Hz—
+  // tiene un filo: si un frame se alarga, hace que se recorra de una zancada
+  // lo que debían ser varios frames, que es exactamente el salto a evitar. Y
+  // los frames SÍ se alargan mientras la vegetación crece: el coste medido no
+  // está en el bucle de JS sino en rasterizar el SVG (se comprobó ocultando la
+  // capa: el JS corre igual y los frames bajan de ~40ms a 17ms).
+  //
+  // La respuesta no es recortar dt —eso frena también la cola de la curva, que
+  // ya es la parte lenta, y el gesto entero se va a 1,4s—. Se limita el paso
+  // en la unidad que de verdad importa: cuánto progreso puede dibujarse en UN
+  // frame. 0.003 es ~1/6 de una muesca de rueda, así que ninguna muesca puede
+  // resolverse en menos de media docena de frames, por lento que vaya el
+  // equipo, y la cola sigue corriendo a velocidad completa.
+  var PASO_VISUAL = 0.003;
+
+  // Junto con RETRASO_MAX esto da una garantía dura y acotada: nunca más de
+  // 0.003 de progreso en un frame (nada de saltos) y nunca más de 0.045 por
+  // detrás (nada de lag), luego alcanzar al objetivo tras un flick cuesta como
+  // máximo unos 15 frames. Las dos perillas se sostienen mutuamente.
+  //
+  // dt sólo se topa por sanidad, para una pestaña que vuelve de segundo plano
+  // con un dt de medio segundo.
+  var PASO_MAX = 50;
 
   var crudo = 0, objetivo = 0, mostrado = 0, corriendo = false, ultimo = 0;
-
   function frame(ahora) {
-    // Ambos pasos se normalizan por tiempo real: en una pantalla de 120Hz el
-    // suavizado debe tardar lo mismo que en una de 60Hz, no la mitad.
-    var dt = ultimo ? Math.min(64, ahora - ultimo) : 16.7;
+    var dt = ultimo ? Math.min(PASO_MAX, ahora - ultimo) : 16.7;
     ultimo = ahora;
-    objetivo += (crudo - objetivo) * (1 - Math.pow(1 - ETAPA_1, dt / 16.7));
-    if (Math.abs(crudo - objetivo) < 0.0002) objetivo = crudo;
-    mostrado += (objetivo - mostrado) * (1 - Math.pow(1 - SUAVIZADO, dt / 16.7));
+    var paso = (objetivo - mostrado) * (1 - Math.pow(1 - SUAVIZADO, dt / 16.7));
+    if (paso >  PASO_VISUAL) paso =  PASO_VISUAL;
+    if (paso < -PASO_VISUAL) paso = -PASO_VISUAL;
+    mostrado += paso;
+    if (objetivo - mostrado > RETRASO_MAX) mostrado = objetivo - RETRASO_MAX;
     if (Math.abs(objetivo - mostrado) < 0.0002) mostrado = objetivo;
     B.render(items, mostrado, PERSISTENTE);
     if (mostrado !== objetivo || objetivo !== crudo) requestAnimationFrame(frame);
