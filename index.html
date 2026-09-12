@@ -6,12 +6,10 @@
 <title>Hotel La Gruta — Arequipa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Dancing+Script:wght@500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
 
-<!-- Leaflet va vendorizado en el repo, no en un CDN: el sitio debe poder
-     subirse tal cual a cualquier hosting sin depender de terceros.
-     site.css SIEMPRE después de leaflet.css: sobrescribe el estilo del
-     marcador y de los controles. -->
-<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
-<script src="assets/vendor/leaflet/leaflet.js" defer></script>
+<!-- Leaflet (vendorizado, no CDN) YA NO se carga acá: pesa ~164KB y solo lo
+     usa la página de Ubicación. app.js lo inyecta bajo demanda (loadLeaflet()
+     en assets/js/app.js) la primera vez que hace falta el mapa, para no
+     penalizar a quien visita Inicio, Habitaciones, Reservas o Experiencias. -->
 <link rel="stylesheet" href="assets/css/site.css">
 
 <!-- Todos con `defer`: se ejecutan en este orden, ya con el documento parseado.
@@ -247,7 +245,7 @@
 <!-- ═══ HABITACIONES ═══ -->
 <div class="page" id="page-rooms">
   <section class="hero">
-    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-habitaciones.jpg" data-ph="Habitación" alt="" loading="eager" fetchpriority="high"></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-habitaciones.jpg" data-ph="Habitación" alt="" loading="lazy"></div>
     <div class="hero-caption">
       <p class="hero-eye">Alojamiento</p>
       <h1 class="hero-title">
@@ -332,7 +330,7 @@
 <!-- ═══ RESERVAS ═══ -->
 <div class="page" id="page-reservas">
   <section class="hero" style="height:56vh;min-height:440px;">
-    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-reservas.jpg" data-ph="La Gruta" alt="" loading="eager" fetchpriority="high"></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/hero/hero-reservas.jpg" data-ph="La Gruta" alt="" loading="lazy"></div>
     <div class="hero-caption">
       <p class="hero-eye">Reservas</p>
       <h1 class="hero-title"><span class="hl"><span class="hw"><em>¿Cuándo nos visitas?</em></span></span></h1>
@@ -382,7 +380,7 @@
 <!-- ═══ EXPERIENCIAS ═══ -->
 <div class="page" id="page-experiencias">
   <section class="hero">
-    <div class="hero-media"><img class="imgc" src="assets/img/experiencias/hero.jpg" data-ph="Campiña arequipeña" alt="" loading="eager" fetchpriority="high"></div>
+    <div class="hero-media"><img class="imgc" src="assets/img/experiencias/hero.jpg" data-ph="Campiña arequipeña" alt="" loading="lazy"></div>
     <div class="hero-caption">
       <p class="hero-eye">Experiencias</p>
       <h1 class="hero-title">
