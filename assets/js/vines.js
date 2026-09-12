@@ -175,11 +175,41 @@
 
     // Orden biológico: una flor nunca antes que su rama. En "pantallas de
     // scroll" (U), contadas desde que la planta asoma por el borde inferior.
-    var OFF = { stem: 0, branch: 0.12, twig: 0.20, leaf: 0.28, fern: 0.36,
-                bud: 0.44, hyd: 0.50, rose: 0.58, ten: 0.66 };
-    var DUR = { stem: 0.34, branch: 0.24, twig: 0.18, leaf: 0.16, fern: 0.24,
-                bud: 0.14, hyd: 0.28, rose: 0.30, ten: 0.18 };
-    var SPAN = (OFF.ten + DUR.ten) * U;      // lo que tarda una planta entera
+    // Estas ventanas están en "pantallas de scroll" (U), y la medida que las
+    // fija es ésta: una muesca de rueda de ratón avanza ~0.14 U. Con las
+    // duraciones anteriores (la más corta, el capullo, duraba 0.14 U) UNA
+    // muesca completaba el trazo entero: por mucho que se interpolase el
+    // progreso global, cada hoja nacía de golpe. Ahora la ventana más corta es
+    // 0.34 U —unas 2,5 muescas— así que ningún gesto normal de scroll puede
+    // terminar un trazo de una vez, y el suavizado tiene algo real que suavizar.
+    //
+    // Los OFF se estiraron menos que los DUR a propósito: al solaparse más, la
+    // planta crece como un organismo —tallo, hoja y flor avanzando a la vez— en
+    // lugar de recitar una secuencia por partes.
+    var OFF = { stem: 0, branch: 0.16, twig: 0.27, leaf: 0.38, fern: 0.49,
+                bud: 0.60, hyd: 0.68, rose: 0.78, ten: 0.89 };
+    var DUR = { stem: 0.58, branch: 0.46, twig: 0.38, leaf: 0.36, fern: 0.46,
+                bud: 0.34, hyd: 0.52, rose: 0.54, ten: 0.38 };
+    // Dispersión del arranque de cada trazo, en unidades U. Sube de 0.03 a
+    // 0.09 para descorrelacionar los trazos hermanos: un grupo que arranca en
+    // el mismo frame se lee como un parpadeo, no como crecimiento.
+    var JIT = 0.09;
+
+    // Lo que tarda una planta entera, de su primer trazo al último.
+    //
+    // Antes se calculaba como OFF.ten + DUR.ten dando por hecho que el zarcillo
+    // era el último en terminar. No lo es: la rosa acaba más tarde
+    // (0.78 + 0.54 = 1.32 frente a 0.89 + 0.38 = 1.27), y con la dispersión
+    // JIT encima, aún más. SPAN quedaba corto, `reloj` no comprimía bastante y
+    // las últimas flores de las plantas más bajas tenían su fin por encima de
+    // 0.995: nunca llegaban a dibujarse del todo. Se detectó midiendo con
+    // prefers-reduced-motion, donde TODO debe salir dibujado y salían 46
+    // trazos sin terminar. Ahora se toma el máximo real de la tabla.
+    var SPAN = (function () {
+      var m = 0;
+      for (var k in DUR) if (DUR[k] > 0) m = Math.max(m, OFF[k] + JIT + DUR[k]);
+      return m * U;
+    })();
 
     /* ── Una enredadera ───────────────────────────────────────────────────── */
     // Reloj de una planta: se ancla a la planta ENTERA, no a cada trazo, para
@@ -191,8 +221,20 @@
       var sq = clamp((0.995 - s0) / SPAN, 0.28, 1);
       s0 = Math.min(s0, 0.995 - SPAN * sq);
       return function (_y, off, dur) {
-        var st = s0 + (off + rnd(0, 0.03)) * U * sq;
-        return { s: st, e: st + dur * U * sq };
+        var d  = dur * U * sq;
+        var st = s0 + (off + rnd(0, JIT)) * U * sq;
+        // GARANTÍA DURA: ninguna ventana puede terminar más allá del progreso
+        // máximo. No basta con dimensionar SPAN: los llamantes añaden sus
+        // propios desplazamientos sobre la tabla (`OFF.rose + 0.04`,
+        // `OFF.hyd + nm * 0.04`, `OFF.leaf + t * 0.10`…), así que el máximo
+        // real no se puede deducir de OFF y DUR. Sin este tope, las últimas
+        // hortensias del pie de página tenían su fin por encima de 1 y se
+        // quedaban al 97%: flores que nunca acababan de abrirse — visible
+        // sobre todo con prefers-reduced-motion, donde todo debería salir ya
+        // dibujado. Se DESLIZA la ventana en lugar de comprimirla: así el
+        // trazo conserva su velocidad de dibujo y sólo empieza antes.
+        if (st + d > 0.995) st = 0.995 - d;
+        return { s: st, e: st + d };
       };
     }
 
@@ -548,18 +590,55 @@
   //   scroll crudo → objetivo → mostrado (interpolado) → trazos
   //
   // SUAVIZADO es la fracción de la distancia restante que se recorre en un
-  // frame de 60Hz. 0.22 ≈ 95% del camino en unos 200ms: continuo, sin lag
-  // perceptible. Subirlo lo hace más directo; bajarlo, más flotante.
-  var SUAVIZADO = 0.22;
+  // frame de 60Hz. 0.15 ≈ 95% del camino en ~310ms: se lee como crecimiento,
+  // no como una animación que se reproduce. Subirlo lo hace más directo (y más
+  // brusco); bajarlo, más flotante (y con sensación de retraso).
+  var SUAVIZADO = 0.15;
+
+  // TECHO DE RETRASO. El seguimiento exponencial tiene un efecto secundario
+  // desagradable: en un recorrido largo y rápido —arrastrar la barra, un
+  // flick— el dibujo se queda atrás en proporción a la velocidad y la página
+  // entera se siente "retrasada". Este tope corta esa acumulación: la
+  // vegetación nunca va más de RETRASO_MAX por detrás del objetivo. En
+  // progreso global, 0.045 son unos 300px de scroll —un tercio de pantalla—:
+  // suficiente para que el crecimiento se lea, imperceptible como lag.
+  var RETRASO_MAX = 0.045;
+
+  // TECHO DEL PASO VISUAL. El suavizado exponencial reparte bien el tiempo,
+  // pero el término dt/16.7 —necesario para que dure lo mismo a 60 y a 120Hz—
+  // tiene un filo: si un frame se alarga, hace que se recorra de una zancada
+  // lo que debían ser varios frames, que es exactamente el salto a evitar. Y
+  // los frames SÍ se alargan mientras la vegetación crece: el coste medido no
+  // está en el bucle de JS sino en rasterizar el SVG (se comprobó ocultando la
+  // capa: el JS corre igual y los frames bajan de ~40ms a 17ms).
+  //
+  // La respuesta no es recortar dt —eso frena también la cola de la curva, que
+  // ya es la parte lenta, y el gesto entero se va a 1,4s—. Se limita el paso
+  // en la unidad que de verdad importa: cuánto progreso puede dibujarse en UN
+  // frame. 0.003 es ~1/6 de una muesca de rueda, así que ninguna muesca puede
+  // resolverse en menos de media docena de frames, por lento que vaya el
+  // equipo, y la cola sigue corriendo a velocidad completa.
+  var PASO_VISUAL = 0.003;
+
+  // Junto con RETRASO_MAX esto da una garantía dura y acotada: nunca más de
+  // 0.003 de progreso en un frame (nada de saltos) y nunca más de 0.045 por
+  // detrás (nada de lag), luego alcanzar al objetivo tras un flick cuesta como
+  // máximo unos 15 frames. Las dos perillas se sostienen mutuamente.
+  //
+  // dt sólo se topa por sanidad, para una pestaña que vuelve de segundo plano
+  // con un dt de medio segundo.
+  var PASO_MAX = 50;
 
   var objetivo = 0, mostrado = 0, corriendo = false, ultimo = 0;
 
   function frame(ahora) {
-    // El paso se normaliza por tiempo real: en una pantalla de 120Hz el
-    // suavizado debe tardar lo mismo que en una de 60Hz, no la mitad.
-    var dt = ultimo ? Math.min(64, ahora - ultimo) : 16.7;
+    var dt = ultimo ? Math.min(PASO_MAX, ahora - ultimo) : 16.7;
     ultimo = ahora;
-    mostrado += (objetivo - mostrado) * (1 - Math.pow(1 - SUAVIZADO, dt / 16.7));
+    var paso = (objetivo - mostrado) * (1 - Math.pow(1 - SUAVIZADO, dt / 16.7));
+    if (paso >  PASO_VISUAL) paso =  PASO_VISUAL;
+    if (paso < -PASO_VISUAL) paso = -PASO_VISUAL;
+    mostrado += paso;
+    if (objetivo - mostrado > RETRASO_MAX) mostrado = objetivo - RETRASO_MAX;
     if (Math.abs(objetivo - mostrado) < 0.0002) mostrado = objetivo;
     B.render(items, mostrado, PERSISTENTE);
     if (mostrado !== objetivo) requestAnimationFrame(frame);

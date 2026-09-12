@@ -146,10 +146,87 @@ scroll crudo → objetivo → mostrado (interpolado) → trazos
 ```
 
 Cada frame, `mostrado` recorre una fracción de la distancia que le falta hasta
-`objetivo` (`SUAVIZADO`, 0.22). El paso se normaliza por tiempo real, así que
-en una pantalla de 120Hz tarda lo mismo que en una de 60Hz. Medido: tras un
-salto de rueda de 120px, el dibujo cubre el 70% del camino en ~6 frames y
-termina de asentarse en ~300ms.
+`objetivo` (`SUAVIZADO`, 0.15). El paso se normaliza por tiempo real, así que
+en una pantalla de 120Hz tarda lo mismo que en una de 60Hz.
+
+Esa cadena existía ya y NO bastaba: seguía sintiéndose a tirones en la rueda.
+Las tres causas, medidas:
+
+1. **La ventana de cada trazo era más corta que una muesca de rueda.** Una
+   muesca de 120px avanza 0.0189 de progreso; la ventana de dibujo de un
+   capullo valía 0.0191. Por mucho que se interpolase el progreso GLOBAL, cada
+   hoja nacía completa dentro de un solo gesto. Se estiraron las tablas `OFF` y
+   `DUR`: hoy la ventana más corta es 0.34 U ≈ 2,5 muescas.
+2. **Los frames se alargan justo mientras la vegetación crece** — 33-51ms
+   frente a 17ms en reposo. No lo causa el bucle de JS: ocultando la capa con
+   `visibility:hidden` el JS sigue corriendo igual y los frames vuelven a 17ms
+   limpios. El coste es **rasterizar el SVG**, no recorrer el array.
+3. **Y un frame largo se convertía en un salto largo**, porque el término
+   `dt/16.7` que iguala 60 y 120Hz hace que un frame lento recorra de una
+   zancada lo que debían ser varios.
+
+Contra (3) hay dos topes que se sostienen mutuamente, y son la parte que de
+verdad arregla la sensación:
+
+| Tope | Valor | Garantiza |
+|---|---|---|
+| `PASO_VISUAL` | 0.003 de progreso por frame (~1/6 de muesca) | ningún frame dibuja un salto, por lento que vaya el equipo |
+| `RETRASO_MAX` | 0.045 de progreso (~300px de scroll) | el dibujo nunca se descuelga del scroll: nada de sensación de lag |
+
+Juntos acotan el peor caso: desde el retraso máximo, alcanzar al objetivo cuesta
+~15 frames. Se limita el paso en progreso y NO en `dt`, porque recortar `dt`
+frena también la cola de la curva —que ya es la parte lenta— y el gesto entero
+se iba a 1,4s.
+
+Medido en una máquina que rasteriza esta capa a ~25fps, tras una muesca de
+rueda de 120px:
+
+| | antes | ahora |
+|---|---|---|
+| paso más grande de un frame | 45% del crecimiento | **20%** |
+| frames con crecimiento perceptible | 6 | **8** |
+| 90% del recorrido | 328ms | 376ms |
+
+A 60Hz reales `PASO_VISUAL` casi no entra (el paso exponencial vale 0.0028) y la
+curva se reparte en ~28 frames con un 90% a los ~237ms: rápido y continuo.
+
+**Persistencia.** Se verificó que sigue siendo acumulativa: bajando al pie,
+subiendo arriba y volviendo a bajar, 0 de 16.651 trazos retroceden. Se corrigió
+además un caso en que sí retrocedía — un trazo a medio dibujar que quedaba por
+detrás del scroll se reiniciaba a cero (`p <= it.s` en `render`), el parpadeo
+aparece → desaparece → aparece. Con `persist` ya no se rebobina nunca.
+
+**Dos flores que no acababan de abrirse.** Buscando lo anterior salió un fallo
+anterior a esta ronda: algunos trazos tenían su fin de ventana por encima del
+progreso máximo y se quedaban al 97% para siempre. Dos causas, las dos
+corregidas en el sitio correcto en vez de caso por caso:
+
+* `win()` en `botanic-lib.js` devolvía sub-ventanas que se salían de su padre
+  (el corazón de la florecilla más tardía de una hortensia llegaba a 1.05).
+  Ahora recorta a 1: es su contrato.
+* `reloj()` en `vines.js` no podía dimensionar `SPAN` correctamente, porque los
+  llamantes añaden sus propios desplazamientos sobre la tabla
+  (`OFF.rose + 0.04`, `OFF.hyd + nm * 0.04`…) y el máximo real no se deduce de
+  `OFF` y `DUR`. Ahora ninguna ventana puede terminar más allá de 0.995: se
+  desliza, no se comprime, para que el trazo conserve su velocidad.
+
+Con `prefers-reduced-motion` —donde TODO debe salir ya dibujado— se pasó de
+16.975/17.021 trazos completos a 17.021/17.021. Al llegar al pie de la página
+con scroll normal, 16.651/16.651.
+
+**Coste del recorrido.** `render()` ya no recorre los ~16.000 trazos en cada
+frame: `measure()` deja el array ordenado por inicio de ventana y `render()`
+mantiene dos cursores monótonos (`_h`, `_t`) que acotan el recorrido a los
+trazos realmente en crecimiento. No es lo que arregla los frames largos —eso es
+la rasterización— pero eran ~1 millón de iteraciones por segundo para tocar unos
+cientos de trazos, y en gama media eso se paga.
+
+**Lo que queda pendiente.** El techo de fluidez es la rasterización del SVG: es
+un único elemento de la altura del documento con ~16.000 paths, así que cualquier
+cambio invalida una región que contiene muchísimos trazos. Bajarlo de verdad
+pide partir la capa en varios SVG por banda vertical, para que la región sucia
+sea local. Es un cambio estructural de la capa, no de su comportamiento, y se
+deja fuera de esta ronda a propósito.
 
 ### El arco narrativo: CIUDAD → CALMA → JARDÍN → REFUGIO
 
@@ -269,7 +346,9 @@ hacer falta.
 | Qué | Dónde |
 |---|---|
 | Presencia de la capa | `INTENSIDAD` en `vines.js` — multiplica TONE; vale 1, así que los números de `TONE` son las opacidades finales |
-| Suavidad del scroll | `SUAVIZADO` en `vines.js` (0.22; subirlo = más directo, bajarlo = más flotante) |
+| Suavidad del scroll | `SUAVIZADO` en `vines.js` (0.15; subirlo = más directo, bajarlo = más flotante) |
+| Techo de salto por frame | `PASO_VISUAL` en `vines.js` (0.003 de progreso; bajarlo = más suave y más lento) |
+| Techo de retraso | `RETRASO_MAX` en `vines.js` (0.045 de progreso; bajarlo = más pegado al scroll) |
 | Reversible o acumulativa | `PERSISTENTE` en `vines.js` (`true` = persiste, actual; `false` = se repliega al subir) |
 | Densidad de la capa | `bandH` (separación entre plantas) y `P.detail` en `vines.js` |
 | Variación de densidad | `densidad(u)` en `vines.js` |
@@ -277,7 +356,11 @@ hacer falta.
 | Ritmo de aparición | tablas `OFF` y `DUR` en `vines.js` |
 
 `OFF` fija el orden biológico —una flor nunca antes que su rama— y `DUR` cuánto
-tarda cada etapa en dibujarse. Ambas se miden en "pantallas de scroll".
+tarda cada etapa en dibujarse. Ambas se miden en "pantallas de scroll" (`U`), y
+la referencia para dimensionarlas es que **una muesca de rueda de ratón vale
+~0.14 U**: ninguna `DUR` debería bajar de ~0.34 U o el trazo se completará
+dentro de un solo gesto y volverá la sensación mecánica. `JIT` (0.09 U) dispersa
+el arranque de los trazos hermanos para que no nazcan en el mismo frame.
 
 ## El mapa
 
