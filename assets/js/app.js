@@ -4,10 +4,9 @@
    formulario de reservas y marcador para las fotos que aún faltan.
    ============================================================================= */
 
-// ⚠️ NÚMERO DE PRUEBAS — no es el del hotel. Piero lo usa para probar el flujo
-// de WhatsApp sin molestar la línea real. Antes de fusionar a master o de
-// mandarle el link a Carmen, volver a '51959344759'.
-const WA_NUMBER = '51948016484';
+// Número real del hotel: mismo que usan los links directos de wa.me de
+// Experiencias y de los botones flotante/CTA del sitio.
+const WA_NUMBER = '51959344759';
 
 const burger=document.getElementById('burger'), menu=document.getElementById('menu');
 let menuOpen=false;
