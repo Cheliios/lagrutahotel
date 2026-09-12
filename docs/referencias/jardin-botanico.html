@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Gruta — El jardín (referencia guardada)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* =============================================================================
+   Copia de referencia de la sección "El jardín" — se sacó del sitio en vivo
+   porque quedaba redundante junto a la capa perimetral (vines.js), que hace
+   el mismo trabajo de "vegetación creciendo con el scroll" para toda la
+   página. Este archivo NO se publica: es solo para no perder la animación.
+
+   Reutiliza el código real, no una copia congelada: botanic-lib.js sigue
+   siendo el mismo que usa el sitio en vivo (../../assets/js/), así que
+   cualquier mejora futura a la biblioteca de especies se refleja aquí
+   también. botanic.js (la composición de "El jardín" en sí) vive junto a
+   este HTML porque ya no lo usa nadie más.
+   ============================================================================= */
+:root {
+  --ink:   #2B2B26;
+  --soft:  #55554C;
+  --gold:  #3A5236;
+  --paper: #FBFAF6;
+}
+* , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Jost', sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.note {
+  position: fixed; top: 16px; left: 16px; z-index: 20;
+  background: var(--ink); color: #fff;
+  padding: 9px 16px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+
+/* ── La sección tal cual vivía en site.css ── */
+.garden { position: relative; height: 380vh; background: var(--paper); }
+.garden-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; padding-top: 6vh; }
+#garden-svg { height: 86vh; width: auto; max-width: 100%; display: block; }
+#garden-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.garden-caption { position: absolute; left: 6vw; top: 50%; transform: translateY(-50%); max-width: 290px; pointer-events: none; }
+.garden-caption .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 28px; }
+.garden-caption h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(24px,2.4vw,34px); font-weight: 300; font-style: italic; line-height: 1.32; color: var(--ink); }
+.garden-caption p.sub { font-size: 13px; line-height: 1.85; color: var(--soft); margin-top: 18px; }
+@media (max-width: 900px) {
+  .garden { height: 320vh; }
+  .garden-sticky { align-items: flex-start; padding-top: 11vh; }
+  #garden-svg { height: 64vh; }
+  .garden-caption { left: 0; right: 0; top: auto; bottom: 4vh; transform: none; max-width: none; padding: 0 28px; text-align: center; }
+  .garden-caption p.sub { margin-top: 12px; }
+}
+
+.foot { height: 40vh; display: flex; align-items: center; justify-content: center; color: var(--soft); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+</style>
+
+<!-- Mismo orden que en el sitio real: la biblioteca antes que su consumidor. -->
+<script src="../../assets/js/botanic-lib.js" defer></script>
+<script src="botanic.js" defer></script>
+</head>
+<body>
+
+<div class="note">Referencia guardada — no se publica</div>
+
+<section class="garden" id="garden">
+  <div class="garden-sticky">
+    <svg id="garden-svg" viewBox="0 0 860 1520" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"></svg>
+    <div class="garden-caption">
+      <p class="eye">Selva Alegre</p>
+      <h2>Un jardín que tomó cuarenta años en crecer.</h2>
+      <p class="sub">Hortensias, helechos y rosales que rodean las habitaciones y amortiguan la ciudad. Baja para verlo crecer.</p>
+    </div>
+  </div>
+</section>
+
+<div class="foot">Fin de la referencia</div>
+
+</body>
+</html>

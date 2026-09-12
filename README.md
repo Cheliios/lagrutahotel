@@ -26,7 +26,8 @@ Cada vez que se haga push a la rama publicada, el sitio se actualiza solo (unos 
 ```
 index.html          → markup de las 4 páginas (único archivo en la raíz)
 assets/css/         → estilos
-assets/js/          → interfaz, mapa y las dos capas botánicas
+assets/js/          → interfaz, mapa y la capa vegetal perimetral
+assets/vendor/      → librerías de terceros (Leaflet, BSD-2)
 assets/img/         → fotos, separadas por uso (hero / rooms / hotel / pendientes)
 docs/               → documentación y prototipos que no se publican
 ```
@@ -64,15 +65,16 @@ No hay paso de build: lo que está en el repo es lo que se sube.
 - **Bucket estático (S3, R2…)** → subir `index.html` y `assets/` conservando la
   estructura de carpetas, y marcar `index.html` como documento índice.
 
-Lo único que hay que revisar en producción es el token de Mapbox
-(`assets/js/map.js`) y que el dominio esté en la lista de URLs permitidas del
-token.
+No hay claves ni tokens que configurar: el mapa usa Leaflet con tiles
+públicas y la librería va dentro del repo (`assets/vendor/leaflet/`).
 
 ## Pendientes conocidos
 
-- **Token público de Mapbox**: `assets/js/map.js` tiene un marcador de posición,
-  así que el mapa todavía no carga. Hace falta un token `pk.` (nunca uno `sk.`,
-  que es una clave secreta y no puede ir en el frontend).
+- **Proveedor de tiles del mapa**: se usa Esri World Light Gray Canvas, gratis
+  y sin cuenta desde hace más de una década (se probó primero con CARTO, que
+  en 2024 empezó a exigir cuenta + API key y dejó de servir tiles anónimas —
+  justo lo que se quería evitar al dejar Mapbox). Si algún día también lo
+  cierran, el cambio es una constante: `TILES` en `assets/js/map.js`.
 - **Foto de recepción**: falta `assets/img/hotel/recepcion.jpg`.
 - **Fotos en alta resolución**: los originales actuales llegan a 1448×1086, lo
   que se nota en pantallas grandes. Harían falta a partir de ~2500 px de ancho.

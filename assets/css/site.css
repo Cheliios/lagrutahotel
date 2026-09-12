@@ -42,32 +42,68 @@ img { display: block; max-width: 100%; }
 .hero, .band { z-index: 6; }
 .wc-img, .room-card-media, .loc-map { z-index: 6; }
 
-/* ── SECCIÓN JARDÍN: ilustración botánica dibujada por scroll ── */
-.garden { position: relative; height: 380vh; background: var(--paper); }
-.garden-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; padding-top: 6vh; }
-#garden-svg { height: 86vh; width: auto; max-width: 100%; display: block; }
-#garden-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.garden-caption { position: absolute; left: 6vw; top: 50%; transform: translateY(-50%); max-width: 290px; pointer-events: none; }
-.garden-caption h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(24px,2.4vw,34px); font-weight: 300; font-style: italic; line-height: 1.32; color: var(--ink); }
-.garden-caption p.sub { font-size: 13px; line-height: 1.85; color: var(--soft); margin-top: 18px; }
-@media (max-width: 900px) {
-  .garden { height: 320vh; }
-  .garden-sticky { align-items: flex-start; padding-top: 11vh; }
-  #garden-svg { height: 64vh; }
-  .garden-caption { left: 0; right: 0; top: auto; bottom: 4vh; transform: none; max-width: none; padding: 0 28px; text-align: center; }
-  .garden-caption p.sub { margin-top: 12px; }
+/* ── PRELOADER ──
+   Por encima de todo, incluida .pt (8000): es lo primero que se pinta y lo
+   último en desaparecer. #app-shell es todo lo demás (nav, menú, páginas);
+   arranca en scale(1.03) mientras el preloader tapa la pantalla, y se asienta
+   a scale(1) en el mismo momento en que el overlay se desvanece — el
+   "zoom-out" de salida. */
+.preloader {
+  position: fixed; inset: 0; z-index: 9000;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--paper);
+  transition: opacity .7s cubic-bezier(.76,0,.24,1);
 }
+.preloader.hide { opacity: 0; pointer-events: none; }
+.preloader-mark {
+  font-family: 'Cormorant Garamond', serif; font-size: clamp(20px,2.6vw,30px);
+  letter-spacing: 9px; text-transform: uppercase; color: var(--ink);
+  opacity: 0; transform: scale(.95);
+  animation: preloaderMark .9s ease forwards;
+}
+@keyframes preloaderMark { to { opacity: 1; transform: scale(1); } }
+
+#app-shell.pre-reveal { transform: scale(1.03); }
+#app-shell { transition: transform .7s cubic-bezier(.76,0,.24,1); }
+
+html.no-preload .preloader { display: none; }
 
 /* transition */
 .pt { position: fixed; inset: 0; z-index: 8000; background: var(--paper2); transform: scaleY(0); transform-origin: bottom; pointer-events: none; }
 .pt.in  { transform: scaleY(1); transition: transform .5s cubic-bezier(.76,0,.24,1); transform-origin: bottom; }
 .pt.out { transform: scaleY(0); transition: transform .5s cubic-bezier(.76,0,.24,1); transform-origin: top; }
 
+/* ── BOTÓN FLOTANTE DE WHATSAPP ──
+   z-index bajo el menú (400) y el preloader (9000) a propósito: ambos lo
+   tapan solos al abrirse, sin lógica extra. */
+.wa-float {
+  position: fixed; right: 24px; bottom: 24px; z-index: 200;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #25D366; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,.22);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.wa-float:hover { transform: scale(1.08); box-shadow: 0 8px 26px rgba(0,0,0,.28); }
+.wa-float svg { width: 30px; height: 30px; fill: #fff; }
+@media (max-width: 900px) {
+  .wa-float { width: 52px; height: 52px; right: 16px; bottom: 16px; }
+  .wa-float svg { width: 27px; height: 27px; }
+}
+
 /* ── NAV ── */
 nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 500;
   display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: center; padding: 26px 40px;
+  /* Antes iba sin fondo: sobre una foto clara o sobre el mapa, el logo y
+     "Reservar" (blancos) se perdían. Un scrim oscuro + desenfoque de fondo
+     lo hace legible sobre cualquier foto sin pintar una barra sólida encima
+     del hero. En las páginas sin hero, nav.dark la sustituye por un fondo
+     claro (ver abajo). */
+  background: linear-gradient(to bottom, rgba(15,14,10,.52) 0%, rgba(15,14,10,.22) 65%, rgba(15,14,10,0) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background .35s ease;
 }
 .burger {
   justify-self: start; display: flex; flex-direction: column;
@@ -94,6 +130,14 @@ nav {
   opacity: 0; animation: fade 1s .4s forwards;
 }
 .nav-book:hover { background: #fff; color: var(--ink); }
+/* Sobre contenido claro (tras el hero, o en Ubicación que no tiene hero):
+   fondo papel semitransparente con desenfoque, no el scrim oscuro. */
+nav.dark {
+  background: rgba(251,250,246,.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 rgba(43,43,38,.07);
+}
 nav.dark .burger span { background: var(--ink); }
 nav.dark .nav-logo { color: var(--ink); }
 nav.dark .nav-logo small { color: var(--soft); }
@@ -153,6 +197,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .hw { display: inline-block; transform: translateY(120%); animation: slideUp 1s cubic-bezier(.16,.84,.44,1) forwards; }
 .hw:nth-child(1){animation-delay:.5s} .hw:nth-child(2){animation-delay:.65s}
 .hero-title em { font-style: italic; }
+.hero-sub { font-size: 15px; line-height: 1.7; color: rgba(255,255,255,.85); max-width: 480px; margin: 22px auto 0; opacity: 0; animation: fadeUp .9s .85s forwards; }
 
 /* availability bar */
 .avail {
@@ -176,6 +221,15 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   opacity: 0; animation: fade .9s 1.4s forwards;
 }
 
+/* ═══ FRANJA DE CONFIANZA (home) ═══
+   Línea fina entre el buscador del hero y la bienvenida. El "·" va como
+   elemento propio (no ::before/::after) para poder ocultarlo en la grilla
+   2x2 de móvil sin dejar un punto suelto. */
+.trust-strip { background: var(--paper); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 20px 40px; }
+.trust-strip-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 20px; }
+.trust-item { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--soft); white-space: nowrap; }
+.trust-sep { color: var(--gold); font-size: 13px; }
+
 /* ═══ WELCOME COLLAGE (asymmetric, image 3) ═══ */
 .welcome { position: relative; padding: 160px 40px; max-width: 1300px; margin: 0 auto; min-height: 90vh; }
 .welcome-grid { position: relative; height: 720px; }
@@ -194,10 +248,29 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .wc-desc { font-size: 15px; line-height: 1.8; color: var(--soft); max-width: 300px; margin: 22px auto 0; }
 
 /* ═══ SPACIOUS STATEMENT ═══ */
-.statement { text-align: center; padding: 40px 40px 160px; max-width: 940px; margin: 0 auto; }
+/* ── RITMO COMPOSITIVO ──
+   El ritmo de Inicio es: hero centrado → welcome asimétrico → statement
+   desplazado → habitaciones escalonadas → banda invertida → cierre.
+   Todas las secciones desplazadas se apoyan en la MISMA retícula de 12
+   columnas de 1240px: la asimetría sale de qué columnas ocupa cada bloque,
+   no de márgenes inventados sección por sección. Eso es lo que separa una
+   composición editorial de un collage. */
+.statement {
+  text-align: left;
+  padding: 40px 40px 170px;
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+/* Columnas 2-9 de 12: aire estrecho a la izquierda, generoso a la derecha.
+   Ese vacío asimétrico es además por donde entra la vegetación. */
+.statement .eye { grid-column: 2 / span 7; }
+.statement h2   { grid-column: 2 / span 8; }
 .statement .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 28px; }
 .statement h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,3.8vw,52px); font-weight: 300; line-height: 1.3; color: var(--ink); }
 .statement h2 em { font-style: italic; color: var(--green); }
+.statement p { grid-column: 2 / span 8; font-size: 16px; line-height: 1.85; color: var(--soft); max-width: 640px; margin-top: 24px; }
 
 /* ═══ ROOM CARDS (image 2 style) ═══ */
 .rooms-sec { background: var(--paper2); padding: 140px 40px; }
@@ -206,7 +279,10 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .rooms-count { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft); font-weight: 500; }
 .rooms-head-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,52px); font-weight: 300; color: var(--ink); }
 .rooms-head-title em { font-style: italic; color: var(--green); }
-.rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+/* Desfase vertical entre columnas: rompe la simetría de espejo sin salirse
+   de la retícula. Con 6 tarjetas produce un ritmo de ladrillo constante. */
+.rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px 64px; align-items: start; }
+.rooms-grid > :nth-child(even) { margin-top: 96px; }
 .room-card { background: var(--white); }
 .room-card-media { position: relative; aspect-ratio: 16/10; overflow: hidden; }
 .room-card-media .imgc { transition: transform .8s cubic-bezier(.16,.84,.44,1); }
@@ -214,19 +290,95 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .room-card-arrows { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; opacity: 0; transition: opacity .3s; }
 .room-card:hover .room-card-arrows { opacity: 1; }
 .room-card-arrow { color: #fff; font-size: 24px; text-shadow: 0 1px 8px rgba(0,0,0,.4); cursor: pointer; }
-.room-card-body { padding: 40px 32px 44px; text-align: center; }
+.room-card-body { padding: 40px 32px 44px; text-align: left; }
 .room-card-name { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--green-lt); margin-bottom: 16px; }
-.room-card-desc { font-size: 14px; line-height: 1.7; color: var(--soft); max-width: 380px; margin: 0 auto 28px; }
-.room-card-actions { display: flex; align-items: center; justify-content: center; gap: 28px; }
+.room-card-desc { font-size: 14px; line-height: 1.7; color: var(--soft); max-width: 380px; margin: 0 0 28px; }
+.room-card-actions { display: flex; align-items: center; justify-content: flex-start; gap: 28px; }
 .rc-book { background: var(--ink); color: #fff; border: none; padding: 14px 28px; font-family: 'Jost',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background .3s; text-decoration: none; }
 .rc-book:hover { background: var(--green); }
 .rc-more { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 4px; transition: color .2s; }
 .rc-more:hover { color: var(--green); }
 
+/* Línea de meta de una experiencia (duración · modalidad · precio): mismo
+   lenguaje tipográfico que las etiquetas pequeñas del sitio (.rv-cl, .eye),
+   entre la descripción y el botón de la tarjeta. */
+.room-card-meta { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin: -14px 0 22px; }
+.room-card-badge { position: absolute; top: 14px; left: 14px; z-index: 2; background: var(--ink); color: #fff; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; padding: 8px 14px; max-width: calc(100% - 28px); }
+
+/* ═══ OFERTAS DE TEMPORADA (home) ═══
+   Borde fino, sin fondo llamativo a propósito: es un aviso, no un banner. */
+.offer-strip { padding: 90px 40px; }
+.offer-strip-in { max-width: 860px; margin: 0 auto; border: 1px solid var(--hair); padding: 52px 40px; text-align: center; }
+.offer-strip-in h3 { font-family: 'Cormorant Garamond', serif; font-size: clamp(24px,2.8vw,34px); font-weight: 400; color: var(--ink); margin-bottom: 16px; }
+.offer-strip-in p { font-size: 14px; line-height: 1.7; color: var(--soft); max-width: 480px; margin: 0 auto 28px; }
+
+/* ═══ EXPERIENCIAS ═══
+   Reutiliza la retícula de 12 columnas de .statement (misma asimetría, mismo
+   vacío por donde entra la vegetación) para la intro, y .rooms-grid/.room-card
+   sin cambios para la grilla de tours: son clases ya genéricas, no específicas
+   de habitaciones. */
+.exp-intro { padding: 100px 40px 70px; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: repeat(12, 1fr); }
+.exp-intro .eye { grid-column: 2 / span 7; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; }
+.exp-intro-text { grid-column: 2 / span 8; font-size: 16px; line-height: 1.85; color: var(--soft); max-width: 640px; }
+
+.exp-note { text-align: center; max-width: 680px; margin: 0 auto; padding: 90px 40px 130px; }
+.exp-note p { font-size: 13px; line-height: 1.8; color: var(--muted); margin-bottom: 32px; }
+
+/* ═══ EL JARDÍN (home) ═══
+   Split imagen/texto: dos fotos superpuestas en un lado, texto en el otro.
+   Mismo lenguaje que .statement/.loc-head (eye + h2), pero en dos columnas
+   en vez de una retícula de 12, porque aquí el contrapeso es una foto real,
+   no aire. */
+.jardin-sec { padding: 150px 40px; }
+.jardin-grid { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: center; }
+.jardin-media { position: relative; height: 520px; }
+.jardin-img { position: absolute; overflow: hidden; }
+.jardin-img-1 { width: 76%; height: 68%; top: 0; left: 0; }
+.jardin-img-2 { width: 56%; height: 56%; bottom: 0; right: 0; border: 8px solid var(--paper); }
+.jardin-text .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; }
+.jardin-text h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,3.8vw,48px); font-weight: 300; color: var(--ink); line-height: 1.25; margin-bottom: 24px; }
+.jardin-text p { font-size: 15px; line-height: 1.85; color: var(--soft); max-width: 440px; }
+
+/* ═══ GASTRONOMÍA (home) ═══
+   Mismo esqueleto que .band (foto a sangre + overlay + texto encima), pero
+   centrado en vez de desplazado a un costado, y con la fotografía partida en
+   dos mitades en vez de una sola: entra el comedor y el plato a la vez, sin
+   forzar una sola imagen a cargar dos historias. */
+.gastro { position: relative; height: 78vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.gastro-media { position: absolute; inset: 0; display: flex; }
+.gastro-media > div { position: relative; flex: 1; overflow: hidden; }
+.gastro::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.35); z-index: 1; }
+.gastro-in { position: relative; z-index: 2; text-align: center; max-width: 620px; padding: 0 24px; }
+.gastro-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,60px); font-weight: 300; color: #fff; line-height: 1.2; margin-bottom: 20px; }
+.gastro-in p { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,.85); }
+.gastro-note { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 20px; }
+
+/* ═══ PREGUNTAS FRECUENTES (home) ═══
+   Acordeón nativo: <details>/<summary>, sin una línea de JS. El marcador
+   por defecto del navegador se apaga con list-style + ::marker/
+   ::-webkit-details-marker, y el chevron propio gira con el atributo
+   [open], que el navegador ya mantiene solo. */
+.faq-sec { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
+.faq-head { margin-bottom: 56px; }
+.faq-head .eye { display: block; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
+.faq-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,48px); font-weight: 300; color: var(--ink); }
+.faq-item { border-bottom: 1px solid var(--hair); list-style: none; }
+.faq-item::marker, .faq-item::-webkit-details-marker { display: none; }
+.faq-item:first-of-type { border-top: 1px solid var(--hair); }
+.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 0; cursor: pointer; list-style: none; }
+.faq-item summary::marker, .faq-item summary::-webkit-details-marker { display: none; }
+.faq-q { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); }
+.faq-chevron { font-size: 15px; color: var(--gold); transition: transform .3s; flex-shrink: 0; }
+.faq-item[open] .faq-chevron { transform: rotate(180deg); }
+.faq-a { padding: 0 0 30px; font-size: 14px; line-height: 1.8; color: var(--soft); max-width: 680px; }
+
 /* ═══ FULL IMAGE BAND ═══ */
-.band { height: 78vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+/* Invierte el desplazamiento del statement: allí el texto va a la izquierda,
+   aquí a la derecha. Es el latido "invertido" del ritmo, y deja la mitad
+   izquierda de la fotografía despejada. */
+.band { height: 78vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; padding-right: 9vw; }
 .band::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.35); z-index: 1; }
-.band-in { position: relative; z-index: 2; text-align: center; }
+.band-in { position: relative; z-index: 2; text-align: right; max-width: 620px; }
 .band-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,64px); font-weight: 300; color: #fff; line-height: 1.2; }
 .band-in em { font-style: italic; }
 .band-link { display: inline-flex; align-items: center; gap: 12px; color: #fff; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; margin-top: 28px; border-bottom: 1px solid var(--gold); padding-bottom: 5px; }
@@ -236,20 +388,52 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 
 /* ═══ LOCATION ═══ */
 .loc-map { height: 76vh; position: relative; overflow: hidden; background: var(--paper2); }
-.loc-map .mapboxgl-map { position: absolute; inset: 0; }
+#loc-map-canvas { position: absolute; inset: 0; background: var(--paper2); }
+
+/* Leaflet apila sus paneles internos hasta z-index 800. `.loc-map` tiene
+   z-index propio, así que esos valores quedan contenidos dentro de ella; pero
+   la insignia y el enlace, que son hermanos del mapa, hay que subirlos por
+   encima o el mapa se los come. */
+.loc-overlay {
+  position: absolute; left: 28px; bottom: 28px; z-index: 900;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+}
+.loc-directions {
+  background: var(--white); color: var(--ink); text-decoration: none;
+  padding: 13px 22px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  box-shadow: 0 2px 18px rgba(30,28,22,.12); transition: background .25s, color .25s;
+}
+.loc-directions:hover { background: var(--green); color: #fff; }
+
+/* Especificidad por encima de `.leaflet-marker-icon { display:block }`. */
+.leaflet-marker-icon.loc-marker { display: flex; background: none; border: none; }
+
+/* Controles y atribución, alineados con el resto del sitio. La atribución es
+   obligatoria por licencia de OpenStreetMap y CARTO: no se elimina. */
+.loc-map .leaflet-control-attribution {
+  background: rgba(251,250,246,.88); font-family: 'Jost', sans-serif;
+  font-size: 10px; color: var(--muted); padding: 4px 8px;
+}
+.loc-map .leaflet-control-attribution a { color: var(--soft); }
+.loc-map .leaflet-bar a {
+  background: var(--white); color: var(--ink);
+  border-bottom-color: var(--hair); width: 34px; height: 34px; line-height: 34px;
+}
+.loc-map .leaflet-bar a:hover { background: var(--paper2); color: var(--green); }
+.loc-map .leaflet-bar { border: none; box-shadow: 0 2px 18px rgba(30,28,22,.12); }
 .loc-marker { display: flex; flex-direction: column; align-items: center; }
 .loc-dot { width: 13px; height: 13px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 7px rgba(58,82,54,.18), 0 0 0 18px rgba(58,82,54,.08); animation: pulse 2s infinite; }
 .loc-line { width: 1px; height: 44px; background: linear-gradient(to bottom,var(--green),transparent); }
 .loc-tag { background: var(--green); color: #fff; padding: 9px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
 .loc-badge {
-  position: absolute; left: 28px; bottom: 28px; z-index: 5;
+  position: relative;
   background: var(--paper); box-shadow: 0 20px 50px rgba(0,0,0,.2);
   padding: 20px 26px; display: flex; align-items: center; gap: 16px; max-width: 280px;
 }
 .loc-badge-n { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 400; color: var(--green); line-height: 1; }
 .loc-badge-t { font-size: 11px; line-height: 1.5; letter-spacing: .5px; color: var(--ink); text-transform: uppercase; }
 .loc-body { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
-.loc-head { text-align: center; margin-bottom: 64px; }
+.loc-head { text-align: left; margin-bottom: 64px; max-width: 620px; }
 .loc-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
 .loc-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px,4.5vw,60px); font-weight: 300; color: var(--ink); }
 .loc-head h2 em { font-style: italic; color: var(--green); }
@@ -268,7 +452,9 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-nearby-list span { font-size: 14px; color: var(--soft); }
 @media (max-width: 900px) {
   .loc-dir-grid { grid-template-columns: 1fr; gap: 20px; }
-  .loc-badge { left: 16px; bottom: 16px; padding: 14px 18px; gap: 12px; max-width: 220px; }
+  .loc-overlay { left: 16px; bottom: 16px; gap: 10px; }
+  .loc-badge { padding: 14px 18px; gap: 12px; max-width: 220px; }
+  .loc-directions { padding: 11px 17px; font-size: 10px; }
   .loc-badge-n { font-size: 38px; }
   .loc-badge-t { font-size: 10px; }
 }
@@ -303,6 +489,25 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 .rv-el { opacity: 0; transform: translateY(30px); transition: opacity 1s, transform 1s cubic-bezier(.16,.84,.44,1); }
 .rv-el.on { opacity: 1; transform: none; }   /* `none`, no translateY(0): así la card deja de ser stacking context y su foto puede subir sobre la vegetación */
 
+/* ── Revelado de texto al hacer scroll (títulos por palabra, párrafos en bloque) ──
+   [data-reveal="words"] llega con su texto normal en el HTML; app.js lo
+   envuelve palabra por palabra en tiempo de ejecución (.rw exterior con
+   overflow:hidden de máscara, .rw-in interior es el que se traslada), igual
+   truco que .hero-title .hl/.hw pero disparado por scroll en vez de por
+   carga de página — por eso el <h1> del hero queda fuera de este sistema. */
+.rw { display: inline-block; overflow: hidden; }
+.rw-in { display: inline-block; transform: translateY(110%); opacity: 0; transition: transform .7s cubic-bezier(.16,.84,.44,1), opacity .7s cubic-bezier(.16,.84,.44,1); }
+.rw-in.on { transform: translateY(0); opacity: 1; }
+
+[data-reveal="fade"] { opacity: 0; transform: translateY(24px); transition: opacity .8s cubic-bezier(.16,.84,.44,1), transform .8s cubic-bezier(.16,.84,.44,1); }
+[data-reveal="fade"].on { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rw-in { opacity: 1; transform: none; transition: none; }
+  [data-reveal="fade"] { opacity: 1; transform: none; transition: none; }
+  .preloader, .preloader-mark, #app-shell { animation: none !important; transition: none !important; }
+}
+
 @keyframes fade { to { opacity: 1; } }
 @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 @keyframes slideUp { to { transform: translateY(0); } }
@@ -313,7 +518,39 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .wc-img { position: relative; width: 100% !important; height: 240px !important; inset: auto !important; }
   .wc-center { position: relative; transform: none; top: auto; left: auto; margin: 20px 0; }
   .rooms-grid, .rv-body, .rv-row { grid-template-columns: 1fr; gap: 32px; }
+  /* En una sola columna el desfase y los desplazamientos no aportan ritmo,
+     solo desalinean. Se desactivan. */
+  .rooms-grid > :nth-child(even) { margin-top: 0; }
+  .statement { grid-template-columns: 1fr; padding-bottom: 110px; text-align: center; }
+  .statement .eye, .statement h2, .statement p { grid-column: 1; max-width: none; }
+  .exp-intro { grid-template-columns: 1fr; text-align: center; padding: 70px 24px 40px; }
+  .exp-intro .eye, .exp-intro-text { grid-column: 1; max-width: none; }
+  .jardin-sec { padding: 90px 24px; }
+  .jardin-grid { grid-template-columns: 1fr; gap: 48px; text-align: center; }
+  .jardin-media { height: 340px; }
+  .jardin-text p { max-width: none; margin: 0 auto; }
+  .gastro-media { flex-direction: column; }
+  .faq-sec { padding: 90px 24px; }
+  .faq-head { text-align: center; }
+  .faq-a { max-width: none; }
+  .band { justify-content: center; padding-right: 0; }
+  .band-in { text-align: center; max-width: none; }
+  .loc-head { text-align: center; max-width: none; }
   .avail { grid-template-columns: 1fr 1fr; }
   .menu-inner { grid-template-columns: 1fr; } .menu-side { display: none; }
   .ft-top { grid-template-columns: 1fr; }
+  .trust-strip-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
+  /* .trust-item trae white-space:nowrap para la fila de escritorio; en la
+     grilla 2x2 esa misma regla impedía partir "Camas que nuestros huéspedes
+     elogian" en dos líneas, así que la celda se estiraba más ancha que su
+     1fr y toda la página quedaba con scroll horizontal. */
+  .trust-item { white-space: normal; text-align: center; min-width: 0; }
+  .trust-sep { display: none; }
+  .offer-strip-in { padding: 40px 24px; }
+  /* deja aire abajo del pie de página para que el botón flotante de WhatsApp
+     no tape el último bloque de contacto/enlaces en pantallas chicas — va
+     acá (después de la regla base de footer más arriba en el archivo) para
+     que la cascada la respete: dentro de un @media que aparece ANTES perdía
+     contra esa regla sin condición. */
+  footer { padding-bottom: 110px; }
 }
