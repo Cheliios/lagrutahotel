@@ -43,7 +43,7 @@ function goTo(page){
     if(location.hash.slice(1)!==wantHash) location.hash = wantHash;
     // `invalidateSize` es el equivalente en Leaflet a un resize: el contenedor
     // acaba de hacerse visible y el mapa se midió cuando aún valía 0.
-    if(page==='location'){ window.initLocMap?.(); setTimeout(()=>window.locMap?.invalidateSize(),560); }
+    if(page==='location'){ ensureLocMap(); setTimeout(()=>window.locMap?.invalidateSize(),560); }
     pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
   },520);
 }
@@ -140,13 +140,36 @@ function navColor(){
 window.addEventListener('scroll',navColor);
 navColor(); // por si la carga inicial ya abrió, vía hash, una página sin hero
 
+/* ── Carga de Leaflet bajo demanda ──
+   Antes vivía en <head> y se descargaba en las 5 páginas aunque solo
+   Ubicación lo usa (~164KB de biblioteca + tiles que nadie más pide). Se
+   inyecta la primera vez que hace falta el mapa, memoizado para no
+   repetirlo si el visitante entra y sale de Ubicación varias veces.
+   El <link> de Leaflet se inserta ANTES que site.css en el <head> (no al
+   final): site.css sobrescribe el estilo del marcador y los controles, y
+   esa cascada depende de que Leaflet cargue primero — insertarlo después
+   invertiría el orden y esos estilos dejarían de aplicar. */
+let leafletReady = null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve();
+  if(leafletReady) return leafletReady;
+  leafletReady = new Promise((resolve, reject) => {
+    const siteCss = document.querySelector('link[href="assets/css/site.css"]');
+    const css = document.createElement('link');
+    css.rel = 'stylesheet'; css.href = 'assets/vendor/leaflet/leaflet.css';
+    siteCss.parentNode.insertBefore(css, siteCss);
+    const script = document.createElement('script');
+    script.src = 'assets/vendor/leaflet/leaflet.js';
+    script.onload = resolve; script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return leafletReady;
+}
+function ensureLocMap(){ loadLeaflet().then(() => window.initLocMap?.()); }
+
 // El mapa de Ubicación se inicializa bajo demanda; si la carga inicial ya
-// apunta ahí (#location), hay que dispararlo igual. Pero recién cuando exista
-// window.initLocMap: lo define map.js, que va después de este script en el
-// <head> y con `defer`, así que a esta altura del archivo todavía no corrió.
-// setTimeout(...,0) lo pospone a la cola de tareas, momento en el que map.js
-// ya se ejecutó por completo.
-if(current==='location') setTimeout(()=>window.initLocMap?.(),0);
+// apunta ahí (#location), hay que dispararlo igual.
+if(current==='location') ensureLocMap();
 
 // Atrás/adelante del navegador, o alguien que edita el hash a mano estando ya
 // en la página: se sigue igual que un click en el menú.
