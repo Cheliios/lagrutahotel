@@ -540,6 +540,11 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .menu-inner { grid-template-columns: 1fr; } .menu-side { display: none; }
   .ft-top { grid-template-columns: 1fr; }
   .trust-strip-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
+  /* .trust-item trae white-space:nowrap para la fila de escritorio; en la
+     grilla 2x2 esa misma regla impedía partir "Camas que nuestros huéspedes
+     elogian" en dos líneas, así que la celda se estiraba más ancha que su
+     1fr y toda la página quedaba con scroll horizontal. */
+  .trust-item { white-space: normal; text-align: center; min-width: 0; }
   .trust-sep { display: none; }
   .offer-strip-in { padding: 40px 24px; }
   /* deja aire abajo del pie de página para que el botón flotante de WhatsApp
