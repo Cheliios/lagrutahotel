@@ -13,6 +13,14 @@ const burger=document.getElementById('burger'), menu=document.getElementById('me
 let menuOpen=false;
 burger.addEventListener('click',()=>{ menuOpen=!menuOpen; burger.classList.toggle('open',menuOpen); menu.classList.toggle('open',menuOpen); });
 
+// Enrutamiento por hash: cada página tiene su propio #hash (#home, #rooms,
+// #location, #reservas, #experiencias), igual que su data-page. Sirve para
+// compartir un link directo a una sección, para que recargar no vuelva
+// siempre a Inicio, y para que el botón atrás/adelante del navegador
+// funcione, aunque esto siga siendo una SPA de una sola página.
+function pageExists(page){ return !!document.getElementById('page-'+page); }
+function pageFromHash(){ const p = location.hash.slice(1); return pageExists(p) ? p : null; }
+
 let current='home';
 const pt=document.getElementById('pt');
 function goTo(page){
@@ -23,6 +31,17 @@ function goTo(page){
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
     current=page; window.scrollTo(0,0); reAnim(page); window.vinesRefresh?.(); navColor();
+    // location.hash (no history.replaceState) a propósito: así el atrás del
+    // navegador funciona. No genera un bucle con el listener de hashchange de
+    // más abajo porque `current` ya quedó al día en la línea de arriba, y ese
+    // listener llama a goTo(), que se sale de inmediato si page===current.
+    // Inicio se representa con hash vacío, no "#home": si en vez de eso se
+    // forzara location.hash='home' cada vez que el atrás del navegador cae en
+    // el hash vacío original, se pisaría la pila de "adelante" (el hash pasa
+    // de '' a 'home', un valor distinto, así que el navegador lo trata como
+    // una navegación nueva y descarta el "adelante" que hubiera).
+    const wantHash = page==='home' ? '' : page;
+    if(location.hash.slice(1)!==wantHash) location.hash = wantHash;
     // `invalidateSize` es el equivalente en Leaflet a un resize: el contenedor
     // acaba de hacerse visible y el mapa se midió cuando aún valía 0.
     if(page==='location'){ window.initLocMap?.(); setTimeout(()=>window.locMap?.invalidateSize(),560); }
@@ -30,6 +49,21 @@ function goTo(page){
   },520);
 }
 document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();goTo(el.dataset.page);}));
+
+// Si la página se carga con un hash presente (link directo o recarga), se
+// abre esa sección de una vez. El cambio se hace "a mano" en vez de con
+// goTo(): goTo() dispara la transición animada y reAnim() (pensada para
+// RE-lanzar animaciones que ya se reprodujeron al cambiar de página) —
+// ninguna de las dos hace falta en la primera carga, y llamarlas aquí, antes
+// de que existan navEl/navColor/initLocMap (se definen más abajo o en
+// map.js, que corre después de este script), rompería con un error de
+// referencia.
+const inicial = pageFromHash();
+if(inicial && inicial!==current){
+  document.getElementById('page-'+current).classList.remove('active');
+  document.getElementById('page-'+inicial).classList.add('active');
+  current = inicial;
+}
 
 function reAnim(page){
   document.querySelectorAll('#page-'+page+' .hw').forEach((el,i)=>{ el.style.animation='none'; el.offsetHeight; el.style.animation=''; el.style.animationDelay=(0.35+i*.15)+'s'; });
@@ -40,7 +74,7 @@ function obs(){
   const o=new IntersectionObserver(en=>{ en.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); o.unobserve(e.target);} }); },{threshold:.12});
   document.querySelectorAll('.page.active .rv-el').forEach(el=>o.observe(el));
 }
-obs();
+obs(); // ya observa la página correcta: el swap por hash de arriba ya ocurrió
 
 const navEl=document.getElementById('nav');
 // La barra es blanca sobre la foto oscura del hero y se oscurece al pasarla.
@@ -53,6 +87,19 @@ function navColor(){
   navEl.classList.toggle('dark', !conHero || window.scrollY > window.innerHeight*.82);
 }
 window.addEventListener('scroll',navColor);
+navColor(); // por si la carga inicial ya abrió, vía hash, una página sin hero
+
+// El mapa de Ubicación se inicializa bajo demanda; si la carga inicial ya
+// apunta ahí (#location), hay que dispararlo igual. Pero recién cuando exista
+// window.initLocMap: lo define map.js, que va después de este script en el
+// <head> y con `defer`, así que a esta altura del archivo todavía no corrió.
+// setTimeout(...,0) lo pospone a la cola de tareas, momento en el que map.js
+// ya se ejecutó por completo.
+if(current==='location') setTimeout(()=>window.initLocMap?.(),0);
+
+// Atrás/adelante del navegador, o alguien que edita el hash a mano estando ya
+// en la página: se sigue igual que un click en el menú.
+window.addEventListener('hashchange', () => goTo(pageFromHash() || 'home'));
 
 /* ── Formulario de reservas → WhatsApp / correo ── */
 const rvForm = document.getElementById('reservaForm');

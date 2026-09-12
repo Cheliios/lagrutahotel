@@ -3,7 +3,7 @@
 Sitio estático. Sin build, sin dependencias que instalar, sin framework. Se
 abre `index.html` con cualquier servidor estático y funciona.
 
-Esa elección no es pereza: el encargo es una landing institucional de cuatro
+Esa elección no es pereza: el encargo es una landing institucional de cinco
 páginas que va a cambiar poco y que tiene que poder subirse a cualquier sitio
 —GitHub Pages hoy, Plesk mañana— sin que nadie tenga que instalar Node para
 tocar un texto. Un framework aquí añadiría un paso de build y un punto de fallo
@@ -12,7 +12,7 @@ a cambio de nada.
 ## Estructura
 
 ```
-index.html                 ← markup de las 4 páginas. ÚNICO archivo en la raíz.
+index.html                 ← markup de las 5 páginas. ÚNICO archivo en la raíz.
 assets/
   css/
     site.css               ← todos los estilos
@@ -27,6 +27,7 @@ assets/
     hero/                  ← cabeceras a sangre de cada página
     rooms/                 ← una foto por tipo de habitación publicado
     hotel/                 ← fachada, cafetería, jardín, panorámica
+    experiencias/          ← una foto por tour (aún no existe: placeholder)
     pendientes/            ← fotos que existen pero aún no se publican
 docs/
   ARQUITECTURA.md          ← este archivo
@@ -305,16 +306,38 @@ la fuerza a oscura cuando la página activa no trae `.hero`.
 
 ## Navegación
 
-Es una SPA falsa: las cuatro páginas están en el HTML dentro de `div.page`, y
+Es una SPA falsa: las cinco páginas están en el HTML dentro de `div.page`, y
 `goTo()` alterna cuál tiene la clase `active`.
 
-**Limitación conocida y aún no resuelta:** no hay URLs reales. Las cuatro
-páginas comparten la misma dirección, así que no se puede enlazar a
-"Habitaciones" ni indexarlas por separado en Google. Para una landing de hotel,
-donde el tráfico de búsqueda importa, esto es una deuda a saldar antes de dar el
-sitio por definitivo. La salida natural es pasar a cuatro archivos HTML reales
-—`habitaciones.html`, `ubicacion.html`, `reservas.html`— reutilizando el mismo
-CSS y los mismos scripts, que ya están separados justamente para eso.
+Cada página tiene su hash (`#home`, `#rooms`, `#location`, `#reservas`,
+`#experiencias`), igual que su `data-page`. `goTo()` lo actualiza al navegar
+(`location.hash`, no `history.replaceState`, a propósito: así el atrás/adelante
+del navegador funciona de verdad, con sus propias entradas de historial) y un
+listener de `hashchange` hace lo mismo a la inversa —atrás, adelante, o alguien
+que edita el hash a mano llaman a `goTo()` igual que un click de menú. Al cargar
+la página con un hash presente (link directo o recarga) se abre esa sección de
+una vez, con un swap de clases manual en vez de pasar por `goTo()`/`reAnim()`:
+esas dos están pensadas para RE-lanzar una transición ya en curso y llaman a
+funciones (`navColor`, `window.initLocMap`) que en la primera carga del script
+todavía no existen — `navColor` porque se define más abajo en el mismo archivo,
+`initLocMap` porque lo define `map.js`, que va después con `defer`. Invocarlas
+antes de tiempo (el primer intento de esto lo hizo) revienta con
+`ReferenceError` por acceder a un `const` en su *temporal dead zone*.
+
+**Inicio es hash vacío, no `#home`.** Si se forzara `location.hash = 'home'`
+cada vez que `goTo('home')` corre, incluido cuando lo dispara el propio atrás
+del navegador cayendo en el hash vacío original, ese cambio de valor (de `''` a
+`'home'`) se leería como una navegación nueva y pisaría la pila de "adelante".
+Por eso `goTo()` sólo escribe el hash cuando el destino no es Inicio.
+
+**Limitación conocida y aún no resuelta:** aunque ya se puede enlazar y
+recargar en `#experiencias`, `#rooms`, etc., sigue siendo una sola URL de
+documento — Google no las indexa como páginas separadas. Para una landing de
+hotel, donde el tráfico de búsqueda importa, esto es una deuda a saldar antes de
+dar el sitio por definitivo. La salida natural es pasar a archivos HTML reales
+—`habitaciones.html`, `ubicacion.html`, `reservas.html`, `experiencias.html`—
+reutilizando el mismo CSS y los mismos scripts, que ya están separados
+justamente para eso.
 
 ## Imágenes
 
