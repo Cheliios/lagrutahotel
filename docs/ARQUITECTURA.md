@@ -26,7 +26,7 @@ assets/
   img/
     hero/                  ← cabeceras a sangre de cada página
     rooms/                 ← una foto por tipo de habitación publicado
-    hotel/                 ← fachada, cafetería, jardín, panorámica
+    hotel/                 ← fachada, cafetería, jardín, panorámica, comedor, comida
     experiencias/          ← una foto por tour (aún no existe: placeholder)
     pendientes/            ← fotos que existen pero aún no se publican
 docs/
@@ -95,6 +95,9 @@ Las secciones no se componen todas igual a propósito. El ritmo de Inicio es:
 | welcome | collage asimétrico |
 | statement | desplazada a la izquierda, aire generoso a la derecha |
 | habitaciones | rejilla escalonada, texto de tarjeta alineado a la izquierda |
+| el jardín | split imagen/texto, dos fotos superpuestas contra el bloque de texto |
+| gastronomía | foto a sangre partida en dos, texto centrado encima (variante simétrica de banda) |
+| preguntas frecuentes | acordeón nativo `<details>`, una sola columna |
 | banda | invertida: texto a la derecha, mitad izquierda de la foto despejada |
 | footer | cierre |
 

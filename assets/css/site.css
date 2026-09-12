@@ -262,6 +262,53 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .exp-note { text-align: center; max-width: 680px; margin: 0 auto; padding: 90px 40px 130px; }
 .exp-note p { font-size: 13px; line-height: 1.8; color: var(--muted); margin-bottom: 32px; }
 
+/* ═══ EL JARDÍN (home) ═══
+   Split imagen/texto: dos fotos superpuestas en un lado, texto en el otro.
+   Mismo lenguaje que .statement/.loc-head (eye + h2), pero en dos columnas
+   en vez de una retícula de 12, porque aquí el contrapeso es una foto real,
+   no aire. */
+.jardin-sec { padding: 150px 40px; }
+.jardin-grid { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: center; }
+.jardin-media { position: relative; height: 520px; }
+.jardin-img { position: absolute; overflow: hidden; }
+.jardin-img-1 { width: 76%; height: 68%; top: 0; left: 0; }
+.jardin-img-2 { width: 56%; height: 56%; bottom: 0; right: 0; border: 8px solid var(--paper); }
+.jardin-text .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; }
+.jardin-text h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,3.8vw,48px); font-weight: 300; color: var(--ink); line-height: 1.25; margin-bottom: 24px; }
+.jardin-text p { font-size: 15px; line-height: 1.85; color: var(--soft); max-width: 440px; }
+
+/* ═══ GASTRONOMÍA (home) ═══
+   Mismo esqueleto que .band (foto a sangre + overlay + texto encima), pero
+   centrado en vez de desplazado a un costado, y con la fotografía partida en
+   dos mitades en vez de una sola: entra el comedor y el plato a la vez, sin
+   forzar una sola imagen a cargar dos historias. */
+.gastro { position: relative; height: 78vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.gastro-media { position: absolute; inset: 0; display: flex; }
+.gastro-media > div { position: relative; flex: 1; overflow: hidden; }
+.gastro::after { content: ''; position: absolute; inset: 0; background: rgba(30,28,22,.35); z-index: 1; }
+.gastro-in { position: relative; z-index: 2; text-align: center; max-width: 620px; padding: 0 24px; }
+.gastro-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,60px); font-weight: 300; color: #fff; line-height: 1.2; margin-bottom: 20px; }
+.gastro-in p { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,.85); }
+
+/* ═══ PREGUNTAS FRECUENTES (home) ═══
+   Acordeón nativo: <details>/<summary>, sin una línea de JS. El marcador
+   por defecto del navegador se apaga con list-style + ::marker/
+   ::-webkit-details-marker, y el chevron propio gira con el atributo
+   [open], que el navegador ya mantiene solo. */
+.faq-sec { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
+.faq-head { margin-bottom: 56px; }
+.faq-head .eye { display: block; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
+.faq-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,48px); font-weight: 300; color: var(--ink); }
+.faq-item { border-bottom: 1px solid var(--hair); list-style: none; }
+.faq-item::marker, .faq-item::-webkit-details-marker { display: none; }
+.faq-item:first-of-type { border-top: 1px solid var(--hair); }
+.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 0; cursor: pointer; list-style: none; }
+.faq-item summary::marker, .faq-item summary::-webkit-details-marker { display: none; }
+.faq-q { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); }
+.faq-chevron { font-size: 15px; color: var(--gold); transition: transform .3s; flex-shrink: 0; }
+.faq-item[open] .faq-chevron { transform: rotate(180deg); }
+.faq-a { padding: 0 0 30px; font-size: 14px; line-height: 1.8; color: var(--soft); max-width: 680px; }
+
 /* ═══ FULL IMAGE BAND ═══ */
 /* Invierte el desplazamiento del statement: allí el texto va a la izquierda,
    aquí a la derecha. Es el latido "invertido" del ritmo, y deja la mitad
@@ -396,6 +443,14 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .statement .eye, .statement h2 { grid-column: 1; }
   .exp-intro { grid-template-columns: 1fr; text-align: center; padding: 70px 24px 40px; }
   .exp-intro .eye, .exp-intro-text { grid-column: 1; max-width: none; }
+  .jardin-sec { padding: 90px 24px; }
+  .jardin-grid { grid-template-columns: 1fr; gap: 48px; text-align: center; }
+  .jardin-media { height: 340px; }
+  .jardin-text p { max-width: none; margin: 0 auto; }
+  .gastro-media { flex-direction: column; }
+  .faq-sec { padding: 90px 24px; }
+  .faq-head { text-align: center; }
+  .faq-a { max-width: none; }
   .band { justify-content: center; padding-right: 0; }
   .band-in { text-align: center; max-width: none; }
   .loc-head { text-align: center; max-width: none; }
