@@ -154,6 +154,17 @@
         var t = TONE[tone] || TONE.leaf;
         var p = document.createElementNS(B.NS, 'path');
         p.setAttribute('d', d);
+        // Longitud NORMALIZADA a 1. Con este atributo el navegador escala
+        // stroke-dasharray/dashoffset a 1 en lugar de a la longitud real del
+        // trazo, así que ya no hace falta preguntársela con getTotalLength().
+        // No cambia el dibujo ni un píxel: pathLength solo afecta al cálculo
+        // de los guiones, no a la geometría, al grosor ni al color.
+        //
+        // Por qué importa: medido con el perfilador de CPU, getTotalLength()
+        // era el 84,4% del tiempo de construcción de la capa (21.120ms de
+        // 25.025ms en Inicio). El navegador tenía que integrar la longitud de
+        // arco de ~9 MB de curvas, un trazo cada vez y todo síncrono.
+        p.setAttribute('pathLength', '1');
         p.setAttribute('stroke', t.c);
         p.setAttribute('stroke-width', (w * 0.95).toFixed(2));
         p.setAttribute('opacity', Math.min(1, t.o * INTENSIDAD).toFixed(2));

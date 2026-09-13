@@ -326,7 +326,19 @@ window.Botanic = (function () {
      Motor de dibujo compartido
      ========================================================================= */
 
-  // getTotalLength() se llama UNA vez por trazo, aquí y solo aquí.
+  // Prepara cada trazo para dibujarse: oculto del todo y listo para revelarse.
+  //
+  // NO se mide nada. Los trazos llevan el atributo pathLength="1" (ver P.draw
+  // en vines.js), así que para el navegador su longitud a efectos de guiones
+  // vale 1, sea cual sea su geometría real: dasharray 1 y dashoffset de 1 a 0.
+  //
+  // Aquí vivía una llamada a getTotalLength() por trazo, y era el cuello de
+  // botella del sitio entero: el 84,4% del tiempo de construcción según el
+  // perfilador (21.120ms de 25.025ms en Inicio), porque el navegador tenía que
+  // integrar la longitud de arco de ~9 MB de curvas de forma síncrona. La capa
+  // congelaba el hilo principal 12 segundos en la carga y hasta 11 al cambiar
+  // de sección. Medido aparte con geometría equivalente: 5.000 trazos costaban
+  // 3.133ms con getTotalLength() y 8ms con pathLength.
   //
   // Al terminar deja `items` ORDENADO por inicio de ventana. No es cosmético:
   // el render persistente se apoya en ese orden para no recorrer en cada frame
@@ -335,10 +347,10 @@ window.Botanic = (function () {
   // decide el DOM, no este array.
   function measure(items) {
     for (var i = 0; i < items.length; i++) {
-      var it = items[i], L = it.el.getTotalLength();
-      it.len = L; it.k = -1;
-      it.el.style.strokeDasharray  = L.toFixed(2);
-      it.el.style.strokeDashoffset = L.toFixed(2);
+      var it = items[i];
+      it.len = 1; it.k = -1;
+      it.el.style.strokeDasharray  = '1';
+      it.el.style.strokeDashoffset = '1';
     }
     items.sort(function (a, b) { return a.s - b.s; });
     items._h = 0; items._t = 0;
@@ -399,7 +411,12 @@ window.Botanic = (function () {
       if (persist && k < it.k) continue;         // crecimiento persistente
       if (k === it.k) continue;
       it.k = k;
-      it.el.style.strokeDashoffset = (it.len * (1 - k)).toFixed(2);
+      // 4 decimales, no 2: con la longitud normalizada a 1, dos decimales
+      // dejarían el trazado en saltos del 1% y tirarían por la borda la
+      // cuantización de k a 1/400 que hay tres líneas más arriba. Con cuatro,
+      // 1/400 = 0.0025 se representa exacto y el dibujo conserva los mismos
+      // 400 pasos visuales que tenía con la longitud en píxeles.
+      it.el.style.strokeDashoffset = (it.len * (1 - k)).toFixed(4);
     }
   }
 
