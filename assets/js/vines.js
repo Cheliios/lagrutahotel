@@ -68,12 +68,38 @@
   var layer = document.createElement('div');
   layer.className = 'vines-layer';
   layer.setAttribute('aria-hidden', 'true');
-  var svg = document.createElementNS(B.NS, 'svg');
-  svg.setAttribute('preserveAspectRatio', 'xMidYMin slice');
-  layer.appendChild(svg);
   document.body.appendChild(layer);
 
+  // El SVG y sus trazos son ahora los de la PÁGINA ACTIVA, no los únicos del
+  // sitio: `svg` e `items` apuntan a la entrada viva y cambian al navegar.
+  var svg = null;
   var items = [], W = 0, Hdoc = 0, vh = 0, scrollMax = 1, U = 0.1;
+
+  /* ── Cache de vegetación por página ───────────────────────────────────────
+     La SPA cambia de sección sin recargar, y hasta aquí cada cambio tiraba el
+     jardín entero y lo generaba otra vez — incluido el jardín EXACTAMENTE
+     igual al que se acababa de destruir. Se comprobó midiendo: el jardín de
+     Inicio sale con el mismo hash de geometría (e49ec3b9) se llegue directo,
+     desde Habitaciones o desde Experiencias.
+
+     Eso es lo que legitima el cache: el dibujo es función pura de cuatro
+     entradas, así que guardarlo no es una apuesta.
+
+       page.id → la semilla, y con ella toda la secuencia aleatoria
+       W       → el ancho gobierna el alcance de cada planta y el layout
+                 entero, del que cuelgan las posiciones de los acentos
+       vh      → entra en el reloj de cada planta, y por tanto en qué trazos
+                 llegan a existir (P.draw descarta los que empiezan tras 1.02)
+       Hdoc    → scrollMax y U, la escala temporal completa
+
+     Las cuatro se guardan CON la entrada y se comparan al volver. Si alguna
+     cambió —girar el teléfono, redimensionar la ventana, una fuente que
+     mueve la altura— la entrada no sirve y se reconstruye. Es lo que evita un
+     cache ciego: la clave no es la página, es la página EN ESAS condiciones.
+
+     El tamaño está acotado por construcción: hay cinco páginas, y volver a
+     una con otras medidas reemplaza su entrada en vez de añadir otra. */
+  var cache = new Map();
   var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ── Zonas donde no se siembra ──────────────────────────────────────────── */
@@ -108,6 +134,34 @@
 
   /* ── Construcción ───────────────────────────────────────────────────────── */
 
+  // Engancha un SVG al layer dejándolo como único hijo. Se evita
+  // `replaceChildren` a propósito: es DOM de 2020 (Safari 14+) y esta capa ya
+  // depende de una compatibilidad que hubo que validar a mano (pathLength).
+  // removeChild/appendChild funciona en todo lo que puede abrir este sitio.
+  function montar(el) {
+    if (layer.firstChild === el && layer.childNodes.length === 1) return;
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    layer.appendChild(el);
+  }
+
+  // Deja una entrada del cache como vegetación viva: la engancha al layer y
+  // la devuelve a su estado inicial sin dibujar.
+  //
+  // El repintado NO es opcional. Los trazos guardados conservan el avance que
+  // tenían al salir de la página, y al volver el scroll arranca de cero: sin
+  // este reinicio el jardín aparecería ya crecido. B.measure() hace justo eso
+  // —dejar cada trazo oculto y recolocar los cursores del recorrido— así que
+  // la reactivación termina igual que una construcción nueva, que es la razón
+  // de que reutilizar sea indistinguible de reconstruir.
+  function activar(entrada) {
+    svg = entrada.svg; items = entrada.items;
+    layer.style.height = Hdoc + 'px';
+    montar(svg);
+    B.measure(items);
+    objetivo = mostrado = REDUCED ? 1 : progress();
+    B.render(items, mostrado, false);
+  }
+
   function build() {
     var page = document.querySelector('.page.active');
     if (!page) return;
@@ -118,12 +172,22 @@
     W    = document.documentElement.clientWidth;
     vh   = window.innerHeight;
     Hdoc = Math.max(document.body.scrollHeight, page.scrollHeight);
-
-    svg.innerHTML = '';
-    items.length = 0;
     scrollMax = Math.max(1, Hdoc - vh);
-    U = vh / scrollMax;                       // "una pantalla" en unidades de progreso
+    U = vh / scrollMax;
 
+    // ¿Hay un jardín ya hecho para esta página Y para estas medidas?
+    var guardado = cache.get(page.id);
+    if (guardado && guardado.W === W && guardado.vh === vh && guardado.Hdoc === Hdoc) {
+      activar(guardado);
+      return;
+    }
+
+    // Un SVG propio por página: al volver se reengancha el nodo entero en
+    // lugar de repoblar uno compartido. Así el jardín anterior sobrevive
+    // intacto, desenganchado, sin que haya que clonar ni volver a medir nada.
+    svg = document.createElementNS(B.NS, 'svg');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMin slice');
+    items = [];
     layer.style.height = Hdoc + 'px';
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Hdoc);
     svg.setAttribute('width', W);
@@ -580,6 +644,8 @@
     });
 
     svg.appendChild(frag);
+    montar(svg);
+    cache.set(page.id, { svg: svg, items: items, W: W, vh: vh, Hdoc: Hdoc });
     B.measure(items);
     objetivo = mostrado = REDUCED ? 1 : progress();
     B.render(items, mostrado, false);
