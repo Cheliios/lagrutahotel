@@ -560,12 +560,20 @@
     [['.statement .eye', 0.95], ['.statement h2', 0.75], ['.rooms-count', 0.85],
      ['.room-card-name', 0.55], ['.rc-book', 0.45], ['.rc-more', 0.45],
      ['.loc-head .eye', 0.95], ['.loc-sub', 0.7], ['.loc-badge', 0.85],
-     ['.rv-info h2', 0.85], ['.rv-submit', 0.6], ['.ft-logo', 0.95],
+     ['.rv-info h2', 0.85], ['.rv-submit', 0.6],
      ['.welcome .wc-script', 0.95]
     ].forEach(function (cfg) {
       page.querySelectorAll(cfg[0]).forEach(function (el) {
         if (randA() < cfg[1]) acento(el);
       });
+    });
+
+    // El footer es único y vive fuera de los .page (ver index.html), así que
+    // su acento se siembra desde el shell. Se consulta aparte —y no añadiendo
+    // el footer a la lista de arriba— porque ese query ya recorre el árbol de
+    // la vista: incluirlo ahí lo sembraría dos veces.
+    document.querySelectorAll('#app-shell > footer .ft-logo').forEach(function (el) {
+      if (randA() < 0.95) acento(el);
     });
 
     svg.appendChild(frag);

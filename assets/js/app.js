@@ -91,8 +91,14 @@ function goTo(page){
   pt.className='pt in';
   showPreloader(); // sincronizado con la cortina: aparece instantáneo mientras cubre
   setTimeout(()=>{
-    document.getElementById('page-'+current).classList.remove('active');
-    document.getElementById('page-'+page).classList.add('active');
+    // `active` controla el estilo; `hidden` es la garantía estructural de que
+    // solo una vista existe en el flujo. Se mantienen los dos en sincro: si la
+    // hoja de estilos no llegara a cargar, [hidden] sigue ocultando las demás
+    // vistas por sí solo (regla del navegador, no nuestra). Sin esto, un fallo
+    // de CSS apilaba las 5 vistas y sus footers en una sola página.
+    const prev=document.getElementById('page-'+current), next=document.getElementById('page-'+page);
+    prev.classList.remove('active'); prev.hidden=true;
+    next.classList.add('active'); next.hidden=false;
     current=page; window.scrollTo(0,0); reAnim(page); window.vinesRefresh?.(); navColor();
     // location.hash (no history.replaceState) a propósito: así el atrás del
     // navegador funciona. No genera un bucle con el listener de hashchange de
@@ -138,8 +144,9 @@ document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click'
 // referencia.
 const inicial = pageFromHash();
 if(inicial && inicial!==current){
-  document.getElementById('page-'+current).classList.remove('active');
-  document.getElementById('page-'+inicial).classList.add('active');
+  const prev=document.getElementById('page-'+current), next=document.getElementById('page-'+inicial);
+  prev.classList.remove('active'); prev.hidden=true;
+  next.classList.add('active'); next.hidden=false;
   current = inicial;
 }
 
