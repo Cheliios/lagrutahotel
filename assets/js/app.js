@@ -19,8 +19,18 @@ const WA_NUMBER = '51959344759';
    falta sacar el nodo del DOM y no volver a tocarlo nunca. */
 const preEl = document.getElementById('preloader');
 const shellEl = document.getElementById('app-shell');
-const preloaderEnabled = !!preEl && !document.documentElement.classList.contains('no-preload');
-if(!preloaderEnabled && preEl) preEl.remove();
+
+// ⛔ PRELOADER DESACTIVADO TEMPORALMENTE — solo para pruebas.
+// Apagado con este único interruptor. Todo el resto del archivo (showPreloader,
+// hidePreloader, el arranque sincronizado con la imagen del hero, la espera
+// correspondiente dentro de goTo) queda intacto y NO hay que tocarlo: con
+// `preloaderEnabled` en false, showPreloader() e hidePreloader() salen de
+// inmediato y el bloque de "primera pintura" no llega a correr, así que
+// #app-shell tampoco recibe .pre-reveal (el scale(1.03) del arranque).
+// PARA VOLVER A ACTIVARLO: borrar la línea `false` y descomentar la de abajo.
+const preloaderEnabled = false;
+// const preloaderEnabled = !!preEl && !document.documentElement.classList.contains('no-preload');
+if(!preloaderEnabled && preEl) preEl.remove(); // limpia el nodo si quedara en el DOM
 
 function showPreloader(){
   if(!preloaderEnabled) return;
