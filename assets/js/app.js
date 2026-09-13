@@ -90,6 +90,21 @@ function goTo(page){
   menuOpen=false; burger.classList.remove('open'); menu.classList.remove('open');
   pt.className='pt in';
   showPreloader(); // sincronizado con la cortina: aparece instantáneo mientras cubre
+
+  // Se empieza a traer el hero de la sección destino AHORA, no dentro de 520ms.
+  //
+  // Los heroes de las secciones internas llevan loading="lazy" y viven en una
+  // vista oculta, así que el navegador no pide la imagen hasta que esa vista se
+  // muestra: medido, la petición salía a los 548ms del click. Esos 520ms de
+  // cortina se perdían sin descargar nada, y sólo entonces empezaba a contar la
+  // espera de más abajo.
+  //
+  // Se pide con un Image() aparte, que deja el archivo en la caché HTTP: no se
+  // toca el <img> del documento, ni sus atributos, ni el diseño. Cuando la vista
+  // se muestre, la imagen resolverá de caché.
+  const heroDestino = document.querySelector('#page-'+page+' .hero-media img');
+  if(heroDestino && !heroDestino.complete){ const pre = new Image(); pre.src = heroDestino.src; }
+
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
@@ -155,6 +170,25 @@ function goTo(page){
       heroImg.addEventListener('load', res, {once:true});
       heroImg.addEventListener('error', res, {once:true});
     });
+    // POR QUÉ ESTE TOPE SIGUE AQUÍ, y no es una espera arbitraria que sobre:
+    // sin la foto, el hero NO es una sección incompleta sino una rota. Se
+    // comprobó dejando la petición colgada y mirando el resultado: .hero y
+    // .hero-media no declaran fondo, así que queda el papel del sitio
+    // (rgb(251,250,246)) bajo el velo del 28% de .hero-media::after, y encima
+    // el titular en blanco puro. Texto blanco sobre gris claro: ilegible.
+    // Descubrir antes de tiempo enseñaría eso.
+    //
+    // El tope es la red de seguridad para que una imagen que nunca llega (una
+    // conexión atascada no dispara ni load ni error) no deje la navegación
+    // bloqueada para siempre. Con el adelanto de la descarga de arriba, la
+    // espera real se acorta en los 520ms de la cortina; el tope sólo entra
+    // cuando la imagen de verdad no está.
+    //
+    // La causa de fondo NO se arregla aquí: los heroes internos pesan entre
+    // 2,3 y 3,0 MB sin comprimir (decisión deliberada, ver ARQUITECTURA.md).
+    // A 400 kbps eso son ~47s de descarga y ningún adelanto lo salva. Si algún
+    // día molesta en 4G flojo, la palanca es el peso de la imagen, no este
+    // número.
     Promise.race([heroReady, new Promise(res=>setTimeout(res, 2500))]).then(()=>{
       hidePreloader();
       pt.className='pt out'; setTimeout(()=>pt.className='pt',520);
@@ -220,8 +254,29 @@ function reAnim(page){
   document.querySelectorAll('#page-'+page+' [data-reveal="fade"]').forEach(el=>el.classList.remove('on'));
   setTimeout(obs,80);
 }
+// Observers de la generación en curso. obs() se llama en CADA navegación (vía
+// reAnim), y hasta aquí cada llamada creaba tres observers nuevos sin soltar
+// los anteriores. Sí hay unobserve() al disparar, pero un elemento que nunca
+// llega a entrar en pantalla —porque te fuiste de esa sección sin bajar hasta
+// él— jamás lo dispara, así que su observer quedaba vivo indefinidamente.
+//
+// Medido en cuatro vueltas del circuito completo de 5 secciones:
+//   observers creados   3 → 18 → 33 → 48 → 63
+//   observers con targets  3 → 10 → 17 → 24 → 31
+//   targets vivos      19 → 60 → 101 → 142 → 183
+// Lineal y sin techo: +15 creados y +41 targets por vuelta, cero disconnect.
+//
+// No cambia nada visible: se observan los mismos elementos, con los mismos
+// umbrales y las mismas clases. Lo único que cambia es que la generación
+// anterior se suelta antes de crear la siguiente.
+let observadores = [];
+
 function obs(){
+  observadores.forEach(ob => ob.disconnect());
+  observadores = [];
+
   const o=new IntersectionObserver(en=>{ en.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); o.unobserve(e.target);} }); },{threshold:.12});
+  observadores.push(o);
   document.querySelectorAll('.page.active .rv-el').forEach(el=>o.observe(el));
 
   if(REDUCED_MOTION) return; // ya visibles de una: la regla reduced-motion de site.css les quita transform/opacity
@@ -234,9 +289,11 @@ function obs(){
     e.target.querySelectorAll('.rw-in').forEach((span,i)=>{ span.style.transitionDelay=(i*40)+'ms'; span.classList.add('on'); });
     wo.unobserve(e.target);
   }); },{threshold:.2});
+  observadores.push(wo);
   document.querySelectorAll('.page.active [data-reveal="words"]').forEach(el=>wo.observe(el));
 
   const fo=new IntersectionObserver(en=>{ en.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('on'); fo.unobserve(e.target);} }); },{threshold:.2});
+  observadores.push(fo);
   document.querySelectorAll('.page.active [data-reveal="fade"]').forEach(el=>fo.observe(el));
 }
 obs(); // ya observa la página correcta: el swap por hash de arriba ya ocurrió
@@ -251,7 +308,10 @@ function navColor(){
   const conHero = !!activa?.querySelector('.hero');
   navEl.classList.toggle('dark', !conHero || window.scrollY > window.innerHeight*.82);
 }
-window.addEventListener('scroll',navColor);
+// Pasivo: navColor solo lee scrollY y conmuta una clase, nunca llama a
+// preventDefault. Declararlo le ahorra al navegador tener que esperar a que
+// este manejador termine antes de desplazar.
+window.addEventListener('scroll',navColor,{passive:true});
 navColor(); // por si la carga inicial ya abrió, vía hash, una página sin hero
 
 /* ── Carga de Leaflet bajo demanda ──
