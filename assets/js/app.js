@@ -93,7 +93,42 @@ function goTo(page){
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
     document.getElementById('page-'+page).classList.add('active');
-    current=page; window.scrollTo(0,0); reAnim(page); window.vinesRefresh?.(); navColor();
+    current=page;
+    // El salto al inicio se hace SIN animar, aunque la hoja de estilos declare
+    // scroll-behavior: smooth. No es un atajo para tapar el problema: es que
+    // este salto no es una transición que nadie llegue a ver —ocurre con la
+    // cortina .pt cubriendo la pantalla— y animarlo rompía la vegetación.
+    //
+    // Con el desplazamiento suavizado, scrollTo(0,0) tarda ~700ms en llegar a
+    // cero (medido: 5867px a los 541ms, 3988px a los 725ms, 0px a los 1273ms),
+    // mientras vinesRefresh() construye 60ms después de esta línea. La capa
+    // vegetal leía window.scrollY con el valor de la página ANTERIOR, calculaba
+    // un progreso de hasta 1 y la sección nueva nacía ya crecida; como el
+    // crecimiento es persistente, no se deshacía al bajar el scroll. Medido en
+    // escritorio: llegar a Inicio desde el pie de Experiencias lo dibujaba al
+    // 34% de entrada. navColor() leía ese mismo scrollY falso.
+    //
+    // Se apaga el suavizado SOLO durante esta llamada y se restaura acto
+    // seguido, en vez de quitar la regla de site.css: así cualquier ancla que
+    // se añada en el futuro seguirá desplazándose con suavidad. Y se hace con
+    // un estilo en línea y no con scrollTo({behavior:'instant'}) porque ese
+    // valor del enum es de 2022 (Safari 15.4) y un navegador que no lo conozca
+    // lanza TypeError, lo que dejaría la navegación a medias.
+    //
+    // Corrige la sincronización, no la disimula: al volver de scrollTo(0,0) el
+    // scroll ya está en cero de verdad, así que da igual cuándo corra el build.
+    const raiz = document.documentElement;
+    const suavizadoPrevio = raiz.style.scrollBehavior;
+    raiz.style.scrollBehavior = 'auto';
+    // NO BORRAR ESTA LÍNEA. Parece una lectura inútil y es lo único que hace
+    // que el cambio de arriba llegue a tiempo: sin forzar aquí el recálculo de
+    // estilo, scrollTo() se ejecuta todavía con el valor `smooth` y el salto
+    // vuelve a animarse. Comprobado midiendo desde 3000px: con esta lectura el
+    // scroll queda en 0px de inmediato; sin ella se queda en 3000px.
+    getComputedStyle(raiz).scrollBehavior;
+    window.scrollTo(0,0);
+    raiz.style.scrollBehavior = suavizadoPrevio;
+    reAnim(page); window.vinesRefresh?.(); navColor();
     // location.hash (no history.replaceState) a propósito: así el atrás del
     // navegador funciona. No genera un bucle con el listener de hashchange de
     // más abajo porque `current` ya quedó al día en la línea de arriba, y ese
