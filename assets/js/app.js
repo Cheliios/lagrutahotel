@@ -107,7 +107,9 @@ function goTo(page){
 
   setTimeout(()=>{
     document.getElementById('page-'+current).classList.remove('active');
+    document.getElementById('page-'+current).setAttribute('hidden','');
     document.getElementById('page-'+page).classList.add('active');
+    document.getElementById('page-'+page).removeAttribute('hidden');
     current=page;
     // El salto al inicio se hace SIN animar, aunque la hoja de estilos declare
     // scroll-behavior: smooth. No es un atajo para tapar el problema: es que
@@ -208,7 +210,9 @@ document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click'
 const inicial = pageFromHash();
 if(inicial && inicial!==current){
   document.getElementById('page-'+current).classList.remove('active');
+  document.getElementById('page-'+current).setAttribute('hidden','');
   document.getElementById('page-'+inicial).classList.add('active');
+  document.getElementById('page-'+inicial).removeAttribute('hidden');
   current = inicial;
 }
 
