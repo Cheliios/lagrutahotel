@@ -303,15 +303,28 @@ const navEl=document.getElementById('nav');
 // Ubicación no tiene hero: arranca con el mapa, que es claro, así que ahí el
 // texto blanco quedaba ilegible. Si la página activa no trae hero, va oscura
 // desde el principio.
+let navPage='', navHero=null, navLimit=0;
+function navMeasure(){
+  navPage=current;
+  navHero=document.querySelector('#page-'+current+' .hero');
+  if(!navHero){ navLimit=0; return; }
+
+  // offsetTop/offsetHeight son medidas de layout: no incluyen el scale(1.03)
+  // temporal del preloader. Se acumula la cadena de offsetParent para obtener
+  // una coordenada documental aunque el hero deje de empezar en y=0.
+  let heroTop=0;
+  for(let el=navHero; el; el=el.offsetParent) heroTop+=el.offsetTop;
+  navLimit=heroTop+navHero.offsetHeight-navEl.offsetHeight;
+}
 function navColor(){
-  const activa = document.querySelector('.page.active');
-  const conHero = !!activa?.querySelector('.hero');
-  navEl.classList.toggle('dark', !conHero || window.scrollY > window.innerHeight*.82);
+  if(navPage!==current) navMeasure();
+  navEl.classList.toggle('dark', !navHero || window.scrollY > navLimit);
 }
 // Pasivo: navColor solo lee scrollY y conmuta una clase, nunca llama a
 // preventDefault. Declararlo le ahorra al navegador tener que esperar a que
 // este manejador termine antes de desplazar.
 window.addEventListener('scroll',navColor,{passive:true});
+window.addEventListener('resize',()=>{ navMeasure(); navColor(); },{passive:true});
 navColor(); // por si la carga inicial ya abrió, vía hash, una página sin hero
 
 /* ── Carga de Leaflet bajo demanda ──
