@@ -851,17 +851,24 @@
     // dejaba el pie de página con apenas un brote asomando por su borde
     // superior, en vez de vegetación cruzándolo de verdad. Dos enredaderas
     // ancladas directamente a un tercio y dos tercios de su alto interior
-    // aseguran presencia ahí sin depender de la suerte del sorteo. `shy` en
-    // true las mantiene contenidas (mismo tamaño que cualquier otra planta
-    // de zona suave), y al nacer DESPUÉS de la siembra por bandas quedan
-    // pintadas por encima del resto, que es justo lo que hace falta para
-    // que se lean sobre el fondo oscuro del footer.
+    // aseguran presencia ahí sin depender de la suerte del sorteo, y al
+    // nacer DESPUÉS de la siembra por bandas quedan pintadas por encima del
+    // resto, que es justo lo que hace falta para que se lean sobre el
+    // fondo oscuro del footer.
+    //
+    // En mobile van SIN `shy`: con `shy` salían escuálidas —un tallo casi
+    // pelado— porque `reach` en mobile ya arranca corto (viewport angosto)
+    // y `shy` lo recorta encima. Sin esa segunda poda quedan tan frondosas
+    // como cualquier otra planta de esa altura de página (mismo aspecto
+    // que las de "Preguntas frecuentes", pedido explícito). Desktop se
+    // queda con `shy` tal cual —ya se veía bien— así que esto no le toca
+    // nada.
     var footerEl = page.querySelector('footer');
     if (footerEl) {
       var fr = footerEl.getBoundingClientRect(), fTop = fr.top + window.scrollY;
       [0.32, 0.68].forEach(function (frac, i) {
         var fy = fTop + fr.height * frac;
-        if (fy < yEnd) vine(fy, i % 2 ? 1 : -1, clamp(fy / Hdoc, 0, 1), true);
+        if (fy < yEnd) vine(fy, i % 2 ? 1 : -1, clamp(fy / Hdoc, 0, 1), !MOBILE);
       });
     }
 
