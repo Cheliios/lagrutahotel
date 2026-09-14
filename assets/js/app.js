@@ -502,3 +502,15 @@ document.querySelectorAll('.room-card-arrow').forEach(arrow => {
     if (img.complete && img.naturalWidth === 0) marcador(img);
   });
 })();
+
+(function () {
+  var track = document.querySelector('.reviews-track');
+  var arrow = document.querySelector('.reviews-arrow');
+  if (!track || !arrow) return;
+  arrow.addEventListener('click', function () {
+    var card = track.querySelector('.review-card');
+    var step = card ? card.offsetWidth + 20 : 280;
+    var atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+    track.scrollTo({ left: atEnd ? 0 : track.scrollLeft + step, behavior: 'smooth' });
+  });
+})();
