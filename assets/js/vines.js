@@ -20,11 +20,11 @@
       posición en el documento de cada trazo. Cada planta se dibuja cuando el
       usuario llega a su altura. Eso da el efecto "va creciendo conmigo" en vez
       de "todo crece a la vez en algún punto del scroll".
-   3. El crecimiento es REVERSIBLE: al subir el scroll la vegetación se
-      repliega por donde vino. Es una decisión de diseño, no una limitación —
-      ver la perilla PERSISTENTE más abajo — hoy en true: el crecimiento se
-      acumula, y lo que da la sensación de scroll continuo en desktop es el
-      suavizado (raw → objetivo → mostrado → trazos), no el replegado.
+   3. El crecimiento es REVERSIBLE, y es el comportamiento buscado: bajando,
+      el jardín se acumula —un brote que terminó se queda entero mientras los
+      siguientes siguen creciendo—; subiendo, se repliega por donde vino. El
+      progreso del scroll no es un disparador: es la posición en la línea de
+      tiempo del jardín, y se recorre en los dos sentidos.
    4. `pointer-events: none` en la capa: jamás debe bloquear un clic.
    ============================================================================= */
 (function () {
@@ -44,11 +44,25 @@
   // cuenta mentalmente para saber con qué opacidad se estaba dibujando.
   var INTENSIDAD = 1;
 
-  // false = reversible: al subir el scroll la planta se repliega por donde
-  //         vino, como si el crecimiento rebobinara. Ata la animación al
-  //         gesto del usuario y hace que se note que responde al scroll.
-  // true  = persistente: lo dibujado se queda y el jardín se acumula.
-  var PERSISTENTE = true;
+  // true  = irreversible: lo dibujado se queda pase lo que pase con el scroll.
+  // false = reversible: el dibujo sigue al progreso en los dos sentidos.
+  //
+  // Va en false, que es lo que se pedía desde el principio. Conviene fijar el
+  // vocabulario porque aquí hubo una confusión real: "persistente" NO quería
+  // decir "dibujado para siempre", sino que mientras se BAJA, un brote que ya
+  // terminó de crecer permanece entero mientras los siguientes crecen — que es
+  // justo lo que hace la ventana por planta, no esta perilla. Con esto en true
+  // el jardín dejaba de responder al scroll en cuanto se subía: el recorrido
+  // sólo se podía hacer una vez, en una dirección.
+  //
+  // Con false, el dibujo es una función del progreso mostrado, sin memoria:
+  //   bajar → cada trazo avanza dentro de su ventana y se queda al 100%
+  //           cuando la rebasa, mientras las ventanas siguientes se abren
+  //   subir → el mismo recorrido a la inversa, trazo a trazo
+  //
+  // No cuesta rendimiento: la ventana activa de render() es bidireccional, así
+  // que subir recorre los mismos pocos cientos de trazos que bajar.
+  var PERSISTENTE = false;
   // Dorado apagado / champagne. Se le quitó la carga verde que tenía antes:
   // más cálido y un punto más claro, pero desaturado — un champagne envejecido,
   // no un dorado metálico. El tono oscuro se mantiene profundo a propósito: a
@@ -715,7 +729,12 @@
     if (paso >  PASO_VISUAL) paso =  PASO_VISUAL;
     if (paso < -PASO_VISUAL) paso = -PASO_VISUAL;
     mostrado += paso;
-    if (objetivo - mostrado > RETRASO_MAX) mostrado = objetivo - RETRASO_MAX;
+    // Simétrico: el tope de retraso vale igual bajando que subiendo. Antes
+    // sólo cortaba en un sentido porque en el otro no había nada que dibujar;
+    // ahora un flick hacia arriba puede descolgar el replegado igual que uno
+    // hacia abajo descolgaba el crecimiento.
+    if (objetivo - mostrado >  RETRASO_MAX) mostrado = objetivo - RETRASO_MAX;
+    if (objetivo - mostrado < -RETRASO_MAX) mostrado = objetivo + RETRASO_MAX;
     if (Math.abs(objetivo - mostrado) < 0.0002) mostrado = objetivo;
     B.render(items, mostrado, PERSISTENTE);
     if (mostrado !== objetivo) requestAnimationFrame(frame);
