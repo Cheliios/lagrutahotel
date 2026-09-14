@@ -656,3 +656,39 @@ Si algún agente necesita tocar `.menu`/`.menu-*`/`.nav-logo`/`.nav-book` en
 Cualquier cambio de vuelta al panel oscuro/dos columnas/serif itálica debe
 consultarse antes: es un rediseño pedido explícitamente, no un estado
 transitorio.
+
+### Ronda 2 (misma fecha): identidad del sitio + mapa en vez de foto
+
+El layout de la Ronda 1 (arriba) se mantiene, pero su piel era genérica
+(grises, sans-serif plana, sin nada que la ligara a La Gruta). Esta ronda le
+puso la identidad del sitio encima del mismo layout, sin tocar la estructura
+de una sola columna centrada:
+
+- **Tipografía:** `.menu-link` pasó de `Jost` a `Cormorant Garamond` (la
+  misma serif de `.hero-title`), y su hover ganó `font-style: italic` — el
+  mismo recurso que ya usa `.hero-title em`, no una convención nueva.
+- **Color:** el hover de `.menu-link` pasó de `--warm-on-light` a `--green`
+  (acento oliva de marca). Se agregó `.menu-eye` arriba de la lista
+  ("Hotel La Gruta"), con el mismo tratamiento de `.hero-eye`
+  (uppercase, `letter-spacing:6px`, 11px, `--warm-on-light`).
+- **Mapa en vez de foto (solo desktop):** `.menu-prev` (la foto
+  `jardin.jpg`, ya descartada en la Ronda 1) se reemplazó por `.menu-map`
+  — un Leaflet real, no una imagen ni un `<iframe>` de Google Maps.
+  Reutiliza las mismas tiles grises de Esri y el mismo marcador
+  (`.loc-dot`) que el mapa de la página Ubicación, para que se lea como
+  el mismo mapa del sitio, no como un componente aparte. Ver
+  `window.initMenuMap` en `assets/js/map.js` (mismas `LAT`/`LNG`/`TILES`
+  que `initLocMap`, pero sin controles ni interacción: es una postal, no
+  una herramienta de navegación) y `ensureMenuMap()` en `assets/js/app.js`,
+  que lo carga bajo demanda —vía el mismo `loadLeaflet()` que ya usaba
+  Ubicación— la primera vez que se abre el menú, no de entrada.
+  `.menu-map { display:none }` por defecto y solo aparece en
+  `@media (min-width: 901px)`: en una pantalla angosta compite demasiado
+  con la lista de links por el mismo espacio vertical, así que en mobile
+  el menú se queda solo con lista + contacto, como en la Ronda 1.
+
+Si se toca `.menu-map`/`.menu-eye`/`initMenuMap`, mantener el mismo
+proveedor de tiles (Esri, sin token) que usa Ubicación — no meter Google
+Maps ni Mapbox aquí: sería un segundo estilo de mapa conviviendo con el de
+Ubicación, y reabriría el problema de API keys que el proyecto ya evitó una
+vez (ver "El mapa" más arriba).

@@ -98,9 +98,52 @@
     requestAnimationFrame(function () { map.invalidateSize(); });
   };
 
+  // Miniatura de ubicación dentro del menú (solo desktop, ver .menu-map en
+  // site.css). Mismas tiles y mismo marcador que el mapa de Ubicación para
+  // que se lea como el mismo mapa, no como un componente distinto — pero
+  // sin controles ni interacción: es una postal, no una herramienta de
+  // navegación (para eso ya está la página de Ubicación con su propio
+  // enlace a Google Maps).
+  window.initMenuMap = function () {
+    var host = document.getElementById('menu-map-canvas');
+    if (window.menuMap || !window.L || !host) return;
+
+    var map = L.map(host, {
+      center: [LAT, LNG],
+      zoom: 14,
+      zoomControl: false,
+      scrollWheelZoom: false,
+      dragging: false,
+      tap: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      attributionControl: false
+    });
+
+    L.tileLayer(TILES.base, { maxZoom: TILES.maxZoom }).addTo(map);
+    L.tileLayer(TILES.labels, { maxZoom: TILES.maxZoom }).addTo(map);
+
+    L.marker([LAT, LNG], {
+      interactive: false,
+      keyboard: false,
+      icon: L.divIcon({ className: 'loc-marker', html: '<div class="loc-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+    }).addTo(map);
+
+    window.menuMap = map;
+
+    // El menú nace oculto (clip-path en 0%, pointer-events:none) hasta que
+    // se abre: igual que en initLocMap, Leaflet mide un contenedor con
+    // tamaño real recién en el frame siguiente a hacerse visible.
+    requestAnimationFrame(function () { map.invalidateSize(); });
+  };
+
   var t;
   window.addEventListener('resize', function () {
     clearTimeout(t);
-    t = setTimeout(function () { if (window.locMap) window.locMap.invalidateSize(); }, 300);
+    t = setTimeout(function () {
+      if (window.locMap) window.locMap.invalidateSize();
+      if (window.menuMap) window.menuMap.invalidateSize();
+    }, 300);
   }, { passive: true });
 })();

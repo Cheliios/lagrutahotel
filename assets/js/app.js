@@ -73,7 +73,14 @@ if(preloaderEnabled){
 
 const burger=document.getElementById('burger'), menu=document.getElementById('menu');
 let menuOpen=false;
-burger.addEventListener('click',()=>{ menuOpen=!menuOpen; burger.classList.toggle('open',menuOpen); menu.classList.toggle('open',menuOpen); });
+burger.addEventListener('click',()=>{
+  menuOpen=!menuOpen; burger.classList.toggle('open',menuOpen); menu.classList.toggle('open',menuOpen);
+  // La miniatura de mapa del menú (desktop, ver .menu-map en site.css) se
+  // carga recién al abrir por primera vez, no de entrada: mismo criterio
+  // de "bajo demanda" que ya usa el mapa de Ubicación, para no pagar el
+  // peso de Leaflet en una visita que nunca abre el menú.
+  if(menuOpen) ensureMenuMap();
+});
 
 // Enrutamiento por hash: cada página tiene su propio #hash (#home, #rooms,
 // #location, #reservas, #experiencias), igual que su data-page. Sirve para
@@ -357,6 +364,7 @@ function loadLeaflet(){
   return leafletReady;
 }
 function ensureLocMap(){ loadLeaflet().then(() => window.initLocMap?.()); }
+function ensureMenuMap(){ loadLeaflet().then(() => window.initMenuMap?.()); }
 
 // El mapa de Ubicación se inicializa bajo demanda; si la carga inicial ya
 // apunta ahí (#location), hay que dispararlo igual.
