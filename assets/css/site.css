@@ -514,7 +514,13 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .rv-contact:first-of-type { border-top: 1px solid var(--hair); }
 .rv-cl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
 .rv-cv { font-size: 15px; color: var(--ink); }
-.rv-form { display: flex; flex-direction: column; }
+.rv-form { position: relative; display: flex; flex-direction: column; }
+.rv-required-note {
+  position: absolute; top: -28px; right: 0;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--soft);
+}
+.rv-required-note span, .rv-required { color: var(--warm-on-light); }
+.rv-required { margin-left: 3px; }
 .rv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
 .rv-field { padding-top: 26px; border-bottom: 1px solid var(--hair); display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
 .rv-field label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft); }

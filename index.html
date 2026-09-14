@@ -347,9 +347,10 @@
       <div class="rv-contact"><span class="rv-cl">Check-in / out</span><span class="rv-cv">2:00 PM / 12:00 PM</span></div>
     </div>
     <form class="rv-form rv-el" id="reservaForm" novalidate>
+      <p class="rv-required-note"><span aria-hidden="true">*</span> Campos obligatorios</p>
       <div class="rv-row">
-        <div class="rv-field"><label for="reserva-nombre">Nombre completo</label><input id="reserva-nombre" type="text" name="nombre" placeholder="Tu nombre" required></div>
-        <div class="rv-field"><label for="reserva-telefono">Teléfono</label><input id="reserva-telefono" type="tel" name="telefono" placeholder="+51" required></div>
+        <div class="rv-field"><label for="reserva-nombre">Nombre completo <span class="rv-required" aria-hidden="true">*</span></label><input id="reserva-nombre" type="text" name="nombre" placeholder="Tu nombre" required></div>
+        <div class="rv-field"><label for="reserva-telefono">Teléfono <span class="rv-required" aria-hidden="true">*</span></label><input id="reserva-telefono" type="tel" name="telefono" placeholder="+51" required></div>
       </div>
       <div class="rv-field"><label for="reserva-correo">Correo electrónico</label><input id="reserva-correo" type="email" name="correo" placeholder="correo@ejemplo.com"></div>
       <div class="rv-row">
@@ -357,8 +358,8 @@
         <div class="rv-field"><label for="reserva-huespedes">Huéspedes</label><input id="reserva-huespedes" type="number" name="huespedes" placeholder="1" min="1"></div>
       </div>
       <div class="rv-row">
-        <div class="rv-field"><label for="reserva-llegada">Llegada</label><input id="reserva-llegada" type="date" name="llegada" required></div>
-        <div class="rv-field"><label for="reserva-salida">Salida</label><input id="reserva-salida" type="date" name="salida" required></div>
+        <div class="rv-field"><label for="reserva-llegada">Llegada <span class="rv-required" aria-hidden="true">*</span></label><input id="reserva-llegada" type="date" name="llegada" required></div>
+        <div class="rv-field"><label for="reserva-salida">Salida <span class="rv-required" aria-hidden="true">*</span></label><input id="reserva-salida" type="date" name="salida" required></div>
       </div>
       <div class="rv-field"><label for="reserva-mensaje">Mensaje adicional</label><textarea id="reserva-mensaje" rows="3" name="mensaje" placeholder="¿Alguna preferencia especial?"></textarea></div>
       <div style="display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:40px;">
