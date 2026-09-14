@@ -35,6 +35,35 @@ img { display: block; max-width: 100%; }
 .vines-layer svg { display: block; }
 .vines-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
+/* ── OCLUSIÓN: la vegetación pasa POR DEBAJO de los bloques de lectura ──
+   La capa vegetal vive en z-index 4. Las fotos y el mapa ya estaban por
+   encima (.hero, .band, .wc-img, .room-card-media, .loc-map en z-index 6),
+   y por eso nunca se veía vegetación cruzándolos. Los bloques de TEXTO, en
+   cambio, no declaraban ni z-index ni fondo, así que quedaban por debajo y
+   la vegetación les pasaba por encima: párrafos, formularios y llamadas a
+   la acción con enredaderas cruzándolos.
+
+   Se resuelve con el mismo mecanismo que ya usaba el proyecto —apilado y
+   fondo opaco—, no con desenfoques ni efectos: la vegetación DESAPARECE
+   debajo, no se difumina.
+
+   Va sobre los contenedores INTERNOS, no sobre las secciones a sangre. Esa
+   es la diferencia entre tapar y enmarcar: los internos llevan ancho máximo,
+   así que la vegetación sigue asomando por los márgenes laterales, entre
+   bloques y en las esquinas — que es donde se quiere ver.
+
+   El fondo es var(--paper), el mismo del body, así que no se ve ningún
+   rectángulo: lo único que cambia es qué tapa a qué. Deliberadamente NO se
+   incluyen .gastro-in ni .band-in: esos van sobre foto y su sección ya
+   ocluye desde z-index 6; pintarles papel encima rompería la foto. */
+.welcome-grid, .statement, .rooms-inner, .rooms-top, .faq-head, .faq-sec details,
+.loc-body, .loc-head, .rv-body, .rv-info, .rv-contact,
+.exp-intro, .exp-note, .offer-strip, .trust-strip, .jardin-sec, footer {
+  position: relative;
+  z-index: 5;
+  background: var(--paper);
+}
+
 /* Orden de apilamiento del sitio:
       fondo → vegetación (z4) → contenido (flujo) → fotos y mapa (z6)
    Las secciones que SON una foto a sangre suben enteras; en las cards sube solo

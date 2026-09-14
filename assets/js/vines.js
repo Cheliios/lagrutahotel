@@ -65,7 +65,12 @@
   // Ahora vale 1: los números de TONE son las opacidades FINALES, las que se
   // ven. Antes había un multiplicador de 1.8 encima y había que hacer la
   // cuenta mentalmente para saber con qué opacidad se estaba dibujando.
-  var INTENSIDAD = 1;
+  // Sube de 1 a 1.28 en escritorio y 1.45 en móvil. Es un multiplicador sobre
+  // TONE, así que la jerarquía interna entre tallo, hoja, flor y microdetalle
+  // se conserva intacta: sube la presencia, no cambia el reparto. Más alto en
+  // móvil porque ahí la capa se lee peor —pantalla pequeña, trazo fino— y era
+  // donde más se pedía notarla. No toca color ni paleta: sólo cuánto se ve.
+  var INTENSIDAD = MOBILE ? 1.45 : 1.28;
 
   // true  = irreversible: lo dibujado se queda pase lo que pase con el scroll.
   // false = reversible: el dibujo sigue al progreso en los dos sentidos.
@@ -257,6 +262,10 @@
       // de botanic-lib (nervaduras de hoja, folíolos mínimos de helecho) para
       // mantener sus decisiones —y el flujo del RNG— idénticos al escalar.
       escala: ESCALA,
+      // Factor de presencia de la composición en curso: lo fija vine() según
+      // la clase (macro / medio / acento) y multiplica la opacidad de sus
+      // trazos. Es una diferencia LEVE a propósito — jerarquía, no contraste.
+      presencia: 1,
       draw: function (g, d, w, tone, sch, ease) {
         if (!d || sch.s > 1.02) return;
         var t = TONE[tone] || TONE.leaf;
@@ -275,7 +284,7 @@
         p.setAttribute('pathLength', '1');
         p.setAttribute('stroke', t.c);
         p.setAttribute('stroke-width', (w * 0.95).toFixed(2));
-        p.setAttribute('opacity', Math.min(1, t.o * INTENSIDAD).toFixed(2));
+        p.setAttribute('opacity', Math.min(1, t.o * INTENSIDAD * (P.presencia || 1)).toFixed(2));
         g.appendChild(p);
         items.push({ el: p, s: sch.s, e: Math.max(sch.e, sch.s + 0.004),
                      ease: ease || B.EASE.out, k: -1, len: 0 });
@@ -305,10 +314,21 @@
     // Los OFF se estiraron menos que los DUR a propósito: al solaparse más, la
     // planta crece como un organismo —tallo, hoja y flor avanzando a la vez— en
     // lugar de recitar una secuencia por partes.
-    var OFF = { stem: 0, branch: 0.16, twig: 0.27, leaf: 0.38, fern: 0.49,
-                bud: 0.60, hyd: 0.68, rose: 0.78, ten: 0.89 };
-    var DUR = { stem: 0.58, branch: 0.46, twig: 0.38, leaf: 0.36, fern: 0.46,
-                bud: 0.34, hyd: 0.52, rose: 0.54, ten: 0.38 };
+    // Escalonado COMPRIMIDO en su fase esquelética. El orden botánico se
+    // respeta —el tallo sigue abriendo, la flor sigue cerrando— pero la
+    // vegetación propiamente dicha entra mucho antes: la hoja pasa de 0.38 a
+    // 0.24, un 37% más pronto, y el tallo deja de ocupar 0.58 de la línea de
+    // tiempo para ocupar 0.46. Antes la planta pasaba más de un tercio de su
+    // vida siendo sólo líneas, y eso se leía como "un SVG dibujándose" en vez
+    // de como algo que brota.
+    //
+    // El suelo de las duraciones NO baja de 0.34 U. Es la regla que evita que
+    // una sola muesca de rueda (~0.14 U) complete un trazo entero y devuelva
+    // la sensación mecánica; se mantiene intacta.
+    var OFF = { stem: 0, branch: 0.10, twig: 0.17, leaf: 0.24, fern: 0.31,
+                bud: 0.41, hyd: 0.47, rose: 0.56, ten: 0.66 };
+    var DUR = { stem: 0.46, branch: 0.42, twig: 0.36, leaf: 0.36, fern: 0.44,
+                bud: 0.34, hyd: 0.50, rose: 0.52, ten: 0.36 };
     // Dispersión del arranque de cada trazo, en unidades U. Sube de 0.03 a
     // 0.09 para descorrelacionar los trazos hermanos: un grupo que arranca en
     // el mismo frame se lee como un parpadeo, no como crecimiento.
@@ -433,6 +453,39 @@
       // contención. Resultado: una planta shy mide EXACTAMENTE lo que medía
       // antes de la escala.
       if (shy) reach *= 0.42 / ESCALA;
+
+      /* ── JERARQUÍA DE COMPOSICIÓN ────────────────────────────────────────
+         Tres pesos, no uno. Que todo creciera por igual era lo que hacía que
+         la capa se leyera como textura uniforme en vez de como composición.
+
+           MACRO   protagonista. Entra desde fuera de la página y puede quedar
+                   recortada por el borde: no todas las plantas tienen que
+                   verse enteras, y las que se salen del encuadre son las que
+                   dan la sensación de que el jardín continúa fuera.
+           MEDIO   acompaña. Tamaño y presencia de referencia.
+           ACENTO  remate. Un gesto botánico, no un protagonista.
+
+         La clase se deduce del `reach` QUE YA SE SORTEÓ arriba — ni una sola
+         llamada nueva a rand(). Eso importa: cualquier consumo extra del
+         generador desplazaría toda la secuencia y cambiaría la composición
+         entera, que es justo lo que no se puede tocar.
+
+         Y se aplica SÓLO a alcance y opacidad, nunca al `scale` del follaje.
+         Ese alimenta P.escala, que en botanic-lib decide cuántas nervaduras y
+         folíolos se dibujan: tocarlo cambiaría el número de paths. */
+      var proporcion = reach / W;
+      var clase = shy ? 'acento'
+                : proporcion > 0.30 ? 'macro'
+                : proporcion > 0.17 ? 'medio' : 'acento';
+      if (clase === 'macro') {
+        reach *= 1.22;          // se pasa del encuadre a propósito
+        x0 += side < 0 ? -reach * 0.16 : reach * 0.16;   // nace más afuera
+        P.presencia = 1.16;
+      } else if (clase === 'acento') {
+        P.presencia = 0.88;
+      } else {
+        P.presencia = 1;
+      }
 
       var when = reloj(y0);
 
@@ -603,7 +656,11 @@
       // con medidas sin escalar— usaría el umbral de hojas escaladas y
       // cambiaría su cuenta de paths y el flujo del RNG. Mismo patrón que
       // conDetalle() con el nivel de detalle.
-      var prevEscala = P.escala;
+      var prevEscala = P.escala, prevPresencia = P.presencia;
+      // Los acentos anclados al contenido son, por definición, el nivel más
+      // bajo de la jerarquía: rematan un titular o un botón, no compiten con
+      // él. Van un punto por debajo del medio.
+      P.presencia = 0.88;
       P.escala = esc;
       var sube = rand() < 0.5;
       var ang = (sube ? 0 : Math.PI) + side * rnd(0.30, 0.80);
@@ -635,7 +692,7 @@
                       when(pf.y, OFF.hyd, DUR.hyd));
         });
       }
-      P.escala = prevEscala;
+      P.escala = prevEscala; P.presencia = prevPresencia;
     }
 
     /* ── Siembra por bandas ───────────────────────────────────────────────── */
