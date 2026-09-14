@@ -471,7 +471,11 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-head h2 em { font-style: italic; color: var(--green-deep); }
 .loc-fact { display: flex; gap: 30px; padding: 34px 0; border-bottom: 1px solid var(--hair); }
 .loc-fact:first-of-type { border-top: 1px solid var(--hair); }
-.loc-fact-n { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--warm-on-light); min-width: 56px; }
+/* Antes un glifo grande en Cormorant Garamond (número o, más tarde, emoji);
+   ahora un ícono de línea. min-width se conserva para que las tres filas
+   seguían alineando su columna de texto igual que antes. */
+.loc-fact-n { display: flex; align-items: center; min-width: 56px; color: var(--warm-on-light); }
+.loc-fact-n svg { width: 26px; height: 26px; }
 .loc-fact strong { display: block; font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 5px; }
 .loc-fact span { font-size: 14px; color: var(--soft); }
 .loc-sub { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--warm-on-light); margin: 72px 0 28px; }
@@ -481,7 +485,8 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-dir-item strong { display: block; font-size: 15px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
 .loc-dir-item span:not(.loc-dir-t) { font-size: 13px; line-height: 1.6; color: var(--soft); }
 .loc-nearby-list { display: flex; flex-wrap: wrap; gap: 14px 32px; }
-.loc-nearby-list span { font-size: 14px; color: var(--soft); }
+.loc-nearby-list span { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soft); }
+.loc-nearby-list svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--warm-on-light); }
 @media (max-width: 900px) {
   .loc-dir-grid { grid-template-columns: 1fr; gap: 20px; }
   .loc-overlay { left: 16px; bottom: 16px; gap: 10px; }
