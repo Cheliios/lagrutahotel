@@ -20,11 +20,11 @@
       posición en el documento de cada trazo. Cada planta se dibuja cuando el
       usuario llega a su altura. Eso da el efecto "va creciendo conmigo" en vez
       de "todo crece a la vez en algún punto del scroll".
-   3. El crecimiento es REVERSIBLE: al subir el scroll la vegetación se
-      repliega por donde vino. Es una decisión de diseño, no una limitación —
-      ver la perilla PERSISTENTE más abajo — hoy en true: el crecimiento se
-      acumula, y lo que da la sensación de scroll continuo en desktop es el
-      suavizado (raw → objetivo → mostrado → trazos), no el replegado.
+   3. El crecimiento es REVERSIBLE, y es el comportamiento buscado: bajando,
+      el jardín se acumula —un brote que terminó se queda entero mientras los
+      siguientes siguen creciendo—; subiendo, se repliega por donde vino. El
+      progreso del scroll no es un disparador: es la posición en la línea de
+      tiempo del jardín, y se recorre en los dos sentidos.
    4. `pointer-events: none` en la capa: jamás debe bloquear un clic.
    ============================================================================= */
 (function () {
@@ -35,6 +35,29 @@
 
   var MOBILE = window.matchMedia('(max-width: 760px)').matches;
 
+  // ESCALA VISUAL — presencia de la capa, no densidad.
+  //
+  // Multiplica el TAMAÑO de lo que ya existe, no su cantidad. Alcance:
+  //   · reach (L398)     → el esqueleto entero escala con él: tallo, ramas y
+  //                        ramillas conservan sus proporciones internas.
+  //   · scale (L443)     → hojas, helechos, capullos, hortensias, rosas y
+  //                        zarcillos de las enredaderas perimetrales.
+  //   · acentos          → tallo, hojas, hortensia y zarcillo anclados al DOM.
+  //
+  // Por qué es seguro:
+  //   · No consume números del RNG: una multiplicación no altera la secuencia
+  //     aleatoria, así que la semilla produce EXACTAMENTE las mismas plantas —
+  //     mismas posiciones, mismo reparto de especies, mismos trazos. Sólo son
+  //     más grandes.
+  //   · Los anclajes no se tocan: la raíz nace en ±12 px fuera del borde y el
+  //     acento junto a su elemento; al crecer desde ahí hacia adentro, la
+  //     planta permanece visualmente unida al borde.
+  //   · Los grosores de trazo siguen siendo los de siempre: crecer no significa
+  //     engrosar, y la ligereza de la línea se conserva.
+  // Mobile lleva más aumento (el viewport es más angosto y las mismas medidas
+  // absoluas leen más pequeñas); es prioridad de presencia visual.
+  var ESCALA = MOBILE ? 1.50 : 1.30;
+
   // Dorado envejecido, no brillante. Todo el peso visual lo lleva la opacidad:
   // el usuario debe descubrir la vegetación, no tropezarse con ella.
   //
@@ -42,13 +65,32 @@
   // Ahora vale 1: los números de TONE son las opacidades FINALES, las que se
   // ven. Antes había un multiplicador de 1.8 encima y había que hacer la
   // cuenta mentalmente para saber con qué opacidad se estaba dibujando.
-  var INTENSIDAD = 1;
+  // Sube de 1 a 1.28 en escritorio y 1.45 en móvil. Es un multiplicador sobre
+  // TONE, así que la jerarquía interna entre tallo, hoja, flor y microdetalle
+  // se conserva intacta: sube la presencia, no cambia el reparto. Más alto en
+  // móvil porque ahí la capa se lee peor —pantalla pequeña, trazo fino— y era
+  // donde más se pedía notarla. No toca color ni paleta: sólo cuánto se ve.
+  var INTENSIDAD = MOBILE ? 1.45 : 1.28;
 
-  // false = reversible: al subir el scroll la planta se repliega por donde
-  //         vino, como si el crecimiento rebobinara. Ata la animación al
-  //         gesto del usuario y hace que se note que responde al scroll.
-  // true  = persistente: lo dibujado se queda y el jardín se acumula.
-  var PERSISTENTE = true;
+  // true  = irreversible: lo dibujado se queda pase lo que pase con el scroll.
+  // false = reversible: el dibujo sigue al progreso en los dos sentidos.
+  //
+  // Va en false, que es lo que se pedía desde el principio. Conviene fijar el
+  // vocabulario porque aquí hubo una confusión real: "persistente" NO quería
+  // decir "dibujado para siempre", sino que mientras se BAJA, un brote que ya
+  // terminó de crecer permanece entero mientras los siguientes crecen — que es
+  // justo lo que hace la ventana por planta, no esta perilla. Con esto en true
+  // el jardín dejaba de responder al scroll en cuanto se subía: el recorrido
+  // sólo se podía hacer una vez, en una dirección.
+  //
+  // Con false, el dibujo es una función del progreso mostrado, sin memoria:
+  //   bajar → cada trazo avanza dentro de su ventana y se queda al 100%
+  //           cuando la rebasa, mientras las ventanas siguientes se abren
+  //   subir → el mismo recorrido a la inversa, trazo a trazo
+  //
+  // No cuesta rendimiento: la ventana activa de render() es bidireccional, así
+  // que subir recorre los mismos pocos cientos de trazos que bajar.
+  var PERSISTENTE = false;
   // Dorado apagado / champagne. Se le quitó la carga verde que tenía antes:
   // más cálido y un punto más claro, pero desaturado — un champagne envejecido,
   // no un dorado metálico. El tono oscuro se mantiene profundo a propósito: a
@@ -68,12 +110,38 @@
   var layer = document.createElement('div');
   layer.className = 'vines-layer';
   layer.setAttribute('aria-hidden', 'true');
-  var svg = document.createElementNS(B.NS, 'svg');
-  svg.setAttribute('preserveAspectRatio', 'xMidYMin slice');
-  layer.appendChild(svg);
   document.body.appendChild(layer);
 
+  // El SVG y sus trazos son ahora los de la PÁGINA ACTIVA, no los únicos del
+  // sitio: `svg` e `items` apuntan a la entrada viva y cambian al navegar.
+  var svg = null;
   var items = [], W = 0, Hdoc = 0, vh = 0, scrollMax = 1, U = 0.1;
+
+  /* ── Cache de vegetación por página ───────────────────────────────────────
+     La SPA cambia de sección sin recargar, y hasta aquí cada cambio tiraba el
+     jardín entero y lo generaba otra vez — incluido el jardín EXACTAMENTE
+     igual al que se acababa de destruir. Se comprobó midiendo: el jardín de
+     Inicio sale con el mismo hash de geometría (e49ec3b9) se llegue directo,
+     desde Habitaciones o desde Experiencias.
+
+     Eso es lo que legitima el cache: el dibujo es función pura de cuatro
+     entradas, así que guardarlo no es una apuesta.
+
+       page.id → la semilla, y con ella toda la secuencia aleatoria
+       W       → el ancho gobierna el alcance de cada planta y el layout
+                 entero, del que cuelgan las posiciones de los acentos
+       vh      → entra en el reloj de cada planta, y por tanto en qué trazos
+                 llegan a existir (P.draw descarta los que empiezan tras 1.02)
+       Hdoc    → scrollMax y U, la escala temporal completa
+
+     Las cuatro se guardan CON la entrada y se comparan al volver. Si alguna
+     cambió —girar el teléfono, redimensionar la ventana, una fuente que
+     mueve la altura— la entrada no sirve y se reconstruye. Es lo que evita un
+     cache ciego: la clave no es la página, es la página EN ESAS condiciones.
+
+     El tamaño está acotado por construcción: hay cinco páginas, y volver a
+     una con otras medidas reemplaza su entrada en vez de añadir otra. */
+  var cache = new Map();
   var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ── Zonas donde no se siembra ──────────────────────────────────────────── */
@@ -93,8 +161,11 @@
       var r = el.getBoundingClientRect();
       hard.push([r.top + window.scrollY - 40, r.bottom + window.scrollY + 40]);
     });
-    page.querySelectorAll('.garden').forEach(function (el) {
+    page.querySelectorAll('.garden, footer').forEach(function (el) {
       var r = el.getBoundingClientRect();
+      // El footer se suma a las zonas suaves: es texto denso a todo el ancho
+      // (contacto, teléfonos, email) y la vegetación escalada lo cruzaba.
+      // Suave, no duro, para que el cierre siga envolviendo — pero corta.
       soft.push([r.top + window.scrollY - 60, r.bottom + window.scrollY + 60]);
     });
     return { hard: hard, soft: soft };
@@ -108,6 +179,34 @@
 
   /* ── Construcción ───────────────────────────────────────────────────────── */
 
+  // Engancha un SVG al layer dejándolo como único hijo. Se evita
+  // `replaceChildren` a propósito: es DOM de 2020 (Safari 14+) y esta capa ya
+  // depende de una compatibilidad que hubo que validar a mano (pathLength).
+  // removeChild/appendChild funciona en todo lo que puede abrir este sitio.
+  function montar(el) {
+    if (layer.firstChild === el && layer.childNodes.length === 1) return;
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    layer.appendChild(el);
+  }
+
+  // Deja una entrada del cache como vegetación viva: la engancha al layer y
+  // la devuelve a su estado inicial sin dibujar.
+  //
+  // El repintado NO es opcional. Los trazos guardados conservan el avance que
+  // tenían al salir de la página, y al volver el scroll arranca de cero: sin
+  // este reinicio el jardín aparecería ya crecido. B.measure() hace justo eso
+  // —dejar cada trazo oculto y recolocar los cursores del recorrido— así que
+  // la reactivación termina igual que una construcción nueva, que es la razón
+  // de que reutilizar sea indistinguible de reconstruir.
+  function activar(entrada) {
+    svg = entrada.svg; items = entrada.items;
+    layer.style.height = Hdoc + 'px';
+    montar(svg);
+    B.measure(items);
+    objetivo = mostrado = REDUCED ? 1 : progress();
+    B.render(items, mostrado, false);
+  }
+
   function build() {
     var page = document.querySelector('.page.active');
     if (!page) return;
@@ -118,12 +217,22 @@
     W    = document.documentElement.clientWidth;
     vh   = window.innerHeight;
     Hdoc = Math.max(document.body.scrollHeight, page.scrollHeight);
-
-    svg.innerHTML = '';
-    items.length = 0;
     scrollMax = Math.max(1, Hdoc - vh);
-    U = vh / scrollMax;                       // "una pantalla" en unidades de progreso
+    U = vh / scrollMax;
 
+    // ¿Hay un jardín ya hecho para esta página Y para estas medidas?
+    var guardado = cache.get(page.id);
+    if (guardado && guardado.W === W && guardado.vh === vh && guardado.Hdoc === Hdoc) {
+      activar(guardado);
+      return;
+    }
+
+    // Un SVG propio por página: al volver se reengancha el nodo entero en
+    // lugar de repoblar uno compartido. Así el jardín anterior sobrevive
+    // intacto, desenganchado, sin que haya que clonar ni volver a medir nada.
+    svg = document.createElementNS(B.NS, 'svg');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMin slice');
+    items = [];
     layer.style.height = Hdoc + 'px';
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Hdoc);
     svg.setAttribute('width', W);
@@ -149,6 +258,14 @@
       rand: rand,
       rnd: function (a, b) { return a + rand() * (b - a); },
       detail: MOBILE ? 0.42 : 0.62,           // capa ambiental: menos microdetalle
+      // Factor de escala visual (ver ESCALA arriba). Lo consumen los umbrales
+      // de botanic-lib (nervaduras de hoja, folíolos mínimos de helecho) para
+      // mantener sus decisiones —y el flujo del RNG— idénticos al escalar.
+      escala: ESCALA,
+      // Factor de presencia de la composición en curso: lo fija vine() según
+      // la clase (macro / medio / acento) y multiplica la opacidad de sus
+      // trazos. Es una diferencia LEVE a propósito — jerarquía, no contraste.
+      presencia: 1,
       draw: function (g, d, w, tone, sch, ease) {
         if (!d || sch.s > 1.02) return;
         var t = TONE[tone] || TONE.leaf;
@@ -167,7 +284,7 @@
         p.setAttribute('pathLength', '1');
         p.setAttribute('stroke', t.c);
         p.setAttribute('stroke-width', (w * 0.95).toFixed(2));
-        p.setAttribute('opacity', Math.min(1, t.o * INTENSIDAD).toFixed(2));
+        p.setAttribute('opacity', Math.min(1, t.o * INTENSIDAD * (P.presencia || 1)).toFixed(2));
         g.appendChild(p);
         items.push({ el: p, s: sch.s, e: Math.max(sch.e, sch.s + 0.004),
                      ease: ease || B.EASE.out, k: -1, len: 0 });
@@ -197,10 +314,21 @@
     // Los OFF se estiraron menos que los DUR a propósito: al solaparse más, la
     // planta crece como un organismo —tallo, hoja y flor avanzando a la vez— en
     // lugar de recitar una secuencia por partes.
-    var OFF = { stem: 0, branch: 0.16, twig: 0.27, leaf: 0.38, fern: 0.49,
-                bud: 0.60, hyd: 0.68, rose: 0.78, ten: 0.89 };
-    var DUR = { stem: 0.58, branch: 0.46, twig: 0.38, leaf: 0.36, fern: 0.46,
-                bud: 0.34, hyd: 0.52, rose: 0.54, ten: 0.38 };
+    // Escalonado COMPRIMIDO en su fase esquelética. El orden botánico se
+    // respeta —el tallo sigue abriendo, la flor sigue cerrando— pero la
+    // vegetación propiamente dicha entra mucho antes: la hoja pasa de 0.38 a
+    // 0.24, un 37% más pronto, y el tallo deja de ocupar 0.58 de la línea de
+    // tiempo para ocupar 0.46. Antes la planta pasaba más de un tercio de su
+    // vida siendo sólo líneas, y eso se leía como "un SVG dibujándose" en vez
+    // de como algo que brota.
+    //
+    // El suelo de las duraciones NO baja de 0.34 U. Es la regla que evita que
+    // una sola muesca de rueda (~0.14 U) complete un trazo entero y devuelva
+    // la sensación mecánica; se mantiene intacta.
+    var OFF = { stem: 0, branch: 0.10, twig: 0.17, leaf: 0.24, fern: 0.31,
+                bud: 0.41, hyd: 0.47, rose: 0.56, ten: 0.66 };
+    var DUR = { stem: 0.46, branch: 0.42, twig: 0.36, leaf: 0.36, fern: 0.44,
+                bud: 0.34, hyd: 0.50, rose: 0.52, ten: 0.36 };
     // Dispersión del arranque de cada trazo, en unidades U. Sube de 0.03 a
     // 0.09 para descorrelacionar los trazos hermanos: un grupo que arranca en
     // el mismo frame se lee como un parpadeo, no como crecimiento.
@@ -317,8 +445,47 @@
       // exceso de "rama grande" — un tallo llegaba a ocupar el 44% del ancho
       // del viewport desde un solo lado. La cobertura perdida se recupera con
       // MÁS ramas y follaje, no con tallos más largos.
-      var reach = W * (MOBILE ? rnd(0.14, 0.25) : rnd(0.19, 0.35)) * arco(u, ALCANCE);
-      if (shy) reach *= 0.42;                 // zona suave: se queda en el borde
+      var reach = W * (MOBILE ? rnd(0.14, 0.25) : rnd(0.19, 0.35)) * arco(u, ALCANCE) * ESCALA;
+      // Zona suave: se queda en el borde. La división por ESCALA cancela el
+      // escalado AQUÍ a propósito: las zonas suaves (El jardín, footer) fueron
+      // diseñadas para acompañar sin competir, con un tamaño ya aprobado — el
+      // factor de presencia no debe agrandar justo donde el diseño pidió
+      // contención. Resultado: una planta shy mide EXACTAMENTE lo que medía
+      // antes de la escala.
+      if (shy) reach *= 0.42 / ESCALA;
+
+      /* ── JERARQUÍA DE COMPOSICIÓN ────────────────────────────────────────
+         Tres pesos, no uno. Que todo creciera por igual era lo que hacía que
+         la capa se leyera como textura uniforme en vez de como composición.
+
+           MACRO   protagonista. Entra desde fuera de la página y puede quedar
+                   recortada por el borde: no todas las plantas tienen que
+                   verse enteras, y las que se salen del encuadre son las que
+                   dan la sensación de que el jardín continúa fuera.
+           MEDIO   acompaña. Tamaño y presencia de referencia.
+           ACENTO  remate. Un gesto botánico, no un protagonista.
+
+         La clase se deduce del `reach` QUE YA SE SORTEÓ arriba — ni una sola
+         llamada nueva a rand(). Eso importa: cualquier consumo extra del
+         generador desplazaría toda la secuencia y cambiaría la composición
+         entera, que es justo lo que no se puede tocar.
+
+         Y se aplica SÓLO a alcance y opacidad, nunca al `scale` del follaje.
+         Ese alimenta P.escala, que en botanic-lib decide cuántas nervaduras y
+         folíolos se dibujan: tocarlo cambiaría el número de paths. */
+      var proporcion = reach / W;
+      var clase = shy ? 'acento'
+                : proporcion > 0.30 ? 'macro'
+                : proporcion > 0.17 ? 'medio' : 'acento';
+      if (clase === 'macro') {
+        reach *= 1.22;          // se pasa del encuadre a propósito
+        x0 += side < 0 ? -reach * 0.16 : reach * 0.16;   // nace más afuera
+        P.presencia = 1.16;
+      } else if (clase === 'acento') {
+        P.presencia = 0.88;
+      } else {
+        P.presencia = 1;
+      }
 
       var when = reloj(y0);
 
@@ -362,7 +529,7 @@
          Las hojas ya no se reparten uniformemente — cada rama tiene un punto
          caliente donde se agrupan y el resto queda aireado. Un reparto regular
          se lee como patrón; uno agrupado, como planta. */
-      var scale = (MOBILE ? 0.80 : 1) * (0.74 + 0.40 * rich);
+      var scale = (MOBILE ? 0.80 : 1) * (0.74 + 0.40 * rich) * ESCALA;
 
       function puntoEn(c, k, n) {
         return rand() < 0.55
@@ -479,9 +646,25 @@
       if (y >= Hdoc - 30 || inside(Z.hard, y)) return;
 
       var when = reloj(y);
+      // En zona suave el acento conserva su tamaño aprobado (misma razón que
+      // el `reach` de las shy): la escala no agranda justo sobre el footer.
+      // La decisión de DIBUJAR no cambia — sólo las medidas —, así que el
+      // flujo del RNG queda idéntico.
+      var esc = inside(Z.soft, y) ? 1 : ESCALA;
+      // El factor efectivo debe alcanzar también a los umbrales de
+      // botanic-lib (nervaduras): si no, un acento de zona suave —que dibuja
+      // con medidas sin escalar— usaría el umbral de hojas escaladas y
+      // cambiaría su cuenta de paths y el flujo del RNG. Mismo patrón que
+      // conDetalle() con el nivel de detalle.
+      var prevEscala = P.escala, prevPresencia = P.presencia;
+      // Los acentos anclados al contenido son, por definición, el nivel más
+      // bajo de la jerarquía: rematan un titular o un botón, no compiten con
+      // él. Van un punto por debajo del medio.
+      P.presencia = 0.88;
+      P.escala = esc;
       var sube = rand() < 0.5;
       var ang = (sube ? 0 : Math.PI) + side * rnd(0.30, 0.80);
-      var len = rnd(30, 62) * (MOBILE ? 0.72 : 1);
+      var len = rnd(30, 62) * (MOBILE ? 0.72 : 1) * esc;
       var tallo = B.growS(P, x, y, ang, len, rnd(0.40, 0.85), 9);
       P.draw(groups.acentos, B.catmull(tallo), 0.48, 'stem',
              when(y, OFF.branch, DUR.branch), E.out);
@@ -491,7 +674,7 @@
         var t = 0.28 + (0.62 / nh) * i + rnd(-0.06, 0.06);
         var pt = B.along(tallo, t);
         var sd = (i % 2) ? 1 : -1;
-        var lh = rnd(11, 21) * (MOBILE ? 0.78 : 1);
+        var lh = rnd(11, 21) * (MOBILE ? 0.78 : 1) * esc;
         B.leaf(P, groups.acentos, pt.x, pt.y, pt.a + sd * rnd(0.60, 1.15),
                lh, lh * rnd(0.26, 0.36), when(pt.y, OFF.leaf + t * 0.08, DUR.leaf));
       }
@@ -500,15 +683,16 @@
       // al elemento en vez de estar simplemente apoyado al lado.
       var pz = B.along(tallo, rnd(0.80, 1.0));
       B.tendril(P, groups.acentos, pz.x, pz.y, pz.a + rnd(-1.1, 1.1),
-                rnd(4, 8), when(pz.y, OFF.ten, DUR.ten));
+                rnd(4, 8) * esc, when(pz.y, OFF.ten, DUR.ten));
 
       if (rand() < 0.42) {
         var pf = B.along(tallo, rnd(0.55, 0.95));
         conDetalle(0.32, function () {
-          B.hydrangea(P, groups.acentos, pf.x, pf.y, rnd(6, 10),
+          B.hydrangea(P, groups.acentos, pf.x, pf.y, rnd(6, 10) * esc,
                       when(pf.y, OFF.hyd, DUR.hyd));
         });
       }
+      P.escala = prevEscala; P.presencia = prevPresencia;
     }
 
     /* ── Siembra por bandas ───────────────────────────────────────────────── */
@@ -580,6 +764,8 @@
     });
 
     svg.appendChild(frag);
+    montar(svg);
+    cache.set(page.id, { svg: svg, items: items, W: W, vh: vh, Hdoc: Hdoc });
     B.measure(items);
     objetivo = mostrado = REDUCED ? 1 : progress();
     B.render(items, mostrado, false);
@@ -649,7 +835,12 @@
     if (paso >  PASO_VISUAL) paso =  PASO_VISUAL;
     if (paso < -PASO_VISUAL) paso = -PASO_VISUAL;
     mostrado += paso;
-    if (objetivo - mostrado > RETRASO_MAX) mostrado = objetivo - RETRASO_MAX;
+    // Simétrico: el tope de retraso vale igual bajando que subiendo. Antes
+    // sólo cortaba en un sentido porque en el otro no había nada que dibujar;
+    // ahora un flick hacia arriba puede descolgar el replegado igual que uno
+    // hacia abajo descolgaba el crecimiento.
+    if (objetivo - mostrado >  RETRASO_MAX) mostrado = objetivo - RETRASO_MAX;
+    if (objetivo - mostrado < -RETRASO_MAX) mostrado = objetivo + RETRASO_MAX;
     if (Math.abs(objetivo - mostrado) < 0.0002) mostrado = objetivo;
     B.render(items, mostrado, PERSISTENTE);
     if (mostrado !== objetivo) requestAnimationFrame(frame);

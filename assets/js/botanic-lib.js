@@ -168,7 +168,17 @@ window.Botanic = (function () {
     // Las nervaduras laterales escalan con el TAMAÑO de la hoja, no solo con
     // el nivel de detalle: en una hoja de 16px son sub-píxel — no se ven y
     // cada una cuesta un path que hay que redibujar en cada frame de scroll.
-    var nv = Math.max(0, Math.round(4 * P.detail * Math.min(1, len / 45)));
+    //
+    // El umbral de longitud (45) se divide por P.escala para que sea
+    // INVARIANTE a la escala del pintor: si la capa crece sus hojas un factor
+    // k, len entra multiplicada por k y len/(45/k) = k·len/45 — la misma
+    // cuenta de nervaduras que antes del escalado. Sin esto, las hojas más
+    // grandes cruzarían el umbral de sub-píxel que antes no cruzaban, el
+    // número de paths cambiaría y —peor— el flujo del RNG se desplazaría
+    // aguas abajo, mutando todo el jardín. Pintores sin escala (o 1) no
+    // notan la diferencia.
+    var esc = P.escala || 1;
+    var nv = Math.max(0, Math.round(4 * P.detail * Math.min(1, len / (45 * esc))));
     for (var v = 0; v < nv; v++) {
       var t = 0.22 + (0.62 / nv) * v + P.rnd(-0.03, 0.03);
       var pt = along(mid, t);
@@ -185,11 +195,16 @@ window.Botanic = (function () {
     var rachis = grow(P, x, y, ang, len, P.rnd(-0.70, 0.70), 0.02, 14);
     P.draw(g, catmull(rachis), 0.75, 'stem', win(sch, 0, 0.42), EASE.out);
     var pairs = Math.max(6, Math.round(11 * P.detail));
+    // Umbral de folíolo mínimo INVARIANTE a la escala (misma razón que en
+    // leaf): len ya viene multiplicada por P.escala, así que el mínimo se
+    // multiplica por el mismo factor y la decisión de descartar —y con ella
+    // el flujo del RNG y el número total de paths— no cambia al escalar.
+    var esc = P.escala || 1;
     for (var i = 0; i < pairs; i++) {
       var t = 0.07 + (i / (pairs - 1)) * 0.90;
       var pt = along(rachis, t);
       var ll = len * 0.215 * Math.sin(Math.pow(t, 0.55) * Math.PI * 0.95) * P.rnd(0.82, 1.14);
-      if (ll < 3) continue;
+      if (ll < 3 * esc) continue;
       for (var s2 = -1; s2 <= 1; s2 += 2) {
         var lf = grow(P, pt.x, pt.y, pt.a + s2 * (Math.PI / 2) - s2 * (0.62 + t * 0.30),
                       ll, s2 * P.rnd(0.25, 0.55), 0.02, 6);
@@ -353,6 +368,19 @@ window.Botanic = (function () {
       it.el.style.strokeDashoffset = '1';
     }
     items.sort(function (a, b) { return a.s - b.s; });
+
+    // Duración de la ventana más larga de todo el conjunto. Con el array
+    // ordenado por INICIO, este número es lo que permite acotar el recorrido
+    // por el otro extremo sin ordenar también por final: si un trazo empieza
+    // en s ≤ p − _d, su final e = s + dur ≤ s + _d ≤ p, luego está terminado
+    // seguro. Es un criterio monótono sobre un array ordenado, así que el
+    // cursor que lo usa puede moverse en los DOS sentidos (ver render).
+    var d = 0;
+    for (var j = 0; j < items.length; j++) {
+      var w = items[j].e - items[j].s;
+      if (w > d) d = w;
+    }
+    items._d = d;
     items._h = 0; items._t = 0;
   }
 
@@ -365,50 +393,71 @@ window.Botanic = (function () {
   // y eso se ve como un salto. Por eso el recorrido se acota a la ventana de
   // trazos realmente en crecimiento.
   function render(items, p, persist) {
-    var n = items.length, i = 0, hasta = n, it, k;
+    var n = items.length, i, it, k, lim;
+    if (items._d == null) { items._d = 1; items._h = 0; items._t = 0; }
 
-    if (persist) {
-      // VENTANA ACTIVA. Bajo persistencia el dibujo sólo avanza, así que basta
-      // con dos cursores que también sólo avanzan:
-      //
-      //   _t (cola)   → primer trazo cuya ventana todavía no ha empezado.
-      //                 De ahí en adelante no hay nada que escribir.
-      //   _h (cabeza) → primer trazo aún sin terminar. Lo anterior ya está al
-      //                 100% y ahí se queda.
-      //
-      // Sólo se recorre [_h, _t): los trazos realmente en crecimiento, unas
-      // decenas o pocos cientos, en lugar de los ~16.000 de cada frame.
-      //
-      // Honestidad sobre qué arregla esto y qué no: los frames LARGOS que se
-      // midieron durante el crecimiento (33-51ms frente a 17ms en reposo) NO
-      // los causaba este bucle. Se comprobó ocultando la capa con
-      // `visibility:hidden` —el JS sigue corriendo igual— y los frames bajaban
-      // a 17ms limpios: el coste está en rasterizar el SVG, no en recorrer el
-      // array. Rebajarlo sigue valiendo la pena en gama media (era ~1 millón
-      // de iteraciones por segundo para tocar unos cientos de trazos), pero el
-      // techo de frame se defiende en vines.js con PASO_MAX, no aquí.
-      if (items._t == null) { items._t = 0; items._h = 0; }
-      while (items._t < n && items[items._t].s < p) items._t++;
-      while (items._h < items._t && items[items._h].k === 1) items._h++;
-      i = items._h; hasta = items._t;
+    // VENTANA ACTIVA BIDIRECCIONAL.
+    //
+    // En un momento dado sólo un puñado de trazos está a medio dibujar: los
+    // demás están terminados (por detrás del scroll) o sin empezar (por
+    // delante). Recorrer los ~16.000 en cada frame para tocar unos cientos es
+    // trabajo tirado, así que dos cursores acotan el tramo vivo.
+    //
+    // La versión anterior sólo sabía avanzar, porque el crecimiento sólo
+    // avanzaba. Ahora el dibujo se retrae al subir el scroll, así que los dos
+    // cursores tienen que saber volver — y volver SIN degradar a un escaneo
+    // completo, que es lo que pasaría si se cayera al camino sin ventana.
+    //
+    //   _t (cola)   → primer trazo cuya ventana todavía no ha empezado.
+    //   _h (cabeza) → primer trazo que aún puede estar sin terminar.
+    //
+    // Coste: cada trazo se escribe UNA vez cada vez que un cursor pasa por
+    // encima de él, así que un recorrido completo de la página en cualquiera
+    // de los dos sentidos cuesta lo mismo que costaba bajar.
+
+    // Cola hacia delante: entran los trazos cuya ventana acaba de empezar.
+    while (items._t < n && items[items._t].s < p) items._t++;
+
+    // Cola hacia atrás: al subir, lo que queda por delante del scroll vuelve a
+    // no estar dibujado. Se reinicia aquí, al pasarle el cursor por encima,
+    // en vez de comprobarlo trazo a trazo en cada frame.
+    if (!persist) {
+      while (items._t > 0 && items[items._t - 1].s >= p) {
+        items._t--;
+        it = items[items._t];
+        if (it.k !== 0) { it.k = 0; it.el.style.strokeDashoffset = it.len.toFixed(4); }
+      }
     }
 
-    for (; i < hasta; i++) {
+    // Cabeza, en los dos sentidos. Todo lo que empieza antes de `lim` terminó
+    // seguro (ver measure), así que queda fuera del recorrido y ahí se queda
+    // dibujado; y si el scroll sube lo suficiente, el cursor retrocede y esos
+    // trazos vuelven a entrar para retraerse.
+    lim = p - items._d;
+    // El `k === 1` de la condición NO sobra: sin él, un salto grande de scroll
+    // —arrastrar la barra, un ancla— mueve el cursor por encima de miles de
+    // trazos que se dan por terminados sin haber recibido nunca su escritura
+    // final, y se quedan invisibles para siempre. Medido al aparecer el fallo:
+    // al 100% del scroll sólo había dibujado el 60% de la capa. Con el
+    // añadido, la cabeza se detiene en el primer trazo que aún no está
+    // completo y el bucle de abajo lo termina; al frame siguiente ya puede
+    // pasar de largo. Se paga una vez por salto, no por frame.
+    while (items._h < items._t && items[items._h].s <= lim && items[items._h].k === 1) items._h++;
+    while (items._h > 0 && items[items._h - 1].s > lim) items._h--;
+
+    for (i = items._h; i < items._t; i++) {
       it = items[i];
       if (persist && it.k === 1) continue;
       if (p <= it.s) {
-        // Con persistencia no se rebobina NUNCA: un trazo a medio dibujar que
-        // queda por detrás del scroll (porque se subió) conserva lo crecido.
-        // Reiniciarlo producía el parpadeo aparece → desaparece → aparece.
-        if (!persist && it.k !== 0) { it.k = 0; it.el.style.strokeDashoffset = it.len.toFixed(2); }
+        if (!persist && it.k !== 0) { it.k = 0; it.el.style.strokeDashoffset = it.len.toFixed(4); }
         continue;
       }
       if (p >= it.e) {
-        if (it.k !== 1) { it.k = 1; it.el.style.strokeDashoffset = '0.00'; }
+        if (it.k !== 1) { it.k = 1; it.el.style.strokeDashoffset = '0.0000'; }
         continue;
       }
       k = Math.round(it.ease((p - it.s) / (it.e - it.s)) * 400) / 400;   // evita escrituras inútiles
-      if (persist && k < it.k) continue;         // crecimiento persistente
+      if (persist && k < it.k) continue;         // sólo si se pide crecimiento irreversible
       if (k === it.k) continue;
       it.k = k;
       // 4 decimales, no 2: con la longitud normalizada a 1, dos decimales
