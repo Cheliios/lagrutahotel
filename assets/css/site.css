@@ -6,9 +6,24 @@
 :root {
   --ink:    #2B2B26;
   --soft:   #55554C;
-  --green:  #3A5236;
-  --green-lt:#5E7355;
-  --gold:   #3A5236;
+  /* Dirección "Oliva boutique": traduce el verde saturado del logo real
+     (#175916, H119° S60% L22%) a una familia más madura para interfaz —
+     mismo hue en el orden de magnitud, saturación bajada y desplazada
+     hacia el oliva en vez de solo apagada. Jerarquía: green-deep para
+     énfasis/hover fuertes, green para identidad principal, green-lt para
+     acento secundario donde el contraste lo permite (ver .room-card-name,
+     único uso real — texto grande, 28px, umbral AA 3:1). */
+  --green:      #5E723B;
+  --green-deep: #303B21;
+  --green-lt:   #7E8863;
+  /* --gold quedaba idéntico a --green por accidente: una sola variable
+     pretendía cubrir "acento cálido" tanto sobre fondos claros como
+     oscuros, algo que ningún HEX puede resolver sin sacrificar contraste
+     en alguno de los dos lados. Se reemplaza por dos tokens de la misma
+     familia terracota (H24°): warm-on-light (4.65:1 sobre --paper) y
+     warm-on-dark (4.65:1 sobre --ink), ambos AA para texto normal. */
+  --warm-on-light: #A75F2F;
+  --warm-on-dark:  #C78457;
   --paper:  #FBFAF6;
   --paper2: #F4F1E9;
   --white:  #FFFFFF;
@@ -188,7 +203,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .menu.open .menu-inner { opacity: 1; transition: opacity .5s .3s; }
 .menu-links { display: flex; flex-direction: column; justify-content: center; padding: 0 80px; gap: 2px; }
 .menu-item { overflow: hidden; padding: 4px 0; }
-.menu-index { font-size: 11px; color: var(--gold); letter-spacing: 2px; vertical-align: super; margin-right: 16px; }
+.menu-index { font-size: 11px; color: var(--warm-on-dark); letter-spacing: 2px; vertical-align: super; margin-right: 16px; }
 .menu-link {
   font-family: 'Cormorant Garamond', serif; font-size: clamp(42px,6vw,80px);
   font-weight: 300; color: rgba(255,255,255,.85); text-decoration: none;
@@ -196,7 +211,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   transition: transform .7s cubic-bezier(.33,1,.68,1), color .3s, font-style .3s;
   letter-spacing: -1px; line-height: 1.1;
 }
-.menu-link:hover { color: var(--gold); font-style: italic; }
+.menu-link:hover { color: var(--warm-on-dark); font-style: italic; }
 .menu.open .menu-link { transform: translateY(0); }
 .menu.open .menu-item:nth-child(1) .menu-link { transition-delay: .35s; }
 .menu.open .menu-item:nth-child(2) .menu-link { transition-delay: .42s; }
@@ -208,7 +223,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .menu-prev-tag { position: absolute; bottom: 16px; left: 16px; z-index:1; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
 .menu-contact { display: flex; flex-direction: column; gap: 10px; }
 .menu-contact a { font-size: 12px; letter-spacing: 2px; color: rgba(255,255,255,.4); text-decoration: none; text-transform: uppercase; transition: color .2s; }
-.menu-contact a:hover { color: var(--gold); }
+.menu-contact a:hover { color: var(--warm-on-dark); }
 
 /* pages */
 .page { display: none; }
@@ -263,18 +278,24 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .trust-strip { background: var(--paper); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 20px 40px; }
 .trust-strip-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 20px; }
 .trust-item { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--soft); white-space: nowrap; }
-.trust-sep { color: var(--gold); font-size: 13px; }
+.trust-sep { color: var(--warm-on-light); font-size: 13px; }
 
 /* ═══ WELCOME COLLAGE (asymmetric, image 3) ═══ */
 .welcome { position: relative; padding: 160px 40px; max-width: 1300px; margin: 0 auto; min-height: 90vh; }
-.welcome-grid { position: relative; height: 720px; }
+/* Alto de grilla y ancla vertical de .wc-center calibrados juntos: con el
+   texto real (párrafo largo), la caja de .wc-center mide ~453px de alto, y
+   antes de este ajuste (grilla 720px, top:48%) su borde inferior invadía
+   ~82px la foto .wc-4 (que ancla por bottom, así que sube con la grilla).
+   Con 860px + top:43% queda ~30px de aire limpio entre ambas, sin tocar
+   tamaño ni posición de wc-1/2/3 (anclan por top, ajenas a este cambio). */
+.welcome-grid { position: relative; height: 860px; }
 .wc-img { position: absolute; overflow: hidden; }
 .wc-1 { width: 300px; height: 240px; top: 20px; left: 130px; }
 .wc-2 { width: 300px; height: 360px; top: 150px; left: 0; }
 .wc-3 { width: 340px; height: 300px; top: 120px; right: 60px; }
 .wc-4 { width: 290px; height: 210px; bottom: 20px; left: 300px; }
 .wc-center {
-  position: absolute; top: 48%; left: 50%; transform: translate(-50%,-50%);
+  position: absolute; top: 43%; left: 50%; transform: translate(-50%,-50%);
   text-align: center; z-index: 3; background: var(--paper);
   padding: 40px 48px;
 }
@@ -302,9 +323,9 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    Ese vacío asimétrico es además por donde entra la vegetación. */
 .statement .eye { grid-column: 2 / span 7; }
 .statement h2   { grid-column: 2 / span 8; }
-.statement .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 28px; }
+.statement .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 28px; }
 .statement h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,3.8vw,52px); font-weight: 300; line-height: 1.3; color: var(--ink); }
-.statement h2 em { font-style: italic; color: var(--green); }
+.statement h2 em { font-style: italic; color: var(--green-deep); }
 .statement p { grid-column: 2 / span 8; font-size: 16px; line-height: 1.85; color: var(--soft); max-width: 640px; margin-top: 24px; }
 
 /* ═══ ROOM CARDS (image 2 style) ═══ */
@@ -313,7 +334,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .rooms-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 56px; }
 .rooms-count { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft); font-weight: 500; }
 .rooms-head-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,52px); font-weight: 300; color: var(--ink); }
-.rooms-head-title em { font-style: italic; color: var(--green); }
+.rooms-head-title em { font-style: italic; color: var(--green-deep); }
 /* Desfase vertical entre columnas: rompe la simetría de espejo sin salirse
    de la retícula. Con 6 tarjetas produce un ritmo de ladrillo constante. */
 .rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px 64px; align-items: start; }
@@ -331,7 +352,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .room-card-actions { display: flex; align-items: center; justify-content: flex-start; gap: 28px; }
 .rc-book { background: var(--ink); color: #fff; border: none; padding: 14px 28px; font-family: 'Jost',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background .3s; text-decoration: none; }
 .rc-book:hover { background: var(--green); }
-.rc-more { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--gold); padding-bottom: 4px; transition: color .2s; }
+.rc-more { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--warm-on-light); padding-bottom: 4px; transition: color .2s; }
 .rc-more:hover { color: var(--green); }
 
 /* Línea de meta de una experiencia (duración · modalidad · precio): mismo
@@ -353,7 +374,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    sin cambios para la grilla de tours: son clases ya genéricas, no específicas
    de habitaciones. */
 .exp-intro { padding: 100px 40px 70px; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: repeat(12, 1fr); }
-.exp-intro .eye { grid-column: 2 / span 7; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; }
+.exp-intro .eye { grid-column: 2 / span 7; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 22px; }
 .exp-intro-text { grid-column: 2 / span 8; font-size: 16px; line-height: 1.85; color: var(--soft); max-width: 640px; }
 
 .exp-note { text-align: center; max-width: 680px; margin: 0 auto; padding: 90px 40px 130px; }
@@ -370,7 +391,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .jardin-img { position: absolute; overflow: hidden; }
 .jardin-img-1 { width: 76%; height: 68%; top: 0; left: 0; }
 .jardin-img-2 { width: 56%; height: 56%; bottom: 0; right: 0; border: 8px solid var(--paper); }
-.jardin-text .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; }
+.jardin-text .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 22px; }
 .jardin-text h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,3.8vw,48px); font-weight: 300; color: var(--ink); line-height: 1.25; margin-bottom: 24px; }
 .jardin-text p { font-size: 15px; line-height: 1.85; color: var(--soft); max-width: 440px; }
 
@@ -395,7 +416,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    [open], que el navegador ya mantiene solo. */
 .faq-sec { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
 .faq-head { margin-bottom: 56px; }
-.faq-head .eye { display: block; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
+.faq-head .eye { display: block; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 18px; }
 .faq-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,48px); font-weight: 300; color: var(--ink); }
 .faq-item { border-bottom: 1px solid var(--hair); list-style: none; }
 .faq-item::marker, .faq-item::-webkit-details-marker { display: none; }
@@ -403,7 +424,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 0; cursor: pointer; list-style: none; }
 .faq-item summary::marker, .faq-item summary::-webkit-details-marker { display: none; }
 .faq-q { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); }
-.faq-chevron { font-size: 15px; color: var(--gold); transition: transform .3s; flex-shrink: 0; }
+.faq-chevron { font-size: 15px; color: var(--warm-on-light); transition: transform .3s; flex-shrink: 0; }
 .faq-item[open] .faq-chevron { transform: rotate(180deg); }
 .faq-a { padding: 0 0 30px; font-size: 14px; line-height: 1.8; color: var(--soft); max-width: 680px; }
 
@@ -416,7 +437,12 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .band-in { position: relative; z-index: 2; text-align: right; max-width: 620px; }
 .band-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,64px); font-weight: 300; color: #fff; line-height: 1.2; }
 .band-in em { font-style: italic; }
-.band-link { display: inline-flex; align-items: center; gap: 12px; color: #fff; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; margin-top: 28px; border-bottom: 1px solid var(--gold); padding-bottom: 5px; }
+/* CTA de cierre de Inicio: usa el mismo botón sólido que "Reservar" en las
+   tarjetas de habitación (.rc-book) en vez de un link fantasma propio — es
+   el punto de mayor intención de conversión de la página y no tenía la
+   misma jerarquía que su equivalente en el resto del sitio. Solo el
+   margen superior es propio de este lugar. */
+.band-in .rc-book { margin-top: 28px; }
 
 /* ═══ ROOMS PAGE hero uses same .hero + avail ═══ */
 /* room list on rooms page — use same card grid */
@@ -469,22 +495,37 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .loc-badge-t { font-size: 11px; line-height: 1.5; letter-spacing: .5px; color: var(--ink); text-transform: uppercase; }
 .loc-body { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
 .loc-head { text-align: left; margin-bottom: 64px; max-width: 620px; }
-.loc-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
+.loc-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 18px; }
 .loc-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px,4.5vw,60px); font-weight: 300; color: var(--ink); }
-.loc-head h2 em { font-style: italic; color: var(--green); }
+.loc-head h2 em { font-style: italic; color: var(--green-deep); }
 .loc-fact { display: flex; gap: 30px; padding: 34px 0; border-bottom: 1px solid var(--hair); }
 .loc-fact:first-of-type { border-top: 1px solid var(--hair); }
-.loc-fact-n { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--gold); min-width: 56px; }
+/* Antes un glifo grande en Cormorant Garamond (número o, más tarde, emoji);
+   ahora un ícono de línea. min-width se conserva para que las tres filas
+   seguían alineando su columna de texto igual que antes. */
+.loc-fact-n { display: flex; align-items: center; min-width: 56px; color: var(--warm-on-light); }
+.loc-fact-n svg { width: 26px; height: 26px; }
 .loc-fact strong { display: block; font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 5px; }
 .loc-fact span { font-size: 14px; color: var(--soft); }
-.loc-sub { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin: 72px 0 28px; }
+.contact-link { color: inherit; text-decoration: none; transition: color .2s, text-decoration-color .2s; }
+.contact-link:hover {
+  color: var(--green); text-decoration: underline;
+  text-decoration-color: var(--warm-on-light); text-decoration-thickness: 1px; text-underline-offset: 4px;
+}
+.contact-link:focus-visible {
+  color: var(--green-deep); text-decoration: underline;
+  text-decoration-color: var(--warm-on-light); text-decoration-thickness: 1px; text-underline-offset: 4px;
+  outline: 1px solid var(--warm-on-light); outline-offset: 4px;
+}
+.loc-sub { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--warm-on-light); margin: 72px 0 28px; }
 .loc-dir-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
 .loc-dir-item { padding: 24px 0 0; border-top: 1px solid var(--hair); }
 .loc-dir-t { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--green); display: block; margin-bottom: 8px; }
 .loc-dir-item strong { display: block; font-size: 15px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
 .loc-dir-item span:not(.loc-dir-t) { font-size: 13px; line-height: 1.6; color: var(--soft); }
 .loc-nearby-list { display: flex; flex-wrap: wrap; gap: 14px 32px; }
-.loc-nearby-list span { font-size: 14px; color: var(--soft); }
+.loc-nearby-list span { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soft); }
+.loc-nearby-list svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--warm-on-light); }
 @media (max-width: 900px) {
   .loc-dir-grid { grid-template-columns: 1fr; gap: 20px; }
   .loc-overlay { left: 16px; bottom: 16px; gap: 10px; }
@@ -502,10 +543,16 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .rv-contact:first-of-type { border-top: 1px solid var(--hair); }
 .rv-cl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
 .rv-cv { font-size: 15px; color: var(--ink); }
-.rv-form { display: flex; flex-direction: column; }
+.rv-form { position: relative; display: flex; flex-direction: column; }
+.rv-required-note {
+  position: absolute; top: -28px; right: 0;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--soft);
+}
+.rv-required-note span, .rv-required { color: var(--warm-on-light); }
+.rv-required { margin-left: 3px; }
 .rv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
 .rv-field { padding-top: 26px; border-bottom: 1px solid var(--hair); display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
-.rv-field label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+.rv-field label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft); }
 .rv-field input, .rv-field select, .rv-field textarea { background: transparent; border: none; font-family: 'Jost',sans-serif; font-size: 15px; color: var(--ink); outline: none; padding: 8px 0 16px; appearance: none; width: 100%; resize: none; }
 .rv-submit { margin-top: 40px; background: var(--ink); color: #fff; border: none; padding: 17px 46px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; align-self: flex-start; transition: background .3s; }
 .rv-submit:hover { background: var(--green); }
@@ -517,10 +564,10 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 /* Fondo del footer siempre oscuro (var(--ink)): el logo se fuerza a blanco,
    a diferencia del nav que alterna según el fondo. */
 .ft-logo-img { height: 38px; width: auto; filter: brightness(0) invert(1); }
-.ft-logo small { display:block; font-size:8px; letter-spacing:4px; color:var(--gold); margin-top:4px; font-family:'Jost',sans-serif; }
-.ft-col h4 { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; font-weight: 400; }
+.ft-logo small { display:block; font-size:8px; letter-spacing:4px; color:var(--warm-on-dark); margin-top:4px; font-family:'Jost',sans-serif; }
+.ft-col h4 { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--warm-on-dark); margin-bottom: 18px; font-weight: 400; }
 .ft-col a, .ft-col p { display: block; font-size: 13px; color: rgba(255,255,255,.5); text-decoration: none; margin-bottom: 10px; line-height: 1.6; }
-.ft-col a:hover { color: var(--gold); }
+.ft-col a:hover { color: var(--warm-on-dark); }
 .ft-bottom { max-width: 1300px; margin: 0 auto; padding-top: 30px; display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.25); }
 
 /* reveal */
