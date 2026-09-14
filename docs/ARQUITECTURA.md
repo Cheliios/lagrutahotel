@@ -788,3 +788,42 @@ dos hijos: `.menu-col-top` (eyebrow+links+contacto, agrupados aparte
 justamente para que el `space-between` separe SOLO estos dos bloques, no
 los tres elementos sueltos de antes) y `.menu-teaser` al fondo. Como el
 mapa, solo aparece en desktop (`.menu-teaser{display:none}` por defecto).
+
+### Ronda 5 (misma fecha): header roto en mobile — chips del nav sin espacio
+
+Otra sesión (commit `feat(vegetacion): la enredadera cruza header y
+footer sin tapar el texto`) intentó que la capa vegetal se viera cruzar
+por debajo del propio `nav`, no solo del contenido: le sacó a `nav` su
+scrim de ancho completo y le dio a `.nav-logo`, `.nav-book` y `.burger`
+un chip translúcido propio (padding + `border-radius` + blur), dejando el
+resto de la barra transparente — en TODOS los anchos, mobile incluido.
+
+**Bug reportado por la tesista con captura: en mobile (390px) los tres
+chips no entraban en el ancho disponible de la barra** (390px de viewport
+− 60px de padding de `nav` ≈ 330px para los tres) y se superponían entre
+sí — logo chocando con el burger y con "Reservar". El commit original
+decía haber verificado con Playwright sin errores, pero el chequeo no
+cubrió este caso concreto (mobile, `nav.dark` activo, los tres elementos
+a la vez).
+
+**Arreglado por otra sesión mientras esta investigaba el mismo bug**
+(commit `fix(nav): revertir mobile a la barra solida original, desktop
+intacto`, llegó a `master` unos minutos antes que el fix de esta ronda —
+se descartó el revert propio de esta sesión a favor de ese, ver más
+abajo): en vez de revertir el chip por completo, lo encierra en
+`@media (min-width: 901px)`. Mobile vuelve exactamente al scrim de ancho
+completo de siempre (gradiente oscuro con blur sobre hero, papel
+translúcido vía `nav.dark` sobre contenido claro, sin chips) — ahí nunca
+hay aire de sobra para tres chips con padding. Desktop se queda con el
+diseño de chips translúcidos (la vegetación cruzando por debajo del nav
+sigue viéndose ahí), que es donde sí hay margen lateral de sobra. Ver el
+bloque `@media (min-width: 901px)` al final de la sección `── NAV ──` en
+`assets/css/site.css` — todo lo que antes eran reglas base de `.burger`/
+`.nav-logo`/`.nav-book` con chip vive ahora solo ahí dentro.
+
+**Si se vuelve a tocar el nav**, seguir con ese mismo split
+mobile-sólido/desktop-chip: no volver a sacar el chip de dentro del
+`@media`, y si se ajusta el breakpoint o el padding de los chips, probar
+explícitamente en 390px con `nav.dark` activo (scrolleado más allá del
+hero) antes de dar por buena la ronda — ese es exactamente el caso que
+se rompió y el que no cubrió la verificación original.
