@@ -23,6 +23,11 @@
      P.rnd(a, b)   → aleatorio con la semilla de esa capa
      P.rand()      → aleatorio 0..1
      P.detail      → 0..1, escala la cantidad de nervaduras, folíolos, flores
+     P.escala      → factor de escala visual del pintor (opcional, 1 por
+                     defecto). Sólo lo consultan los UMBRALES de conteo —
+                     nervaduras de hoja, folíolos mínimos de helecho— para que
+                     escalar una capa no cambie CUÁNTO dibuja, sólo de qué
+                     tamaño. Ver leaf() y fern().
      P.draw(g, d, width, tone, sch, ease)
                    → crea el path; `tone` es semántico ('stem' | 'leaf' |
                      'vein' | 'flower' | 'detail') y cada capa decide qué
@@ -168,7 +173,17 @@ window.Botanic = (function () {
     // Las nervaduras laterales escalan con el TAMAÑO de la hoja, no solo con
     // el nivel de detalle: en una hoja de 16px son sub-píxel — no se ven y
     // cada una cuesta un path que hay que redibujar en cada frame de scroll.
-    var nv = Math.max(0, Math.round(4 * P.detail * Math.min(1, len / 45)));
+    //
+    // El umbral de longitud (45) se divide por P.escala para que sea
+    // INVARIANTE a la escala del pintor: si la capa crece sus hojas un factor
+    // k, len entra multiplicada por k y len/(45/k) = k·len/45 — la misma
+    // cuenta de nervaduras que antes del escalado. Sin esto, las hojas más
+    // grandes cruzarían el umbral de sub-píxel que antes no cruzaban, el
+    // número de paths cambiaría y —peor— el flujo del RNG se desplazaría
+    // aguas abajo, mutando todo el jardín. Pintores sin escala (o 1) no
+    // notan la diferencia.
+    var esc = P.escala || 1;
+    var nv = Math.max(0, Math.round(4 * P.detail * Math.min(1, len / (45 * esc))));
     for (var v = 0; v < nv; v++) {
       var t = 0.22 + (0.62 / nv) * v + P.rnd(-0.03, 0.03);
       var pt = along(mid, t);
@@ -185,11 +200,16 @@ window.Botanic = (function () {
     var rachis = grow(P, x, y, ang, len, P.rnd(-0.70, 0.70), 0.02, 14);
     P.draw(g, catmull(rachis), 0.75, 'stem', win(sch, 0, 0.42), EASE.out);
     var pairs = Math.max(6, Math.round(11 * P.detail));
+    // Umbral de folíolo mínimo INVARIANTE a la escala (misma razón que en
+    // leaf): len ya viene multiplicada por P.escala, así que el mínimo se
+    // multiplica por el mismo factor y la decisión de descartar —y con ella
+    // el flujo del RNG y el número total de paths— no cambia al escalar.
+    var esc = P.escala || 1;
     for (var i = 0; i < pairs; i++) {
       var t = 0.07 + (i / (pairs - 1)) * 0.90;
       var pt = along(rachis, t);
       var ll = len * 0.215 * Math.sin(Math.pow(t, 0.55) * Math.PI * 0.95) * P.rnd(0.82, 1.14);
-      if (ll < 3) continue;
+      if (ll < 3 * esc) continue;
       for (var s2 = -1; s2 <= 1; s2 += 2) {
         var lf = grow(P, pt.x, pt.y, pt.a + s2 * (Math.PI / 2) - s2 * (0.62 + t * 0.30),
                       ll, s2 * P.rnd(0.25, 0.55), 0.02, 6);

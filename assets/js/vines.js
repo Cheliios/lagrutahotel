@@ -35,6 +35,29 @@
 
   var MOBILE = window.matchMedia('(max-width: 760px)').matches;
 
+  // ESCALA VISUAL — presencia de la capa, no densidad.
+  //
+  // Multiplica el TAMAÑO de lo que ya existe, no su cantidad. Alcance:
+  //   · reach (L398)     → el esqueleto entero escala con él: tallo, ramas y
+  //                        ramillas conservan sus proporciones internas.
+  //   · scale (L443)     → hojas, helechos, capullos, hortensias, rosas y
+  //                        zarcillos de las enredaderas perimetrales.
+  //   · acentos          → tallo, hojas, hortensia y zarcillo anclados al DOM.
+  //
+  // Por qué es seguro:
+  //   · No consume números del RNG: una multiplicación no altera la secuencia
+  //     aleatoria, así que la semilla produce EXACTAMENTE las mismas plantas —
+  //     mismas posiciones, mismo reparto de especies, mismos trazos. Sólo son
+  //     más grandes.
+  //   · Los anclajes no se tocan: la raíz nace en ±12 px fuera del borde y el
+  //     acento junto a su elemento; al crecer desde ahí hacia adentro, la
+  //     planta permanece visualmente unida al borde.
+  //   · Los grosores de trazo siguen siendo los de siempre: crecer no significa
+  //     engrosar, y la ligereza de la línea se conserva.
+  // Mobile lleva más aumento (el viewport es más angosto y las mismas medidas
+  // absoluas leen más pequeñas); es prioridad de presencia visual.
+  var ESCALA = MOBILE ? 1.50 : 1.30;
+
   // Dorado envejecido, no brillante. Todo el peso visual lo lleva la opacidad:
   // el usuario debe descubrir la vegetación, no tropezarse con ella.
   //
@@ -133,8 +156,11 @@
       var r = el.getBoundingClientRect();
       hard.push([r.top + window.scrollY - 40, r.bottom + window.scrollY + 40]);
     });
-    page.querySelectorAll('.garden').forEach(function (el) {
+    page.querySelectorAll('.garden, footer').forEach(function (el) {
       var r = el.getBoundingClientRect();
+      // El footer se suma a las zonas suaves: es texto denso a todo el ancho
+      // (contacto, teléfonos, email) y la vegetación escalada lo cruzaba.
+      // Suave, no duro, para que el cierre siga envolviendo — pero corta.
       soft.push([r.top + window.scrollY - 60, r.bottom + window.scrollY + 60]);
     });
     return { hard: hard, soft: soft };
@@ -227,6 +253,10 @@
       rand: rand,
       rnd: function (a, b) { return a + rand() * (b - a); },
       detail: MOBILE ? 0.42 : 0.62,           // capa ambiental: menos microdetalle
+      // Factor de escala visual (ver ESCALA arriba). Lo consumen los umbrales
+      // de botanic-lib (nervaduras de hoja, folíolos mínimos de helecho) para
+      // mantener sus decisiones —y el flujo del RNG— idénticos al escalar.
+      escala: ESCALA,
       draw: function (g, d, w, tone, sch, ease) {
         if (!d || sch.s > 1.02) return;
         var t = TONE[tone] || TONE.leaf;
@@ -395,8 +425,14 @@
       // exceso de "rama grande" — un tallo llegaba a ocupar el 44% del ancho
       // del viewport desde un solo lado. La cobertura perdida se recupera con
       // MÁS ramas y follaje, no con tallos más largos.
-      var reach = W * (MOBILE ? rnd(0.14, 0.25) : rnd(0.19, 0.35)) * arco(u, ALCANCE);
-      if (shy) reach *= 0.42;                 // zona suave: se queda en el borde
+      var reach = W * (MOBILE ? rnd(0.14, 0.25) : rnd(0.19, 0.35)) * arco(u, ALCANCE) * ESCALA;
+      // Zona suave: se queda en el borde. La división por ESCALA cancela el
+      // escalado AQUÍ a propósito: las zonas suaves (El jardín, footer) fueron
+      // diseñadas para acompañar sin competir, con un tamaño ya aprobado — el
+      // factor de presencia no debe agrandar justo donde el diseño pidió
+      // contención. Resultado: una planta shy mide EXACTAMENTE lo que medía
+      // antes de la escala.
+      if (shy) reach *= 0.42 / ESCALA;
 
       var when = reloj(y0);
 
@@ -440,7 +476,7 @@
          Las hojas ya no se reparten uniformemente — cada rama tiene un punto
          caliente donde se agrupan y el resto queda aireado. Un reparto regular
          se lee como patrón; uno agrupado, como planta. */
-      var scale = (MOBILE ? 0.80 : 1) * (0.74 + 0.40 * rich);
+      var scale = (MOBILE ? 0.80 : 1) * (0.74 + 0.40 * rich) * ESCALA;
 
       function puntoEn(c, k, n) {
         return rand() < 0.55
@@ -557,9 +593,21 @@
       if (y >= Hdoc - 30 || inside(Z.hard, y)) return;
 
       var when = reloj(y);
+      // En zona suave el acento conserva su tamaño aprobado (misma razón que
+      // el `reach` de las shy): la escala no agranda justo sobre el footer.
+      // La decisión de DIBUJAR no cambia — sólo las medidas —, así que el
+      // flujo del RNG queda idéntico.
+      var esc = inside(Z.soft, y) ? 1 : ESCALA;
+      // El factor efectivo debe alcanzar también a los umbrales de
+      // botanic-lib (nervaduras): si no, un acento de zona suave —que dibuja
+      // con medidas sin escalar— usaría el umbral de hojas escaladas y
+      // cambiaría su cuenta de paths y el flujo del RNG. Mismo patrón que
+      // conDetalle() con el nivel de detalle.
+      var prevEscala = P.escala;
+      P.escala = esc;
       var sube = rand() < 0.5;
       var ang = (sube ? 0 : Math.PI) + side * rnd(0.30, 0.80);
-      var len = rnd(30, 62) * (MOBILE ? 0.72 : 1);
+      var len = rnd(30, 62) * (MOBILE ? 0.72 : 1) * esc;
       var tallo = B.growS(P, x, y, ang, len, rnd(0.40, 0.85), 9);
       P.draw(groups.acentos, B.catmull(tallo), 0.48, 'stem',
              when(y, OFF.branch, DUR.branch), E.out);
@@ -569,7 +617,7 @@
         var t = 0.28 + (0.62 / nh) * i + rnd(-0.06, 0.06);
         var pt = B.along(tallo, t);
         var sd = (i % 2) ? 1 : -1;
-        var lh = rnd(11, 21) * (MOBILE ? 0.78 : 1);
+        var lh = rnd(11, 21) * (MOBILE ? 0.78 : 1) * esc;
         B.leaf(P, groups.acentos, pt.x, pt.y, pt.a + sd * rnd(0.60, 1.15),
                lh, lh * rnd(0.26, 0.36), when(pt.y, OFF.leaf + t * 0.08, DUR.leaf));
       }
@@ -578,15 +626,16 @@
       // al elemento en vez de estar simplemente apoyado al lado.
       var pz = B.along(tallo, rnd(0.80, 1.0));
       B.tendril(P, groups.acentos, pz.x, pz.y, pz.a + rnd(-1.1, 1.1),
-                rnd(4, 8), when(pz.y, OFF.ten, DUR.ten));
+                rnd(4, 8) * esc, when(pz.y, OFF.ten, DUR.ten));
 
       if (rand() < 0.42) {
         var pf = B.along(tallo, rnd(0.55, 0.95));
         conDetalle(0.32, function () {
-          B.hydrangea(P, groups.acentos, pf.x, pf.y, rnd(6, 10),
+          B.hydrangea(P, groups.acentos, pf.x, pf.y, rnd(6, 10) * esc,
                       when(pf.y, OFF.hyd, DUR.hyd));
         });
       }
+      P.escala = prevEscala;
     }
 
     /* ── Siembra por bandas ───────────────────────────────────────────────── */
