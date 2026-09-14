@@ -245,16 +245,81 @@
       return;
     }
 
-    // Un SVG propio por página: al volver se reengancha el nodo entero en
-    // lugar de repoblar uno compartido. Así el jardín anterior sobrevive
-    // intacto, desenganchado, sin que haya que clonar ni volver a medir nada.
-    svg = document.createElementNS(B.NS, 'svg');
-    svg.setAttribute('preserveAspectRatio', 'xMidYMin slice');
+    // Un contenedor propio por página: al volver se reengancha el nodo
+    // entero en lugar de repoblar uno compartido. Así el jardín anterior
+    // sobrevive intacto, desenganchado, sin que haya que clonar ni volver a
+    // medir nada.
+    //
+    // Antes esto era UN solo <svg> del alto del documento entero. El coste
+    // medido no estaba en el bucle de JS sino en rasterizar ese SVG completo
+    // (ver nota más abajo, en PASO_VISUAL): el navegador lo trata como una
+    // sola superficie, así que cualquier cambio de un trazo —aunque sea uno
+    // solo, aunque esté fuera de pantalla— podía forzar recálculo sobre toda
+    // la pieza. Reducir plantas ya bajó ese coste una vez; para bajarlo más
+    // SIN sacrificar volumen ni densidad hay que atacar el rasterizado, no
+    // el contenido.
+    //
+    // La solución es partir el documento en BANDAS (`CHUNK_H` px cada una),
+    // cada una con su propio <svg> dentro de un <div> con
+    // `content-visibility: auto`. Esa propiedad le dice al navegador: si
+    // esta banda no está cerca del viewport, no le hagas layout ni paint —
+    // trátala como si no existiera hasta que vuelva a acercarse. El
+    // contenido sigue estando ahí completo (nada se quita, nada se recorta
+    // en densidad), pero sólo se paga el costo de rasterizar las 2-3 bandas
+    // que sí importan en cada momento, no el documento entero.
+    //
+    // El viewBox de cada banda arranca en su propio offset documental
+    // (`0 top W h`, no `0 0 W h`): así el <path> de cada planta conserva
+    // exactamente las mismas coordenadas absolutas que ya calculaba
+    // botanic-lib —cero cambios ahí— y sólo cambia EN QUÉ <svg> vive. Y cada
+    // <svg> lleva `overflow: visible`: una rama puede nacer cerca del borde
+    // de su banda y asomar a la vecina sin que la banda la recorte; eso
+    // sólo importa cuando la banda con la rama está pintándose, así que no
+    // cuesta nada en las bandas que content-visibility ya está saltándose.
     items = [];
     layer.style.height = Hdoc + 'px';
-    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Hdoc);
-    svg.setAttribute('width', W);
-    svg.setAttribute('height', Hdoc);
+
+    var CHUNK_H = 900;
+    var nChunks = Math.max(1, Math.ceil(Hdoc / CHUNK_H));
+    var root = document.createElement('div');
+    root.className = 'vines-doc';
+    root.style.cssText = 'position:absolute;top:0;left:0;width:' + W + 'px;height:' + Hdoc + 'px;';
+
+    var PARTES = ['tallos', 'ramas', 'ramillas', 'hojas', 'helechos', 'capullos',
+                  'hortensias', 'rosas', 'zarcillos', 'acentos'];
+    var chunkGroups = [];
+    for (var ci = 0; ci < nChunks; ci++) {
+      var top = ci * CHUNK_H, h = Math.min(CHUNK_H, Hdoc - top);
+      var chunk = document.createElement('div');
+      chunk.className = 'vines-chunk';
+      chunk.style.cssText = 'position:absolute;left:0;top:' + top + 'px;width:' + W + 'px;height:' +
+        h + 'px;content-visibility:auto;contain-intrinsic-size:' + W + 'px ' + h + 'px;overflow:visible;';
+      var chSvg = document.createElementNS(B.NS, 'svg');
+      chSvg.setAttribute('viewBox', '0 ' + top + ' ' + W + ' ' + h);
+      chSvg.setAttribute('width', W);
+      chSvg.setAttribute('height', h);
+      chSvg.setAttribute('overflow', 'visible');
+      chSvg.style.display = 'block';
+      chSvg.style.overflow = 'visible';
+      var cg = {};
+      PARTES.forEach(function (n) {
+        var g = document.createElementNS(B.NS, 'g');
+        g.setAttribute('data-part', n);
+        chSvg.appendChild(g);
+        cg[n] = g;
+      });
+      chunk.appendChild(chSvg);
+      root.appendChild(chunk);
+      chunkGroups.push(cg);
+    }
+    // Banda a la que pertenece la coordenada documental `y`. `vine()` y
+    // `acento()` la llaman una vez, con la y de origen de la planta, y
+    // reasignan `groups` — el resto de su cuerpo sigue leyendo `groups.X`
+    // exactamente igual que antes, así que esto no obliga a tocar cada
+    // llamada a P.draw/B.leaf/B.fern/etc. una por una.
+    function bandaDe(y) {
+      return chunkGroups[Math.min(nChunks - 1, Math.max(0, Math.floor(y / CHUNK_H)))];
+    }
 
     // Semilla derivada de la página: cada sección tiene su propio jardín, pero
     // siempre el mismo (no cambia entre visitas ni al redimensionar).
@@ -262,15 +327,7 @@
     for (var c = 0; c < page.id.length; c++) seed = (seed * 31 + page.id.charCodeAt(c)) >>> 0;
     var rand = B.makeRng(seed);
 
-    var frag = document.createDocumentFragment();
-    var groups = {};
-    ['tallos', 'ramas', 'ramillas', 'hojas', 'helechos', 'capullos',
-     'hortensias', 'rosas', 'zarcillos', 'acentos'].forEach(function (n) {
-      var g = document.createElementNS(B.NS, 'g');
-      g.setAttribute('data-part', n);
-      frag.appendChild(g);
-      groups[n] = g;
-    });
+    var groups = chunkGroups[0];
 
     var P = {
       rand: rand,
@@ -451,6 +508,11 @@
     }
 
     function vine(y0, side, u, shy) {
+      // Banda de content-visibility a la que pertenece esta planta (ver
+      // `bandaDe` más arriba). Sus ramas pueden alcanzar unos cientos de px
+      // más allá de y0, pero el overflow:visible de cada banda las deja
+      // pintarse igual aunque asomen a la vecina.
+      groups = bandaDe(y0);
       // `rich` ya no es una rampa lineal genérica: es el arco de follaje, que
       // arranca casi plano en CIUDAD y se dispara en REFUGIO.
       var rich = clamp(arco(u, FOLLAJE), 0, 1.1);
@@ -464,13 +526,13 @@
       // del viewport desde un solo lado. La cobertura perdida se recupera con
       // MÁS ramas y follaje, no con tallos más largos.
       var reach = W * (MOBILE ? rnd(0.14, 0.25) : rnd(0.19, 0.35)) * arco(u, ALCANCE) * ESCALA;
-      // Zona suave: se queda en el borde. La división por ESCALA cancela el
-      // escalado AQUÍ a propósito: las zonas suaves (El jardín, footer) fueron
-      // diseñadas para acompañar sin competir, con un tamaño ya aprobado — el
-      // factor de presencia no debe agrandar justo donde el diseño pidió
-      // contención. Resultado: una planta shy mide EXACTAMENTE lo que medía
-      // antes de la escala.
-      if (shy) reach *= 0.42 / ESCALA;
+      // Zona suave: se queda cerca del borde. La división por ESCALA sigue
+      // cancelando el escalado grande de la capa (footer y "El jardín" no
+      // deben crecer al ritmo del resto, o compiten con su texto), pero el
+      // factor pasó de 0.42 a 0.58: quería verse más jardín cruzando el pie
+      // de página sin llegar a competir con el texto — un punto medio entre
+      // "invisible" y "tan grande como el resto de la página".
+      if (shy) reach *= 0.58 / ESCALA;
 
       /* ── JERARQUÍA DE COMPOSICIÓN ────────────────────────────────────────
          Tres pesos, no uno. Que todo creciera por igual era lo que hacía que
@@ -662,13 +724,16 @@
       var x = side < 0 ? c.x - rnd(4, 16) : c.x + c.w + rnd(4, 16);
       var y = c.y + c.h * rnd(0.10, 0.90);
       if (y >= Hdoc - 30 || inside(Z.hard, y)) return;
+      groups = bandaDe(y);
 
       var when = reloj(y);
-      // En zona suave el acento conserva su tamaño aprobado (misma razón que
-      // el `reach` de las shy): la escala no agranda justo sobre el footer.
-      // La decisión de DIBUJAR no cambia — sólo las medidas —, así que el
-      // flujo del RNG queda idéntico.
-      var esc = inside(Z.soft, y) ? 1 : ESCALA;
+      // En zona suave el acento no toma la escala completa (misma razón que
+      // el `reach` de las shy): competiría con el texto del footer. Sube de
+      // 1 a 1.3 por el mismo motivo que el 0.42→0.58 de arriba — un poco más
+      // de presencia sin llegar al tamaño del resto de la página. La
+      // decisión de DIBUJAR no cambia — sólo las medidas —, así que el flujo
+      // del RNG queda idéntico.
+      var esc = inside(Z.soft, y) ? 1.3 : ESCALA;
       // El factor efectivo debe alcanzar también a los umbrales de
       // botanic-lib (nervaduras): si no, un acento de zona suave —que dibuja
       // con medidas sin escalar— usaría el umbral de hojas escaladas y
@@ -781,6 +846,25 @@
       }
     }
 
+    // Cobertura garantizada del footer. La siembra por bandas de arriba es
+    // probabilística —tramos de respiro incluidos— y con algunas semillas
+    // dejaba el pie de página con apenas un brote asomando por su borde
+    // superior, en vez de vegetación cruzándolo de verdad. Dos enredaderas
+    // ancladas directamente a un tercio y dos tercios de su alto interior
+    // aseguran presencia ahí sin depender de la suerte del sorteo. `shy` en
+    // true las mantiene contenidas (mismo tamaño que cualquier otra planta
+    // de zona suave), y al nacer DESPUÉS de la siembra por bandas quedan
+    // pintadas por encima del resto, que es justo lo que hace falta para
+    // que se lean sobre el fondo oscuro del footer.
+    var footerEl = page.querySelector('footer');
+    if (footerEl) {
+      var fr = footerEl.getBoundingClientRect(), fTop = fr.top + window.scrollY;
+      [0.32, 0.68].forEach(function (frac, i) {
+        var fy = fTop + fr.height * frac;
+        if (fy < yEnd) vine(fy, i % 2 ? 1 : -1, clamp(fy / Hdoc, 0, 1), true);
+      });
+    }
+
     // Elementos del contenido que reciben acento. No todos lo reciben: la
     // probabilidad evita que se lea como un adorno aplicado por regla.
     //
@@ -801,7 +885,7 @@
       });
     });
 
-    svg.appendChild(frag);
+    svg = root;
     montar(svg);
     cache.set(page.id, { svg: svg, items: items, W: W, vh: vh, Hdoc: Hdoc });
     B.measure(items);
