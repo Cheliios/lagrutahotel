@@ -56,7 +56,12 @@
   //     engrosar, y la ligereza de la línea se conserva.
   // Mobile lleva más aumento (el viewport es más angosto y las mismas medidas
   // absoluas leen más pequeñas); es prioridad de presencia visual.
-  var ESCALA = MOBILE ? 1.50 : 1.30;
+  //
+  // Desktop sube de 1.30 a 1.95 junto con el recorte de densidad de siembra
+  // (ver DENSIDAD_SIEMBRA más abajo): menos plantas, pero cada una bastante
+  // más grande, así el volumen visual total no baja aunque sí bajen los
+  // trazos que hay que animar por frame — que es lo que causaba el lag.
+  var ESCALA = MOBILE ? 1.50 : 1.95;
 
   // Dorado envejecido, no brillante. Todo el peso visual lo lleva la opacidad:
   // el usuario debe descubrir la vegetación, no tropezarse con ella.
@@ -70,7 +75,20 @@
   // se conserva intacta: sube la presencia, no cambia el reparto. Más alto en
   // móvil porque ahí la capa se lee peor —pantalla pequeña, trazo fino— y era
   // donde más se pedía notarla. No toca color ni paleta: sólo cuánto se ve.
-  var INTENSIDAD = MOBILE ? 1.45 : 1.28;
+  //
+  // Ambos suben (1.28→1.50 desktop, 1.45→1.60 móvil) para que las líneas
+  // resalten más en las dos plataformas, a pedido.
+  var INTENSIDAD = MOBILE ? 1.60 : 1.50;
+
+  // DENSIDAD_SIEMBRA sólo recorta CUÁNTAS plantas nacen en desktop, nunca
+  // cuánto follaje/ramas/flores lleva cada una una vez que nace (eso lo
+  // deciden `rich`/`arco`, intactos). Multiplica la densidad ANTES de decidir
+  // si una banda se siembra y si nace una segunda planta junto a la primera.
+  // Con esto el volumen total de trazos a animar por frame baja de verdad
+  // (menos plantas = menos <path>), y ESCALA de arriba compensa el volumen
+  // visual perdido haciendo cada planta bastante más grande. Móvil no se
+  // toca: vale 1 y la fórmula queda igual que antes.
+  var DENSIDAD_SIEMBRA = MOBILE ? 1 : 0.62;
 
   // true  = irreversible: lo dibujado se queda pase lo que pase con el scroll.
   // false = reversible: el dibujo sigue al progreso en los dos sentidos.
@@ -699,7 +717,12 @@
     var Z      = zones(page);
     // Bandas más juntas que antes: más puntos de origen, cada uno con una
     // planta más chica. La cobertura sale de la cantidad, no del tamaño.
-    var bandH  = MOBILE ? 146 : 100;
+    //
+    // Desktop separa más las bandas (100→160): menos puntos de origen, cada
+    // uno con una planta bastante más grande (ver ESCALA). Menos <path> que
+    // animar por frame es lo que resuelve el lag; el volumen visual lo repone
+    // el tamaño, no la cantidad.
+    var bandH  = MOBILE ? 146 : 160;
     var hero   = page.querySelector('.hero');
     var yStart = hero ? hero.getBoundingClientRect().bottom + window.scrollY + 40 : 120;
     var yEnd   = Hdoc - 40;
@@ -729,7 +752,14 @@
       side = (rand() < 0.78) ? -side : side;
 
       // Tramos de respiro: algunas bandas se saltan enteras.
-      if (rand() > d + 0.20) continue;
+      // dSiembra sólo gobierna CUÁNTO nace (esta banda se salta o no, nace una
+      // segunda planta o no); `u`, que es lo que define qué tan grande/frondosa
+      // sale cada planta (`rich`, `arco`), sigue viajando sin tocar. Así en
+      // desktop nacen menos plantas pero cada una igual de desarrollada —y más
+      // grande por ESCALA— en vez de plantas igual de numerosas pero recortadas.
+      var dSiembra = d * DENSIDAD_SIEMBRA;
+      // Tramos de respiro: algunas bandas se saltan enteras.
+      if (rand() > dSiembra + 0.20) continue;
 
       // En las zonas densas nacen grupos: dos plantas juntas, y la extra sale
       // del lado contrario para que el racimo abrace el contenido en vez de
@@ -743,7 +773,7 @@
       // saturado/duplicado — algo que móvil nunca mostró porque el máximo ahí
       // siempre fue 2. Se quita el tercer sumando para igualar el tope en las
       // dos plataformas sin tocar nada del comportamiento móvil.
-      var n = 1 + (d > 0.60 && rand() < d - 0.32 ? 1 : 0);
+      var n = 1 + (dSiembra > 0.60 && rand() < dSiembra - 0.32 ? 1 : 0);
       for (var k = 0; k < n; k++) {
         var yy = y + rnd(0.05, 0.85) * bandH;
         if (yy >= yEnd || inside(Z.hard, yy)) continue;
