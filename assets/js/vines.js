@@ -731,11 +731,19 @@
       // Tramos de respiro: algunas bandas se saltan enteras.
       if (rand() > d + 0.20) continue;
 
-      // En las zonas densas nacen grupos: dos o tres plantas juntas, y las
-      // extra salen del lado contrario para que el racimo abrace el contenido
-      // en vez de apilarse en un solo costado.
-      var n = 1 + (d > 0.60 && rand() < d - 0.32 ? 1 : 0)
-                + (!MOBILE && d > 0.84 && rand() < 0.38 ? 1 : 0);
+      // En las zonas densas nacen grupos: dos plantas juntas, y la extra sale
+      // del lado contrario para que el racimo abrace el contenido en vez de
+      // apilarse en un solo costado.
+      //
+      // Antes desktop sumaba una TERCERA planta a la misma banda cuando la
+      // densidad superaba 0.84 (`!MOBILE && d > 0.84 && rand() < 0.38`). Esa
+      // densidad se dispara justo en el tramo final de la página (acto
+      // REFUGIO), donde cae la sección de FAQ, así que en desktop ahí nacían
+      // tres enredaderas en el mismo punto y se veían como un racimo
+      // saturado/duplicado — algo que móvil nunca mostró porque el máximo ahí
+      // siempre fue 2. Se quita el tercer sumando para igualar el tope en las
+      // dos plataformas sin tocar nada del comportamiento móvil.
+      var n = 1 + (d > 0.60 && rand() < d - 0.32 ? 1 : 0);
       for (var k = 0; k < n; k++) {
         var yy = y + rnd(0.05, 0.85) * bandH;
         if (yy >= yEnd || inside(Z.hard, yy)) continue;
