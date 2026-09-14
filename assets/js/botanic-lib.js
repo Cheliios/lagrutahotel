@@ -23,11 +23,6 @@
      P.rnd(a, b)   → aleatorio con la semilla de esa capa
      P.rand()      → aleatorio 0..1
      P.detail      → 0..1, escala la cantidad de nervaduras, folíolos, flores
-     P.escala      → factor de escala visual del pintor (opcional, 1 por
-                     defecto). Sólo lo consultan los UMBRALES de conteo —
-                     nervaduras de hoja, folíolos mínimos de helecho— para que
-                     escalar una capa no cambie CUÁNTO dibuja, sólo de qué
-                     tamaño. Ver leaf() y fern().
      P.draw(g, d, width, tone, sch, ease)
                    → crea el path; `tone` es semántico ('stem' | 'leaf' |
                      'vein' | 'flower' | 'detail') y cada capa decide qué
