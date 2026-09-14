@@ -40,6 +40,12 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
+/* Bloqueo de scroll con el menú abierto (ver setMenuOpen() en app.js).
+   position:fixed en vez de overflow:hidden a secas: es lo único que
+   también frena el rebote de iOS Safari. `top` lo fija JS al scrollY
+   exacto de donde estaba el usuario, para poder devolverlo ahí al cerrar
+   sin que la página "salte" al inicio. */
+body.menu-lock { position: fixed; left: 0; right: 0; overflow: hidden; }
 img { display: block; max-width: 100%; }
 .imgc { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 /* ── CAPA VEGETAL PERIMETRAL (vines.js) ──
@@ -223,10 +229,11 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    - el burger sigue haciendo de botón "X" al abrir (rotación de sus
      barras), así que no hace falta un cierre aparte.
 
-   En mobile es una sola columna centrada (el mapa no entra: ver
-   .menu-map más abajo). En desktop (≥901px) pasa a DOS columnas —
-   texto a la izquierda, mapa grande e interactivo a la derecha — para
-   que el mapa tenga aire real en vez de ir de invitado abajo del todo. */
+   En mobile es una sola columna centrada (el mapa y la tarjeta del jardín
+   no entran: ver .menu-map/.menu-teaser más abajo). En desktop (≥901px)
+   pasa a DOS columnas justificadas a los bordes del panel — texto pegado
+   al borde izquierdo, mapa pegado al borde derecho — en vez de un bloque
+   centrado con aire sobrante a los costados. */
 .menu { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; }
 .menu-panel { position: absolute; inset: 0; background: var(--paper); clip-path: circle(0% at 60px 40px); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
 .menu.open { pointer-events: all; }
@@ -238,6 +245,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 }
 .menu.open .menu-inner { opacity: 1; transition: opacity .5s .3s; }
 .menu-col { display: flex; flex-direction: column; align-items: center; }
+.menu-col-top { display: flex; flex-direction: column; align-items: center; }
 .menu-eye { font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 6px; text-transform: uppercase; color: var(--warm-on-light); }
 .menu-links { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 12px; }
 .menu-item { overflow: hidden; padding: 6px 0; }
@@ -248,8 +256,27 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   display: inline-block; text-align: center; transform: translateY(120%);
   transition: transform .7s cubic-bezier(.33,1,.68,1), color .3s, font-style .3s;
   letter-spacing: .2px; line-height: 1.5;
+  /* .menu-item recorta con overflow:hidden para el reveal de entrada
+     (máscara del translateY) — sin este padding, el link mide justo su
+     contenido en reposo y el translateX(7px) de la flecha al hover se
+     sale de esa caja y queda cortado por el clip del padre. */
+  padding-right: 12px;
+}
+/* La flechita es un ::after, no texto agregado al link: viaja gratis con
+   el mismo transform:translateY del reveal de entrada (es parte de la
+   misma caja), y en reposo ya se ve (pedido explícito: "como en la
+   foto"), pero MUY sutil — sans-serif chica, gris cálido — para no pelear
+   con el peso visual de la serif grande. El link entero recicla el motivo
+   "▸" que ya usa .nav-book ("▸ Reservar"): misma familia de acento, ahora
+   como sufijo en vez de prefijo, y con su propio desliz al hover. */
+.menu-link::after {
+  content: '→'; display: inline-block; font-family: 'Jost', sans-serif;
+  font-size: 17px; margin-left: 16px; color: var(--warm-on-light);
+  transform: translateX(0); transition: transform .3s ease, color .3s ease;
+  vertical-align: middle;
 }
 .menu-link:hover { color: var(--green); font-style: italic; }
+.menu-link:hover::after { color: var(--green); transform: translateX(7px); }
 .menu.open .menu-link { transform: translateY(0); }
 .menu.open .menu-item:nth-child(1) .menu-link { transition-delay: .35s; }
 .menu.open .menu-item:nth-child(2) .menu-link { transition-delay: .42s; }
@@ -259,6 +286,19 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .menu-contact { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 28px; }
 .menu-contact a { font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--soft); text-decoration: none; text-transform: uppercase; transition: color .2s; }
 .menu-contact a:hover { color: var(--warm-on-light); }
+
+/* Tarjeta teaser bajo el contacto (solo desktop, ver media query): no es
+   contenido nuevo inventado, es "El jardín" —la sección de Inicio que ya
+   dice, textual, "El jardín no es un adorno del hotel: es el corazón de
+   todo"— reempaquetado como tarjeta chica para llenar el aire que queda
+   bajo el contacto, con la misma imagen (jardin-1.jpg) que ya usa esa
+   sección. Referencia de la tesista: una tarjeta chica de foto+caption
+   al pie de la columna de navegación. */
+.menu-teaser { display: none; }
+.menu-teaser-img { position: relative; width: 100%; height: 130px; overflow: hidden; border: 1px solid var(--hair); }
+.menu-teaser-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.menu-teaser-eye { margin-top: 14px; }
+.menu-teaser-cap { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; line-height: 1.5; color: var(--soft); margin-top: 6px; }
 
 /* Antes había una foto de archivo (jardin.jpg) acá; se descarta a propósito
    por el mapa de ubicación real — ver más abajo — y solo en desktop: en
@@ -272,13 +312,22 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    la página" que rige todos los mapas del sitio. */
 .menu-map { display: none; }
 @media (min-width: 901px) {
+  /* justify-content:flex-start (no center): el mapa con flex:1 ya se
+     estira hasta el borde derecho, así que no hace falta repartir el
+     espacio sobrante — se acabó, lo ocupó el mapa. Eso es lo que
+     "justifica a los costados": columna de texto pegada al padding
+     izquierdo, mapa pegado al padding derecho, sin bloque centrado con
+     aire de sobra en medio. align-items:stretch además hace que ambas
+     columnas compartan la misma altura completa del panel. */
   .menu-inner {
-    flex-direction: row; align-items: center; justify-content: center;
-    gap: clamp(40px, 6vw, 100px); padding: 100px 5vw 60px; max-width: 1400px; margin: 0 auto;
+    flex-direction: row; align-items: stretch; justify-content: flex-start;
+    gap: clamp(32px, 5vw, 80px); padding: 112px clamp(40px, 6vw, 96px) 56px;
   }
-  .menu-col { align-items: flex-start; text-align: left; flex: 0 0 auto; }
+  .menu-col { align-items: flex-start; text-align: left; flex: 0 0 auto; justify-content: space-between; }
+  .menu-col-top { align-items: flex-start; }
   .menu-links, .menu-eye { align-items: flex-start; text-align: left; }
   .menu-contact { align-items: flex-start; }
+  .menu-teaser { display: flex; flex-direction: column; align-items: flex-start; width: 100%; max-width: 260px; }
   /* "Marquito" tipo paspartú: un borde de aire color papel (--paper2, un
      tono por debajo de --paper para que se note contra el panel del menú)
      entre el filete y el mapa, más un filete fino en verde oliva pegado al
@@ -286,16 +335,28 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
      fotos del collage de bienvenida, pero sutil: nada de sombra dura ni
      marco grueso. Así el recuadro se lee aunque las tiles de Esri tarden
      en cargar (fondo gris claro casi igual al papel de fondo).
-     min(46vw,560px): crece con la ventana pero nunca aplasta la columna
-     de texto ni se sale del panel en laptops de 13". */
+     flex:1: el mapa se estira para llenar todo lo que sobra hasta el
+     borde derecho del panel, en vez de un ancho fijo/viewport-relative
+     que dejaba una franja de papel vacía a su derecha. */
   .menu-map {
-    display: block; position: relative; width: min(46vw, 560px);
+    display: block; position: relative; flex: 1 1 auto; min-width: 320px; max-width: 760px;
     padding: 10px; background: var(--paper2);
     border: 1px solid var(--hair); box-shadow: 0 24px 60px rgba(43,43,38,.16);
   }
 }
 .menu-map-frame { position: relative; height: min(52vh, 460px); overflow: hidden; border: 1px solid rgba(94,114,59,.4); cursor: grab; }
 .menu-map-frame:active { cursor: grabbing; }
+@media (min-width: 901px) {
+  /* Va DESPUÉS de la regla base (misma especificidad — una sola clase —
+     así que en el cascade gana la que aparece después en el archivo, no
+     alcanza con que esté dentro de un @media más específico): dentro de
+     la columna estirada por align-items:stretch, .menu-map ya tiene una
+     altura definida (la del panel completo, menos el padding vertical de
+     .menu-inner), y el frame la hereda entera en vez de topar en un
+     máximo fijo, para que el mapa se sienta tan grande como el resto del
+     panel, no un recuadro flotando en medio de aire vacío. */
+  .menu-map-frame { height: 100%; }
+}
 #menu-map-canvas { position: absolute; inset: 0; }
 .menu-map-tag { position: absolute; bottom: 14px; left: 14px; z-index: 401; background: var(--green); color: #fff; padding: 8px 16px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
 

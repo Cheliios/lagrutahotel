@@ -72,15 +72,38 @@ if(preloaderEnabled){
 }
 
 const burger=document.getElementById('burger'), menu=document.getElementById('menu');
-let menuOpen=false;
-burger.addEventListener('click',()=>{
-  menuOpen=!menuOpen; burger.classList.toggle('open',menuOpen); menu.classList.toggle('open',menuOpen);
-  // La miniatura de mapa del menú (desktop, ver .menu-map en site.css) se
-  // carga recién al abrir por primera vez, no de entrada: mismo criterio
-  // de "bajo demanda" que ya usa el mapa de Ubicación, para no pagar el
-  // peso de Leaflet en una visita que nunca abre el menú.
-  if(menuOpen) ensureMenuMap();
-});
+let menuOpen=false, scrollLockY=0;
+
+/* Bug real en mobile: .menu es position:fixed, pero eso NO bloquea el
+   scroll del documento de fondo (el dedo sigue moviendo la página detrás
+   del panel). La solución robusta cross-browser (incluido el rebote de
+   iOS Safari, donde un simple overflow:hidden en <body> no alcanza) es
+   sacar el <body> del flujo de scroll con position:fixed y devolverlo a
+   su scrollY exacto al cerrar — si solo se reseteara a 0 al cerrar, la
+   página "saltaría" al inicio cada vez que se abre el menú. */
+function setMenuOpen(open){
+  menuOpen=open;
+  burger.classList.toggle('open',open);
+  menu.classList.toggle('open',open);
+  if(open){
+    scrollLockY = window.scrollY;
+    document.body.classList.add('menu-lock');
+    document.body.style.top = (-scrollLockY)+'px';
+    // La miniatura de mapa del menú (desktop, ver .menu-map en site.css) se
+    // carga recién al abrir por primera vez, no de entrada: mismo criterio
+    // de "bajo demanda" que ya usa el mapa de Ubicación, para no pagar el
+    // peso de Leaflet en una visita que nunca abre el menú.
+    ensureMenuMap();
+  } else {
+    document.body.classList.remove('menu-lock');
+    document.body.style.top = '';
+    // behavior:'instant', no el default: <html> tiene scroll-behavior:smooth
+    // (ver site.css) y sin esto el restore se vería como un scroll animado
+    // de vuelta en vez de un salto invisible al punto exacto de antes.
+    window.scrollTo({ top: scrollLockY, left: 0, behavior: 'instant' });
+  }
+}
+burger.addEventListener('click',()=>{ setMenuOpen(!menuOpen); });
 
 // Enrutamiento por hash: cada página tiene su propio #hash (#home, #rooms,
 // #location, #reservas, #experiencias), igual que su data-page. Sirve para
@@ -93,8 +116,8 @@ function pageFromHash(){ const p = location.hash.slice(1); return pageExists(p) 
 let current='home';
 const pt=document.getElementById('pt');
 function goTo(page){
-  if(page===current){ if(menuOpen){menuOpen=false;burger.classList.remove('open');menu.classList.remove('open');} return; }
-  menuOpen=false; burger.classList.remove('open'); menu.classList.remove('open');
+  if(page===current){ if(menuOpen) setMenuOpen(false); return; }
+  if(menuOpen) setMenuOpen(false);
   pt.className='pt in';
   showPreloader(); // sincronizado con la cortina: aparece instantáneo mientras cubre
 

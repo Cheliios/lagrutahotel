@@ -731,3 +731,60 @@ Si se vuelve a tocar el tamaño del mapa del menú, mantener las dos unidades
 relativas (`vw`/`vh` con techo fijo) en vez de un tamaño fijo: es lo que
 evita que se vea diminuto en monitores grandes (queja original de esta
 ronda) sin romper el layout en pantallas de 13".
+
+### Ronda 4 (misma fecha): scroll de fondo, layout a los bordes, flechitas y tarjeta del jardín
+
+**Bug real corregido — scroll de fondo en mobile.** `.menu` es
+`position:fixed`, pero eso NUNCA bloqueó el scroll del `<body>` detrás: con
+el menú abierto, un dedo (o rueda) seguía moviendo la página de fondo. La
+solución no es `overflow:hidden` a secas en `<body>` — no alcanza para el
+rebote de iOS Safari —, es sacar el `<body>` del flujo con
+`position:fixed` y devolverlo a su `scrollY` exacto al cerrar. Ver
+`setMenuOpen()` en `assets/js/app.js` (reemplaza los tres sitios sueltos
+que antes tocaban `menuOpen`/`burger.classList`/`menu.classList` por
+separado: el burger, `goTo()` al navegar y `goTo()` al cerrar sin navegar)
+y `body.menu-lock` en `assets/css/site.css`. Dos detalles no obvios:
+
+- `scrollLockY` se captura en cada apertura (no una vez) y se restaura con
+  `window.scrollTo({..., behavior:'instant'})` — **no** el default: `<html>`
+  tiene `scroll-behavior:smooth` (ver arriba), y sin `'instant'` el
+  restore se ve como un scroll animado de vuelta en vez de un salto
+  invisible al punto exacto de antes.
+- Si se toca `setMenuOpen()`, seguir centralizando ahí cualquier cambio de
+  estado del menú — no volver a poner `menuOpen=`/`.classList` sueltos en
+  otro sitio, o el lock de scroll se queda desincronizado del panel.
+
+**Layout justificado a los bordes (desktop).** La tesista pidió
+explícitamente "justificar a los costados": `.menu-inner` pasó de
+`justify-content:center` con un `max-width` centrado a
+`justify-content:flex-start` con `.menu-map { flex:1 }` — el mapa se
+estira solo hasta ocupar todo el ancho sobrante hasta el borde derecho del
+panel, así que no hace falta repartir espacio de sobra: se acabó, lo ocupó
+el mapa. `align-items:stretch` en `.menu-inner` hace que texto y mapa
+compartan la misma altura completa del panel (antes el mapa tenía una
+altura tope en `vh`, ahora hereda el 100% de su columna vía
+`.menu-map-frame{height:100%}` — ver el comentario en el CSS sobre por qué
+esa regla tiene que ir DESPUÉS de la regla base en el archivo, no alcanza
+con que esté en un `@media` más específico: misma especificidad, gana la
+que aparece después en el cascade).
+
+**Flechitas en los links (desktop y mobile).** `.menu-link::after` agrega
+un "→" siempre visible (pedido explícito: "como en la foto"), pero sutil —
+sans-serif chica en `--warm-on-light`, no compite con el peso de la serif
+grande — que se desliza y se pone verde al hover. Es el mismo motivo "▸"
+que ya usa `.nav-book` ("▸ Reservar"), ahora como sufijo. Truco no obvio:
+`.menu-item` recorta con `overflow:hidden` para enmascarar el reveal de
+entrada (`translateY`), así que sin `padding-right` extra en `.menu-link`
+el `translateX` de la flecha al hover se sale de esa caja y queda
+cortado — el padding reserva el aire que ese desliz necesita.
+
+**Tarjeta "El jardín" (desktop, bajo el contacto).** No es contenido
+nuevo inventado: es la sección "El jardín" de Inicio (`jardin-sec`, más
+arriba en este documento) — que ya dice, textual, *"El jardín no es un
+adorno del hotel: es el corazón de todo"* — reempaquetada como tarjeta
+chica con la misma imagen (`jardin-1.jpg`) para llenar el aire que quedaba
+bajo el contacto. `.menu-col` pasa a `justify-content:space-between` con
+dos hijos: `.menu-col-top` (eyebrow+links+contacto, agrupados aparte
+justamente para que el `space-between` separe SOLO estos dos bloques, no
+los tres elementos sueltos de antes) y `.menu-teaser` al fondo. Como el
+mapa, solo aparece en desktop (`.menu-teaser{display:none}` por defecto).
