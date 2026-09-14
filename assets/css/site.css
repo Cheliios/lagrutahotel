@@ -142,7 +142,7 @@ html.no-preload .preloader { display: none; }
 nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 500;
   display: grid; grid-template-columns: 1fr auto 1fr;
-  align-items: center; padding: 26px 40px;
+  align-items: center; padding: 30px 40px;
   /* Antes iba sin fondo: sobre una foto clara o sobre el mapa, el logo y
      "Reservar" (blancos) se perdían. Un scrim oscuro + desenfoque de fondo
      lo hace legible sobre cualquier foto sin pintar una barra sólida encima
@@ -162,6 +162,17 @@ nav {
 .burger.open span:nth-child(1){ transform: translateY(7.5px) rotate(45deg); }
 .burger.open span:nth-child(2){ opacity: 0; }
 .burger.open span:nth-child(3){ transform: translateY(-7.5px) rotate(-45deg); }
+/* El burger queda por encima del panel del menú (z-index 500 > 400): al
+   abrir, sus barras (blancas por defecto) deben verse oscuras sobre el
+   panel claro nuevo, sin depender de si nav.dark está activo. */
+.burger.open span { background: var(--ink); }
+/* Con el menú abierto solo debe quedar visible la "X" (burger), igual que
+   la referencia: logo y botón de reservar se ocultan mientras dura. */
+/* !important necesario: ambos elementos ya traen una animación de entrada
+   (fade forwards) que fija su opacity final en 1 y gana sobre una regla
+   normal con la misma especificidad. */
+body:has(.menu.open) .nav-logo,
+body:has(.menu.open) .nav-book { opacity: 0 !important; pointer-events: none; transition: opacity .25s; }
 .nav-logo {
   justify-self: center; text-align: center;
   text-decoration: none;
@@ -169,14 +180,19 @@ nav {
 }
 /* El logo es verde sobre transparente; sobre el hero oscuro se fuerza a
    blanco con un filtro (nav.dark lo saca) — mismo criterio de color que ya
-   usaba el texto, un solo archivo sirve para los dos fondos. */
-.nav-logo-img { height: 34px; width: auto; display: block; margin: 0 auto; filter: brightness(0) invert(1); transition: filter .3s; }
-.nav-logo small { display: block; font-size: 8px; letter-spacing: 4px; color: rgba(255,255,255,.7); margin-top: 6px; font-family: 'Jost',sans-serif; }
+   usaba el texto, un solo archivo sirve para los dos fondos.
+   Logo agrandado (34px -> 48px): el header gana algo de padding vertical
+   para que siga respirando, y .nav-book sube de 11px a 13px — no al mismo
+   tamaño del logo (se vería descompensado), sino a un punto medio entre su
+   tamaño anterior y la escala del logo nuevo, para que ambos elementos del
+   nav se sientan de la misma familia visual. */
+.nav-logo-img { height: 48px; width: auto; display: block; margin: 0 auto; filter: brightness(0) invert(1); transition: filter .3s; }
+.nav-logo small { display: block; font-size: 9px; letter-spacing: 4px; color: rgba(255,255,255,.7); margin-top: 7px; font-family: 'Jost',sans-serif; }
 .nav-book {
   justify-self: end; display: flex; align-items: center; gap: 8px;
-  font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+  font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
   color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.4);
-  padding: 12px 26px; transition: all .3s;
+  padding: 13px 28px; transition: all .3s;
   opacity: 0; animation: fade 1s .4s forwards;
 }
 .nav-book:hover { background: #fff; color: var(--ink); }
@@ -194,36 +210,45 @@ nav.dark .nav-logo small { color: var(--soft); }
 nav.dark .nav-book { color: var(--ink); border-color: var(--hair); }
 nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 
-/* ── MENU ── */
+/* ── MENU ──
+   Rediseñado sobre el patrón de referencia de la tesista (panel claro,
+   lista centrada en una sola columna, tipografía sencilla, sin panel
+   lateral con imagen): fondo papel en vez del velo oscuro anterior, links
+   centrados con la sans-serif del sitio (no la serif itálica de antes), y
+   el burger ya hace de botón "X" al abrir (rotación de sus barras), así
+   que no hace falta un cierre aparte. */
 .menu { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; }
-.menu-panel { position: absolute; inset: 0; background: var(--ink); clip-path: circle(0% at 60px 40px); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
+.menu-panel { position: absolute; inset: 0; background: var(--paper); clip-path: circle(0% at 60px 40px); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
 .menu.open { pointer-events: all; }
 .menu.open .menu-panel { clip-path: circle(150% at 60px 40px); }
-.menu-inner { position: relative; z-index: 1; height: 100%; display: grid; grid-template-columns: 1.2fr 1fr; opacity: 0; }
-.menu.open .menu-inner { opacity: 1; transition: opacity .5s .3s; }
-.menu-links { display: flex; flex-direction: column; justify-content: center; padding: 0 80px; gap: 2px; }
-.menu-item { overflow: hidden; padding: 4px 0; }
-.menu-index { font-size: 11px; color: var(--warm-on-dark); letter-spacing: 2px; vertical-align: super; margin-right: 16px; }
-.menu-link {
-  font-family: 'Cormorant Garamond', serif; font-size: clamp(42px,6vw,80px);
-  font-weight: 300; color: rgba(255,255,255,.85); text-decoration: none;
-  display: inline-block; transform: translateY(120%);
-  transition: transform .7s cubic-bezier(.33,1,.68,1), color .3s, font-style .3s;
-  letter-spacing: -1px; line-height: 1.1;
+.menu-inner {
+  position: relative; z-index: 1; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 56px; padding: 120px 40px 60px; opacity: 0;
 }
-.menu-link:hover { color: var(--warm-on-dark); font-style: italic; }
+.menu.open .menu-inner { opacity: 1; transition: opacity .5s .3s; }
+.menu-links { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.menu-item { overflow: hidden; padding: 6px 0; }
+.menu-index { display: none; }
+.menu-link {
+  font-family: 'Jost', sans-serif; font-size: clamp(20px,2.6vw,28px);
+  font-weight: 400; color: var(--ink); text-decoration: none;
+  display: inline-block; text-align: center; transform: translateY(120%);
+  transition: transform .7s cubic-bezier(.33,1,.68,1), color .3s;
+  letter-spacing: .5px; line-height: 1.9;
+}
+.menu-link:hover { color: var(--warm-on-light); }
 .menu.open .menu-link { transform: translateY(0); }
 .menu.open .menu-item:nth-child(1) .menu-link { transition-delay: .35s; }
 .menu.open .menu-item:nth-child(2) .menu-link { transition-delay: .42s; }
 .menu.open .menu-item:nth-child(3) .menu-link { transition-delay: .49s; }
 .menu.open .menu-item:nth-child(4) .menu-link { transition-delay: .56s; }
 .menu.open .menu-item:nth-child(5) .menu-link { transition-delay: .63s; }
-.menu-side { display: flex; flex-direction: column; justify-content: flex-end; padding: 100px 80px; gap: 40px; }
-.menu-prev { height: 300px; position: relative; overflow: hidden; }
-.menu-prev-tag { position: absolute; bottom: 16px; left: 16px; z-index:1; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
-.menu-contact { display: flex; flex-direction: column; gap: 10px; }
-.menu-contact a { font-size: 12px; letter-spacing: 2px; color: rgba(255,255,255,.4); text-decoration: none; text-transform: uppercase; transition: color .2s; }
-.menu-contact a:hover { color: var(--warm-on-dark); }
+.menu-side { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.menu-prev { display: none; }
+.menu-contact { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.menu-contact a { font-size: 12px; letter-spacing: 2px; color: var(--soft); text-decoration: none; text-transform: uppercase; transition: color .2s; }
+.menu-contact a:hover { color: var(--warm-on-light); }
 
 /* pages */
 .page { display: none; }
@@ -631,7 +656,6 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .band-in { text-align: center; max-width: none; }
   .loc-head { text-align: center; max-width: none; }
   .avail { grid-template-columns: 1fr 1fr; }
-  .menu-inner { grid-template-columns: 1fr; } .menu-side { display: none; }
   .ft-top { grid-template-columns: 1fr; }
   .trust-strip-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
   /* .trust-item trae white-space:nowrap para la fila de escritorio; en la

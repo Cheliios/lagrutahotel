@@ -620,3 +620,39 @@ completas y sin motor de scroll. La vegetación lleva `aria-hidden="true"` y
 `pointer-events: none`. El preloader y el revelado de texto por palabra
 (sección anterior) hacen lo mismo: se saltan enteros y el contenido aparece
 ya visible.
+
+## Diseño del menú y del header (NO REVERTIR sin hablar con la tesista)
+
+**Decisión deliberada, aprobada por la tesista el 2026-09-14.** Antes, `.menu`
+era un panel oscuro (`--ink`) con los links en serif itálica grande (`Cormorant
+Garamond`, hasta 80px) repartidos en dos columnas (lista + imagen lateral +
+contacto). Se reemplazó a propósito por un patrón de referencia que la
+tesista trajo de un sitio hotelero real (Intursa): panel **claro** (`--paper`),
+**una sola columna centrada**, tipografía **sans-serif del sitio** (`Jost`) en
+tamaño moderado (`clamp(20px,2.6vw,28px)`), sin números de índice, sin panel
+lateral con foto. El contacto queda debajo de la lista, también centrado.
+
+Si algún agente necesita tocar `.menu`/`.menu-*`/`.nav-logo`/`.nav-book` en
+`assets/css/site.css`, tener en cuenta:
+
+- El burger (`#burger`) **ya hace de botón "X"** al abrir (rotación de sus
+  barras vía `.burger.open span`); no se agregó ningún botón de cierre nuevo.
+  Sus barras cambian a `var(--ink)` cuando el menú está abierto
+  (`.burger.open span { background: var(--ink); }`) porque ahora quedan sobre
+  un panel claro, no oscuro.
+- Con el menú abierto, `.nav-logo` y `.nav-book` se ocultan
+  (`body:has(.menu.open) ...`, con `!important` porque ambos traen una
+  animación `fade forwards` que si no gana la pelea de especificidad) para
+  que solo quede visible la "X", igual que la referencia.
+- `.menu-index` (el "01", "02"…) se dejó en el HTML pero se oculta por CSS
+  (`display: none`) — no se tocó `index.html` para no arriesgar el JS que
+  referencia esos nodos.
+- El logo del header (`.nav-logo-img`) se agrandó de 34px a 48px de alto, el
+  padding de `nav` subió de 26px a 30px, y `.nav-book` ("Reservar") subió de
+  11px a 13px — **no** al mismo tamaño del logo (se vería descompensado),
+  sino a un punto medio entre su tamaño anterior y la escala del logo nuevo,
+  para que ambos elementos del nav se sientan de la misma familia visual.
+
+Cualquier cambio de vuelta al panel oscuro/dos columnas/serif itálica debe
+consultarse antes: es un rediseño pedido explícitamente, no un estado
+transitorio.
