@@ -243,11 +243,20 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   font-weight: 400; color: #fff; line-height: .95; letter-spacing: 1px;
   overflow: hidden;
 }
-.hero-title .hl { overflow: hidden; display: inline-block; }
+/* max-width:100% — antes .hl (inline-block sin ancho propio) podía calcular
+   su shrink-to-fit por encima del ancho real disponible en ciertos textos
+   de una sola línea, provocando overflow horizontal en el hero de Inicio
+   a 390px con el copy final v1. No afecta la máscara/animación existente,
+   solo evita que el bloque exceda el ancho de .hero-caption. */
+.hero-title .hl { overflow: hidden; display: inline-block; max-width: 100%; }
 .hw { display: inline-block; transform: translateY(120%); animation: slideUp 1s cubic-bezier(.16,.84,.44,1) forwards; }
 .hw:nth-child(1){animation-delay:.5s} .hw:nth-child(2){animation-delay:.65s}
 .hero-title em { font-style: italic; }
-.hero-sub { font-size: 15px; line-height: 1.7; color: rgba(255,255,255,.85); max-width: 480px; margin: 22px auto 0; opacity: 0; animation: fadeUp .9s .85s forwards; }
+/* text-shadow leve: único ajuste visual autorizado en el copy final v1,
+   para que el subtítulo del hero de Inicio se lea mejor sobre el follaje
+   claro de la foto sin agregar caja, blur ni tocar el overlay compartido
+   por el resto de heroes (.hero-media::after). */
+.hero-sub { font-size: 15px; line-height: 1.7; color: rgba(255,255,255,.85); max-width: 480px; margin: 22px auto 0; opacity: 0; animation: fadeUp .9s .85s forwards; text-shadow: 0 1px 4px rgba(0,0,0,.35); }
 
 /* availability bar */
 .avail {
