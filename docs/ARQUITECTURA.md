@@ -692,3 +692,42 @@ proveedor de tiles (Esri, sin token) que usa Ubicación — no meter Google
 Maps ni Mapbox aquí: sería un segundo estilo de mapa conviviendo con el de
 Ubicación, y reabriría el problema de API keys que el proyecto ya evitó una
 vez (ver "El mapa" más arriba).
+
+### Ronda 3 (misma fecha): mapa más grande e interactivo, layout de dos columnas en desktop
+
+La tesista pidió explícitamente que el mapa del menú se viera más grande y
+que fuera interactivo (arrastre + zoom), no una postal fija — y sugirió, de
+paso, un Google Maps con colores propios. Se descartó esa vía (exige API key
+facturable de Google Cloud, el mismo problema de secretos/cuota que ya se
+evitó con Mapbox) a favor de dar más interacción y más aire al Leaflet que
+ya existía:
+
+- **`.menu-inner` pasa a `flex-direction:row` en desktop** (≥901px): antes
+  era una sola columna centrada con el mapa apretado abajo del todo; ahora
+  el texto (`.menu-col`: eyebrow + links + contacto, agrupados en un solo
+  wrapper para poder ir a la izquierda) queda a la izquierda y el mapa a la
+  derecha, ambos centrados verticalmente. En mobile sigue siendo una sola
+  columna centrada, sin mapa — sin cambios ahí.
+- **El mapa crece con la ventana:** `width: min(46vw, 560px)` y
+  `.menu-map-frame { height: min(52vh, 460px) }` — bastante más grande que
+  el recuadro fijo de 320×190px de la Ronda 2, pero acotado para no aplastar
+  la columna de texto en laptops de 13" ni desbordar el panel en monitores
+  grandes.
+- **Ahora es interactivo de verdad:** `initMenuMap` en `assets/js/map.js`
+  pasó `dragging`/`tap`/`doubleClickZoom`/`boxZoom` de `false` a `true` y
+  agregó `L.control.zoom({position:'bottomright'})` — mismos permisos que
+  `initLocMap`. La única excepción, en los dos mapas del sitio: la rueda del
+  mouse **nunca** hace zoom (`scrollWheelZoom:false`), la misma regla de "no
+  secuestrar el scroll de la página" documentada en "El mapa" más arriba —
+  el menú, al ser un overlay a pantalla completa, la necesita todavía más.
+- **Controles y atribución con la piel del sitio:** las reglas
+  `.loc-map .leaflet-control-attribution` / `.leaflet-bar` (colores,
+  tipografía) ahora también aplican a `.menu-map-frame`, así que los
+  botones `+`/`−` y el texto de atribución de Esri/OpenStreetMap (que la
+  licencia obliga a mostrar, ver "El mapa") se ven iguales en los dos
+  mapas del sitio en vez de con el estilo por defecto de Leaflet.
+
+Si se vuelve a tocar el tamaño del mapa del menú, mantener las dos unidades
+relativas (`vw`/`vh` con techo fijo) en vez de un tamaño fijo: es lo que
+evita que se vea diminuto en monitores grandes (queja original de esta
+ronda) sin romper el layout en pantallas de 13".

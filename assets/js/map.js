@@ -104,6 +104,12 @@
   // sin controles ni interacción: es una postal, no una herramienta de
   // navegación (para eso ya está la página de Ubicación con su propio
   // enlace a Google Maps).
+  //
+  // Interactivo, no una postal fija: mismos permisos que initLocMap
+  // (arrastre + zoom con botones), salvo la rueda del mouse, que en
+  // NINGÚN mapa del sitio hace zoom — es la misma regla de "no secuestrar
+  // el scroll de la página" que ya rige Ubicación, y el menú, al ser un
+  // overlay a pantalla completa, la necesita todavía más.
   window.initMenuMap = function () {
     var host = document.getElementById('menu-map-canvas');
     if (window.menuMap || !window.L || !host) return;
@@ -113,16 +119,18 @@
       zoom: 14,
       zoomControl: false,
       scrollWheelZoom: false,
-      dragging: false,
-      tap: false,
-      doubleClickZoom: false,
-      boxZoom: false,
+      dragging: true,
+      tap: true,
+      doubleClickZoom: true,
+      boxZoom: true,
       keyboard: false,
-      attributionControl: false
+      attributionControl: true
     });
 
-    L.tileLayer(TILES.base, { maxZoom: TILES.maxZoom }).addTo(map);
+    L.tileLayer(TILES.base, { maxZoom: TILES.maxZoom, attribution: TILES.attribution }).addTo(map);
     L.tileLayer(TILES.labels, { maxZoom: TILES.maxZoom }).addTo(map);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     L.marker([LAT, LNG], {
       interactive: false,
