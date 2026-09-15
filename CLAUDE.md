@@ -9,15 +9,19 @@ pisen entre sí ni rompan `master`.
 Todo cambio va en una rama propia y se integra vía Pull Request. `master` es siempre la
 versión que se puede mandar a producción sin revisar de nuevo.
 
-## 2. Antes de escribir código, planear en 2-3 líneas
+## 2. Plan previo solo cuando la tarea lo amerita
 
-Para cualquier tarea que no sea trivial (una línea, un typo), primero decir:
+Si el pedido es puntual y claro (un archivo, un cambio concreto: mover un elemento, cambiar
+un color, un typo, un ajuste de una línea) — ejecutar directo, sin pausa.
+
+Si el pedido es ambiguo ("mejora esto", "arregla el diseño") o toca más de un
+archivo/sección, primero decir en 2-3 líneas:
 - qué archivo(s)/sección(es) se va a tocar,
 - qué cambia y por qué,
 - qué NO se va a tocar.
 
-Esperar aprobación antes de ejecutar si la tarea es ambigua o toca varias zonas del sitio.
-No asumir "mejorar" o "arreglar" sin especificar el alcance exacto.
+Esperar aprobación antes de ejecutar solo en ese caso. La duda se resuelve para el lado de
+ejecutar rápido, no de pausar de más.
 
 ## 3. Scope por dominio — no tocar fuera de tu área
 
