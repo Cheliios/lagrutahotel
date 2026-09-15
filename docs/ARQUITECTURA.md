@@ -1396,3 +1396,23 @@ Verificado con Playwright en 1440px y 390px: modal abierto desde "Ver
 más" en la tarjeta Suite, los 5 amenities visibles y legibles en ambos
 anchos, sin desbordar el panel ni superponerse con el botón "Reservar
 esta habitación", sin errores de consola.
+
+### Ronda 20 (2026-09-15): botón de WhatsApp tapado por el badge de Netlify
+
+Reporte con captura desde el deploy real (`lagrutav1.netlify.app`) en
+mobile: el badge "Powered by Netlify" que Netlify inyecta solo sobre el
+sitio (no vive en este repo, así que no se puede editar ni quitar por
+CSS) tapaba el botón flotante de WhatsApp, que en mobile vivía en
+`bottom: 16px`.
+
+**Fix:** se sube el botón en el breakpoint mobile (`@media (max-width:
+900px)`) de `bottom: 16px` a `bottom: 76px` — suficiente para despejar
+la altura típica del badge de Netlify. Sin tocar la posición en desktop
+(`bottom: 24px`, donde el badge no lo tapaba en la captura).
+
+Verificado con Playwright en 390px: `.wa-float` queda con su borde
+inferior a 76px del final del viewport (antes: 16px), sin superponerse
+con la barra de disponibilidad del hero ni otro elemento de la página.
+No se pudo reproducir el badge de Netlify en el servidor local (solo lo
+inyecta el hosting real), así que la verificación fue de la posición del
+botón en sí, no de la ausencia de solapamiento con el badge en vivo.

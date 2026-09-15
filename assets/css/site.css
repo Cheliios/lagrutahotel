@@ -157,7 +157,10 @@ html.no-preload .preloader { display: none; }
 .wa-float:hover { transform: scale(1.08); box-shadow: 0 8px 26px rgba(0,0,0,.28); }
 .wa-float svg { width: 30px; height: 30px; fill: #fff; }
 @media (max-width: 900px) {
-  .wa-float { width: 52px; height: 52px; right: 16px; bottom: 16px; }
+  /* bottom:16px lo dejaba tapado por el badge "Powered by Netlify" que
+     Netlify inyecta solo (no vive en este repo, así que no se puede
+     quitar por CSS) — se sube lo justo para despejarlo. */
+  .wa-float { width: 52px; height: 52px; right: 16px; bottom: 76px; }
   .wa-float svg { width: 27px; height: 27px; }
 }
 
