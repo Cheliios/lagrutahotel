@@ -1227,3 +1227,56 @@ relacionado con el sitio) — el placeholder gris de Leaflet se ve correcto y
 del tamaño esperado, que es lo que este fix controla; la carga de tiles en
 producción depende solo de que el navegador del visitante alcance Esri, ya
 verificado en rondas anteriores del mismo mapa (Ronda 8 y otras).
+
+### Ronda 15 (2026-09-15): la tarjeta de dirección quedaba tapada detrás del mapa + tiles más legibles
+
+Reporte con capturas: en producción el mapa ya se veía (Ronda 14 lo
+arregló), pero la tarjeta "Todo cerca. Nada de ruido." había desaparecido,
+y además el mapa se notaba demasiado plano/gris para distinguirse como
+mapa. Dos causas independientes, dos fixes independientes.
+
+**1. Tarjeta oculta — causa:** `.home-map-frame` hereda `z-index: 6` de la
+regla de orden de apilamiento del sitio cerca del tope del archivo
+(`.wc-img, .room-card-media, .home-map-frame { z-index: 6; }`, parte del
+esquema documentado ahí mismo: "fondo → vegetación (z4) → contenido (flujo)
+→ fotos y mapa (z6)" — pensada para esas fotos, nunca pensada para competir
+con la tarjeta del mapa). `.home-map-card` no tenía z-index propio (heredaba
+`auto`), así que perdía el apilamiento contra el mapa y quedaba
+completamente detrás, aunque su HTML, texto y estilos internos estuvieran
+intactos — no era que "se borró", nunca se pintó encima.
+
+**Fix:** `.home-map-card { z-index: 7; }`. Un número por encima del 6
+compartido, nada más — no se tocó la regla compartida (sigue sirviendo a
+las fotos) ni la posición/tamaño de la tarjeta.
+
+**2. Mapa demasiado pálido — causa:** Esri World Light Gray Canvas (el
+estilo elegido en Ronda 3) es, por diseño, casi monocromo — pensado para
+ser un fondo discreto detrás de datos superpuestos, no para leerse como
+mapa por sí solo. En el mapa chico del menú (ya retirado) pasaba
+desapercibido; en el mapa grande de Inicio, a pantalla casi completa,
+se notaba como un panel gris liso sin información.
+
+**Fix:** se cambia el proveedor de tiles a Esri World Street Map
+(`.../ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}`) —
+mismo servidor Esri, mismo esquema de tiles, sigue sin requerir token ni
+cuenta ni facturación (se evaluó Google Maps para esto y se descartó por
+la misma razón que Mapbox: exige API key + cuenta de facturación, y el
+escáner de secretos de GitHub la bloquea en cada push). World Street Map
+ya trae sus propias etiquetas integradas, así que se colapsan las dos
+capas (`base` + `labels` transparente encima) que usaba Light Gray Canvas
+en una sola `L.tileLayer`, se sube `maxZoom` de 16 a 19 (WSM soporta más
+zoom que Canvas) y se actualiza el string de atribución con los
+proveedores reales de este layer (HERE, Garmin, USGS, Intermap, etc.,
+según la atribución oficial de Esri para World Street Map). El mismo
+`TILES` sirve para el único mapa que queda (`initHomeMap`); no hay
+segundo consumidor que romper.
+
+Verificado con Playwright en 1440px y 390px: `.home-map-card` con
+`z-index:7` por encima de `.home-map-frame` (`z-index:6`), visible en
+pantalla con su texto completo en ambos anchos (en mobile, donde la
+tarjeta pasa a `position:static` debajo del mapa, sin cambios — ese
+layout no dependía del z-index), `initHomeMap` inicializa una sola capa
+de tiles sin la capa `labels` ya removida, sin errores de consola nuevos.
+Los tiles reales de Esri (color, calles, parques) no se pudieron
+confirmar visualmente en este entorno por el mismo bloqueo de proxy TLS
+de la Ronda 14 — ajeno al sitio.

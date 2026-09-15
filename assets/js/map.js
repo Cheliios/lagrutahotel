@@ -36,22 +36,26 @@
   //
   // Se usó CARTO (basemaps.cartocdn.com) hasta que dejó de servir tiles
   // anónimas y empezó a pedir cuenta + API key — exactamente lo que se quería
-  // evitar al dejar Mapbox. Esri World Light Gray Canvas es de uso libre sin
-  // cuenta desde hace más de una década (es el mapa "gris" que aparece en
-  // incontables ejemplos de Leaflet); si algún día también lo cierran, la
-  // alternativa sin key más robusta es el servidor oficial de OpenStreetMap
-  // (tile.openstreetmap.org), con un estilo más colorido y su propia
-  // política de uso — no pensada para tráfico alto sin tile server propio.
+  // evitar al dejar Mapbox (ver arriba). Se probó también Esri World Light
+  // Gray Canvas (el mapa "gris" clásico de Leaflet), pero en el mapa grande
+  // de Inicio quedaba tan pálido que apenas se distinguía como mapa — casi
+  // no se notaba calles ni manzanas, solo gris plano. World Street Map (del
+  // mismo servidor Esri, mismo esquema sin key ni cuenta) trae calles,
+  // parques y edificios en color y ya incluye sus propias etiquetas, así
+  // que acá va en una sola capa (antes eran dos: base + labels transparente).
+  // Si algún día también cierran el acceso anónimo, la alternativa sin key
+  // más robusta es el servidor oficial de OpenStreetMap
+  // (tile.openstreetmap.org), con su propia política de uso — no pensada
+  // para tráfico alto sin tile server propio.
   //
   // OJO con el orden de {z}/{y}/{x}: Esri usa el esquema ArcGIS REST
   // (nivel/fila/columna), NO el {z}/{x}/{y} habitual de XYZ.
   var TILES = {
-    base: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    // Capa de calles y nombres, semitransparente, por encima del gris base.
-    labels: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-    maxZoom: 16,
+    base: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    maxZoom: 19,
     attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> &middot; ' +
-                 'Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+                 'Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), ' +
+                 '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, GIS User Community'
   };
 
   // Mapa grande de Inicio (ver .home-map en site.css). Interactivo
@@ -75,7 +79,6 @@
     });
 
     L.tileLayer(TILES.base, { maxZoom: TILES.maxZoom, attribution: TILES.attribution }).addTo(map);
-    L.tileLayer(TILES.labels, { maxZoom: TILES.maxZoom }).addTo(map);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
