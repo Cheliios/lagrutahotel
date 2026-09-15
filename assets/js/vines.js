@@ -167,7 +167,7 @@
   // que dibujar debajo de ellas sería gastar trazos invisibles. Y la sección
   // "El jardín" ya tiene su propia ilustración: meterle enredaderas encima
   // sería ruido, no densidad.
-  // DURAS: fotos a sangre y mapa. Van siempre por encima de la vegetación, así
+  // DURAS: fotos a sangre. Van siempre por encima de la vegetación, así
   // que sembrar debajo sería gastar trazos invisibles.
   // SUAVE: la sección "El jardín" ya tiene su propia ilustración de grafito.
   // Bloquearla del todo abría un hueco muerto de 380vh —el 43% de la página— y
@@ -175,7 +175,7 @@
   // vegetación, pero corta y pegada al borde: acompaña sin competir.
   function zones(page) {
     var hard = [], soft = [];
-    page.querySelectorAll('.hero, .band, .gastro, .loc-map').forEach(function (el) {
+    page.querySelectorAll('.hero, .band, .gastro').forEach(function (el) {
       var r = el.getBoundingClientRect();
       hard.push([r.top + window.scrollY - 40, r.bottom + window.scrollY + 40]);
     });
@@ -885,7 +885,6 @@
     var randA = B.makeRng(seed ^ 0x5BF03635);
     [['.statement .eye', 0.95], ['.statement h2', 0.75], ['.rooms-count', 0.85],
      ['.room-card-name', 0.55], ['.rc-book', 0.45], ['.rc-more', 0.45],
-     ['.loc-head .eye', 0.95], ['.loc-sub', 0.7], ['.loc-badge', 0.85],
      ['.rv-info h2', 0.85], ['.rv-submit', 0.6], ['.ft-logo', 0.95],
      ['.welcome .wc-script', 0.95]
     ].forEach(function (cfg) {

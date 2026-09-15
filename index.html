@@ -7,9 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Dancing+Script:wght@500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
 
 <!-- Leaflet (vendorizado, no CDN) YA NO se carga acá: pesa ~164KB y solo lo
-     usa la página de Ubicación. app.js lo inyecta bajo demanda (loadLeaflet()
-     en assets/js/app.js) la primera vez que hace falta el mapa, para no
-     penalizar a quien visita Inicio, Habitaciones, Reservas o Experiencias. -->
+     usa la miniatura de mapa del menú. app.js lo inyecta bajo demanda
+     (loadLeaflet() en assets/js/app.js) la primera vez que se abre el
+     menú, para no penalizar a quien nunca lo abre. -->
 <link rel="stylesheet" href="assets/css/site.css">
 
 <!-- Todos con `defer`: se ejecutan en este orden, ya con el documento parseado.
@@ -55,9 +55,8 @@
         <div class="menu-links">
           <div class="menu-item"><a href="#" class="menu-link" data-page="home"><span class="menu-index">01</span>Inicio</a></div>
           <div class="menu-item"><a href="#" class="menu-link" data-page="rooms"><span class="menu-index">02</span>Habitaciones</a></div>
-          <div class="menu-item"><a href="#" class="menu-link" data-page="location"><span class="menu-index">03</span>Ubicación</a></div>
-          <div class="menu-item"><a href="#" class="menu-link" data-page="reservas"><span class="menu-index">04</span>Reservas</a></div>
-          <div class="menu-item"><a href="#" class="menu-link" data-page="experiencias"><span class="menu-index">05</span>Experiencias</a></div>
+          <div class="menu-item"><a href="#" class="menu-link" data-page="reservas"><span class="menu-index">03</span>Reservas</a></div>
+          <div class="menu-item"><a href="#" class="menu-link" data-page="experiencias"><span class="menu-index">04</span>Experiencias</a></div>
         </div>
         <div class="menu-contact">
           <a href="tel:+51054289899">+(51) 054 289899</a>
@@ -327,7 +326,7 @@
   <footer>
     <div class="ft-top">
       <div class="ft-col"><span class="ft-logo"><img class="ft-logo-img" src="assets/img/logos/lagruta-wordmark.png" alt="La Gruta" loading="lazy"><small>Hotel boutique con jardines · Arequipa, Perú</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
-      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
+      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p class="ft-near"><em>A solo 7 minutos caminando de la Plaza de Armas.</em></p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
     <div class="ft-bottom"><span>© 2026 Hotel La Gruta</span><span>Desarrollado por Blanca Labz</span></div>
@@ -373,46 +372,7 @@
   <footer>
     <div class="ft-top">
       <div class="ft-col"><span class="ft-logo"><img class="ft-logo-img" src="assets/img/logos/lagruta-wordmark.png" alt="La Gruta" loading="lazy"><small>Hotel boutique con jardines · Arequipa, Perú</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
-      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
-      <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p class="ft-near"><em>A solo 7 minutos caminando de la Plaza de Armas.</em></p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
-    </div>
-    <div class="ft-bottom"><span>© 2026 Hotel La Gruta</span><span>Desarrollado por Blanca Labz</span></div>
-  </footer>
-</div>
-
-<!-- ═══ UBICACIÓN ═══ -->
-<div class="page" id="page-location" hidden>
-  <div class="loc-map">
-    <div id="loc-map-canvas"></div>
-    <div class="loc-overlay">
-      <div class="loc-badge"><span class="loc-badge-n">7</span><span class="loc-badge-t">minutos caminando<br>de la Plaza de Armas</span></div>
-      <a class="loc-directions" target="_blank" rel="noopener"
-         href="https://www.google.com/maps/dir/?api=1&amp;destination=-16.387764,-71.530067">Cómo llegar &rsaquo;</a>
-    </div>
-  </div>
-  <div class="loc-body">
-    <div class="loc-head rv-el"><p class="eye">Cómo llegar</p><h2 data-reveal="words">Nos encuentras <em>fácil.</em></h2></div>
-    <div class="rv-el">
-      <div class="loc-fact"><div class="loc-fact-n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-7.58 7-12a7 7 0 1 0-14 0c0 4.42 7 12 7 12z"/><circle cx="12" cy="9" r="2.25"/></svg></div><div><strong>Pasaje La Gruta 304</strong><span>Urbanización Selva Alegre, Arequipa, Perú</span></div></div>
-      <div class="loc-fact"><div class="loc-fact-n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div><strong><a class="contact-link" href="tel:+5154289899">(054) 289899</a> / <a class="contact-link" href="tel:+5154224631">224631</a></strong><span>Celular: <a class="contact-link" href="tel:+51959344759">+51 959 344 759</a></span></div></div>
-      <div class="loc-fact"><div class="loc-fact-n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg></div><div><strong><a class="contact-link" href="mailto:lagruta@lagrutahotel.com">lagruta@lagrutahotel.com</a></strong><span>Te respondemos en menos de 24 horas.</span></div></div>
-    </div>
-    <p class="loc-sub rv-el">Cómo llegar</p>
-    <div class="loc-dir-grid rv-el">
-      <div class="loc-dir-item"><span class="loc-dir-t">~20 min</span><strong>Desde el aeropuerto</strong><span>Aeropuerto Alfredo Rodríguez Ballón, en taxi</span></div>
-      <div class="loc-dir-item"><span class="loc-dir-t">~20 min</span><strong>Desde el terminal terrestre</strong><span>En taxi o auto particular</span></div>
-      <div class="loc-dir-item"><span class="loc-dir-t">7 min</span><strong>Desde la Plaza de Armas</strong><span>Caminando, sin complicaciones</span></div>
-    </div>
-    <p class="loc-sub rv-el">A pocos pasos del hotel</p>
-    <div class="loc-nearby-list rv-el">
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-4.2 2.7-7 6.8-7 10.5a7 7 0 0 0 14 0C19 9.8 16.2 5.7 12 3z"/><path d="M12 21v-9.5"/></svg>Parque Selva Alegre</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V9l8-5 8 5v12"/><path d="M9.5 21v-6h5v6"/><path d="M4 21h16"/></svg>Zona comercial y bancaria de Selva Alegre</span>
-    </div>
-  </div>
-  <footer>
-    <div class="ft-top">
-      <div class="ft-col"><span class="ft-logo"><img class="ft-logo-img" src="assets/img/logos/lagruta-wordmark.png" alt="La Gruta" loading="lazy"><small>Hotel boutique con jardines · Arequipa, Perú</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
-      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
+      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p class="ft-near"><em>A solo 7 minutos caminando de la Plaza de Armas.</em></p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
     <div class="ft-bottom"><span>© 2026 Hotel La Gruta</span><span>Desarrollado por Blanca Labz</span></div>
@@ -463,7 +423,7 @@
   <footer>
     <div class="ft-top">
       <div class="ft-col"><span class="ft-logo"><img class="ft-logo-img" src="assets/img/logos/lagruta-wordmark.png" alt="La Gruta" loading="lazy"><small>Hotel boutique con jardines · Arequipa, Perú</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
-      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
+      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p class="ft-near"><em>A solo 7 minutos caminando de la Plaza de Armas.</em></p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
     <div class="ft-bottom"><span>© 2026 Hotel La Gruta</span><span>Desarrollado por Blanca Labz</span></div>
@@ -567,7 +527,7 @@
   <footer>
     <div class="ft-top">
       <div class="ft-col"><span class="ft-logo"><img class="ft-logo-img" src="assets/img/logos/lagruta-wordmark.png" alt="La Gruta" loading="lazy"><small>Hotel boutique con jardines · Arequipa, Perú</small></span><p style="color:rgba(255,255,255,.5);font-size:13px;line-height:1.7;max-width:280px;">Calma a pasos del centro histórico de Arequipa.</p></div>
-      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="location">Ubicación</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
+      <div class="ft-col"><h4>Navegación</h4><a href="#" data-page="home">Inicio</a><a href="#" data-page="rooms">Habitaciones</a><a href="#" data-page="reservas">Reservas</a><a href="#" data-page="experiencias">Experiencias</a></div>
       <div class="ft-col"><h4>Contacto</h4><p>Pasaje La Gruta 304<br>Urb. Selva Alegre, Arequipa</p><p class="ft-near"><em>A solo 7 minutos caminando de la Plaza de Armas.</em></p><p>(054) 289899 / 224631</p><p>lagruta@lagrutahotel.com</p></div>
     </div>
     <div class="ft-bottom"><span>© 2026 Hotel La Gruta</span><span>Desarrollado por Blanca Labz</span></div>

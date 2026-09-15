@@ -57,9 +57,9 @@ img { display: block; max-width: 100%; }
 .vines-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ── OCLUSIÓN: la vegetación pasa POR DEBAJO de los bloques de lectura ──
-   La capa vegetal vive en z-index 4. Las fotos y el mapa ya estaban por
-   encima (.hero, .band, .wc-img, .room-card-media, .loc-map en z-index 6),
-   y por eso nunca se veía vegetación cruzándolos. Los bloques de TEXTO, en
+   La capa vegetal vive en z-index 4. Las fotos ya estaban por encima
+   (.hero, .band, .wc-img, .room-card-media en z-index 6), y por eso nunca
+   se veía vegetación cruzándolas. Los bloques de TEXTO, en
    cambio, no declaraban ni z-index ni fondo, así que quedaban por debajo y
    la vegetación les pasaba por encima: párrafos, formularios y llamadas a
    la acción con enredaderas cruzándolos.
@@ -87,7 +87,7 @@ img { display: block; max-width: 100%; }
    la vegetación puede cruzar el fondo oscuro del footer —el padding
    superior/inferior, el hueco entre columnas— pero no el texto. */
 .statement, .rooms-inner, .rooms-top, .faq-head, .faq-sec details,
-.loc-body, .loc-head, .rv-body, .rv-info, .rv-contact,
+.rv-body, .rv-info, .rv-contact,
 .exp-intro, .exp-note, .offer-strip, .jardin-sec, .reviews-sec {
   position: relative;
   z-index: 5;
@@ -106,7 +106,7 @@ img { display: block; max-width: 100%; }
    Las secciones que SON una foto a sangre suben enteras; en las cards sube solo
    el bloque de imagen, para que las ramas puedan cruzar el texto de la card. */
 .hero, .band, .gastro { z-index: 6; }
-.wc-img, .room-card-media, .loc-map { z-index: 6; }
+.wc-img, .room-card-media { z-index: 6; }
 
 /* ── PRELOADER ──
    Por encima de todo, incluida .pt (8000): es lo primero que se pinta y lo
@@ -218,7 +218,8 @@ body:has(.menu.open) .nav-book { opacity: 0 !important; pointer-events: none; tr
   opacity: 0; animation: fade 1s .4s forwards;
 }
 .nav-book:hover { background: #fff; color: var(--ink); }
-/* Sobre contenido claro (tras el hero, o en Ubicación que no tiene hero):
+/* Sobre contenido claro (tras el hero, o en una página sin hero — ninguna
+   lo es hoy, pero la extinta página de Ubicación tampoco tenía uno):
    fondo papel semitransparente con desenfoque, no el scrim oscuro. */
 nav.dark {
   background: rgba(251,250,246,.86);
@@ -610,7 +611,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 
 /* ═══ EL JARDÍN (home) ═══
    Split imagen/texto: dos fotos superpuestas en un lado, texto en el otro.
-   Mismo lenguaje que .statement/.loc-head (eye + h2), pero en dos columnas
+   Mismo lenguaje que .statement (eye + h2), pero en dos columnas
    en vez de una retícula de 12, porque aquí el contrapeso es una foto real,
    no aire. */
 .jardin-sec { padding: 150px 40px; }
@@ -687,73 +688,29 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 /* ═══ ROOMS PAGE hero uses same .hero + avail ═══ */
 /* room list on rooms page — use same card grid */
 
-/* ═══ LOCATION ═══ */
-.loc-map { height: 76vh; position: relative; overflow: hidden; background: var(--paper2); }
-#loc-map-canvas { position: absolute; inset: 0; background: var(--paper2); }
-
-/* Leaflet apila sus paneles internos hasta z-index 800. `.loc-map` tiene
-   z-index propio, así que esos valores quedan contenidos dentro de ella; pero
-   la insignia y el enlace, que son hermanos del mapa, hay que subirlos por
-   encima o el mapa se los come. */
-.loc-overlay {
-  position: absolute; left: 28px; bottom: 28px; z-index: 900;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
-}
-.loc-directions {
-  background: var(--white); color: var(--ink); text-decoration: none;
-  padding: 13px 22px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-  box-shadow: 0 2px 18px rgba(30,28,22,.12); transition: background .25s, color .25s;
-}
-.loc-directions:hover { background: var(--green); color: #fff; }
-
-/* Especificidad por encima de `.leaflet-marker-icon { display:block }`. */
+/* Especificidad por encima de `.leaflet-marker-icon { display:block }`.
+   Compartida con la miniatura interactiva del menú (.menu-map-frame): su
+   marcador reutiliza el mismo className 'loc-marker'/'loc-dot' que usaba
+   la página de Ubicación (ya retirada, ver ARQUITECTURA.md) — no borrar
+   estas reglas pensando que quedaron huérfanas. */
 .leaflet-marker-icon.loc-marker { display: flex; background: none; border: none; }
 
-/* Controles y atribución, alineados con el resto del sitio. La atribución es
-   obligatoria por licencia de OpenStreetMap y CARTO: no se elimina. Mismas
-   reglas para el mapa de Ubicación (.loc-map) y la miniatura interactiva
-   del menú (.menu-map-frame): son el mismo mapa, deben verse igual. */
-.loc-map .leaflet-control-attribution,
+/* Controles y atribución de la miniatura del menú, alineados con el resto
+   del sitio. La atribución es obligatoria por licencia de OpenStreetMap y
+   Esri: no se elimina. */
 .menu-map-frame .leaflet-control-attribution {
   background: rgba(251,250,246,.88); font-family: 'Jost', sans-serif;
   font-size: 10px; color: var(--muted); padding: 4px 8px;
 }
-.loc-map .leaflet-control-attribution a,
 .menu-map-frame .leaflet-control-attribution a { color: var(--soft); }
-.loc-map .leaflet-bar a,
 .menu-map-frame .leaflet-bar a {
   background: var(--white); color: var(--ink);
   border-bottom-color: var(--hair); width: 34px; height: 34px; line-height: 34px;
 }
-.loc-map .leaflet-bar a:hover,
 .menu-map-frame .leaflet-bar a:hover { background: var(--paper2); color: var(--green); }
-.loc-map .leaflet-bar,
 .menu-map-frame .leaflet-bar { border: none; box-shadow: 0 2px 18px rgba(30,28,22,.12); }
 .loc-marker { display: flex; flex-direction: column; align-items: center; }
 .loc-dot { width: 13px; height: 13px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 7px rgba(58,82,54,.18), 0 0 0 18px rgba(58,82,54,.08); animation: pulse 2s infinite; }
-.loc-line { width: 1px; height: 44px; background: linear-gradient(to bottom,var(--green),transparent); }
-.loc-tag { background: var(--green); color: #fff; padding: 9px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
-.loc-badge {
-  position: relative;
-  background: var(--paper); box-shadow: 0 20px 50px rgba(0,0,0,.2);
-  padding: 20px 26px; display: flex; align-items: center; gap: 16px; max-width: 280px;
-}
-.loc-badge-n { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 400; color: var(--green); line-height: 1; }
-.loc-badge-t { font-size: 11px; line-height: 1.5; letter-spacing: .5px; color: var(--ink); text-transform: uppercase; }
-.loc-body { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
-.loc-head { text-align: left; margin-bottom: 64px; max-width: 620px; }
-.loc-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 18px; }
-.loc-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px,4.5vw,60px); font-weight: 300; color: var(--ink); }
-.loc-head h2 em { font-style: italic; color: var(--green-deep); }
-.loc-fact { display: flex; gap: 30px; padding: 34px 0; border-bottom: 1px solid var(--hair); }
-.loc-fact:first-of-type { border-top: 1px solid var(--hair); }
-/* Antes un glifo grande en Cormorant Garamond (número o, más tarde, emoji);
-   ahora un ícono de línea. min-width se conserva para que las tres filas
-   seguían alineando su columna de texto igual que antes. */
-.loc-fact-n { display: flex; align-items: center; min-width: 56px; color: var(--warm-on-light); }
-.loc-fact-n svg { width: 26px; height: 26px; }
-.loc-fact strong { display: block; font-size: 16px; font-weight: 400; color: var(--ink); margin-bottom: 5px; }
-.loc-fact span { font-size: 14px; color: var(--soft); }
 .contact-link { color: inherit; text-decoration: none; transition: color .2s, text-decoration-color .2s; }
 .contact-link:hover {
   color: var(--green); text-decoration: underline;
@@ -763,23 +720,6 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   color: var(--green-deep); text-decoration: underline;
   text-decoration-color: var(--warm-on-light); text-decoration-thickness: 1px; text-underline-offset: 4px;
   outline: 1px solid var(--warm-on-light); outline-offset: 4px;
-}
-.loc-sub { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--warm-on-light); margin: 72px 0 28px; }
-.loc-dir-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
-.loc-dir-item { padding: 24px 0 0; border-top: 1px solid var(--hair); }
-.loc-dir-t { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--green); display: block; margin-bottom: 8px; }
-.loc-dir-item strong { display: block; font-size: 15px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
-.loc-dir-item span:not(.loc-dir-t) { font-size: 13px; line-height: 1.6; color: var(--soft); }
-.loc-nearby-list { display: flex; flex-wrap: wrap; gap: 14px 32px; }
-.loc-nearby-list span { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soft); }
-.loc-nearby-list svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--warm-on-light); }
-@media (max-width: 900px) {
-  .loc-dir-grid { grid-template-columns: 1fr; gap: 20px; }
-  .loc-overlay { left: 16px; bottom: 16px; gap: 10px; }
-  .loc-badge { padding: 14px 18px; gap: 12px; max-width: 220px; }
-  .loc-directions { padding: 11px 17px; font-size: 10px; }
-  .loc-badge-n { font-size: 38px; }
-  .loc-badge-t { font-size: 10px; }
 }
 
 /* ═══ RESERVAS ═══ */
@@ -891,7 +831,6 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .faq-a { max-width: none; }
   .band { justify-content: center; padding-right: 0; }
   .band-in { text-align: center; max-width: none; }
-  .loc-head { text-align: center; max-width: none; }
   .avail { grid-template-columns: 1fr 1fr; }
   .ft-top { grid-template-columns: 1fr; }
   .offer-strip-in { padding: 40px 24px; }

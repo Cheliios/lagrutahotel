@@ -89,10 +89,9 @@ function setMenuOpen(open){
     scrollLockY = window.scrollY;
     document.body.classList.add('menu-lock');
     document.body.style.top = (-scrollLockY)+'px';
-    // La miniatura de mapa del menú (desktop, ver .menu-map en site.css) se
-    // carga recién al abrir por primera vez, no de entrada: mismo criterio
-    // de "bajo demanda" que ya usa el mapa de Ubicación, para no pagar el
-    // peso de Leaflet en una visita que nunca abre el menú.
+    // La miniatura de mapa del menú (ver .menu-map en site.css) se carga
+    // recién al abrir por primera vez, no de entrada: bajo demanda, para
+    // no pagar el peso de Leaflet en una visita que nunca abre el menú.
     ensureMenuMap();
   } else {
     document.body.classList.remove('menu-lock');
@@ -106,7 +105,7 @@ function setMenuOpen(open){
 burger.addEventListener('click',()=>{ setMenuOpen(!menuOpen); });
 
 // Enrutamiento por hash: cada página tiene su propio #hash (#home, #rooms,
-// #location, #reservas, #experiencias), igual que su data-page. Sirve para
+// #reservas, #experiencias), igual que su data-page. Sirve para
 // compartir un link directo a una sección, para que recargar no vuelva
 // siempre a Inicio, y para que el botón atrás/adelante del navegador
 // funcione, aunque esto siga siendo una SPA de una sola página.
@@ -187,9 +186,6 @@ function goTo(page){
     // una navegación nueva y descarta el "adelante" que hubiera).
     const wantHash = page==='home' ? '' : page;
     if(location.hash.slice(1)!==wantHash) location.hash = wantHash;
-    // `invalidateSize` es el equivalente en Leaflet a un resize: el contenedor
-    // acaba de hacerse visible y el mapa se midió cuando aún valía 0.
-    if(page==='location'){ ensureLocMap(); setTimeout(()=>window.locMap?.invalidateSize(),560); }
 
     // El preloader se queda tapando un poco más si el hero de la página nueva
     // todavía no cargó (es lazy en las 3 páginas que no son Inicio): así el
@@ -234,9 +230,8 @@ document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click'
 // goTo(): goTo() dispara la transición animada y reAnim() (pensada para
 // RE-lanzar animaciones que ya se reprodujeron al cambiar de página) —
 // ninguna de las dos hace falta en la primera carga, y llamarlas aquí, antes
-// de que existan navEl/navColor/initLocMap (se definen más abajo o en
-// map.js, que corre después de este script), rompería con un error de
-// referencia.
+// de que existan navEl/navColor (se definen más abajo), rompería con un
+// error de referencia.
 const inicial = pageFromHash();
 if(inicial && inicial!==current){
   document.getElementById('page-'+current).classList.remove('active');
@@ -334,9 +329,9 @@ obs(); // ya observa la página correcta: el swap por hash de arriba ya ocurrió
 
 const navEl=document.getElementById('nav');
 // La barra es blanca sobre la foto oscura del hero y se oscurece al pasarla.
-// Ubicación no tiene hero: arranca con el mapa, que es claro, así que ahí el
-// texto blanco quedaba ilegible. Si la página activa no trae hero, va oscura
-// desde el principio.
+// Si alguna página no trae `.hero` (ninguna la tiene hoy, pero la extinta
+// página de Ubicación tampoco lo tenía — ver ARQUITECTURA.md), arranca ya
+// oscura desde el principio en vez de blanca sobre fondo claro ilegible.
 let navPage='', navHero=null, navLimit=0;
 function navMeasure(){
   navPage=current;
@@ -362,10 +357,10 @@ window.addEventListener('resize',()=>{ navMeasure(); navColor(); },{passive:true
 navColor(); // por si la carga inicial ya abrió, vía hash, una página sin hero
 
 /* ── Carga de Leaflet bajo demanda ──
-   Antes vivía en <head> y se descargaba en las 5 páginas aunque solo
-   Ubicación lo usa (~164KB de biblioteca + tiles que nadie más pide). Se
-   inyecta la primera vez que hace falta el mapa, memoizado para no
-   repetirlo si el visitante entra y sale de Ubicación varias veces.
+   Antes vivía en <head> y se descargaba en las 5 páginas aunque solo la
+   miniatura del menú lo usa (~164KB de biblioteca + tiles que nadie más
+   pide). Se inyecta la primera vez que se abre el menú, memoizado para no
+   repetirlo si el visitante lo abre y cierra varias veces.
    El <link> de Leaflet se inserta ANTES que site.css en el <head> (no al
    final): site.css sobrescribe el estilo del marcador y los controles, y
    esa cascada depende de que Leaflet cargue primero — insertarlo después
@@ -386,12 +381,7 @@ function loadLeaflet(){
   });
   return leafletReady;
 }
-function ensureLocMap(){ loadLeaflet().then(() => window.initLocMap?.()); }
 function ensureMenuMap(){ loadLeaflet().then(() => window.initMenuMap?.()); }
-
-// El mapa de Ubicación se inicializa bajo demanda; si la carga inicial ya
-// apunta ahí (#location), hay que dispararlo igual.
-if(current==='location') ensureLocMap();
 
 // Atrás/adelante del navegador, o alguien que edita el hash a mano estando ya
 // en la página: se sigue igual que un click en el menú.

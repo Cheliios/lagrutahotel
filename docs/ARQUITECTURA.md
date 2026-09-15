@@ -12,7 +12,7 @@ a cambio de nada.
 ## Estructura
 
 ```
-index.html                 ← markup de las 5 páginas. ÚNICO archivo en la raíz.
+index.html                 ← markup de las 4 páginas. ÚNICO archivo en la raíz.
 assets/
   css/
     site.css               ← todos los estilos
@@ -380,31 +380,37 @@ decisiones que conviene no revertir sin pensarlo:
   tiene que poder subirse tal cual a cualquier hosting sin depender de que un
   tercero siga sirviendo el archivo.
 - **Carga bajo demanda, no en `<head>`.** `leaflet.js` + `leaflet.css` pesan
-  ~164KB juntos, y hasta hace poco se cargaban en las 5 páginas aunque solo
-  Ubicación usa el mapa — puro peso perdido en cada visita a Inicio,
-  Habitaciones, Reservas o Experiencias. `loadLeaflet()` en `app.js` los
-  inyecta la primera vez que hace falta (memoizado: solo una vez por carga
-  de página, sin importar cuántas veces se entre y salga de Ubicación).
-  El `<link>` de Leaflet se inserta **antes** que `site.css` en el `<head>`
-  al inyectarlo (no al final): `site.css` sobrescribe el estilo del
-  marcador y los controles, y esa cascada depende del orden — insertarlo
-  después invertiría la prioridad y esos estilos dejarían de aplicar.
+  ~164KB juntos, y solo los usa la miniatura de mapa del menú — puro peso
+  perdido en cualquier visita que no abra el menú. `loadLeaflet()` en
+  `app.js` los inyecta la primera vez que hace falta (memoizado: solo una
+  vez por carga de página, sin importar cuántas veces se abra y cierre el
+  menú). El `<link>` de Leaflet se inserta **antes** que `site.css` en el
+  `<head>` al inyectarlo (no al final): `site.css` sobrescribe el estilo
+  del marcador y los controles, y esa cascada depende del orden —
+  insertarlo después invertiría la prioridad y esos estilos dejarían de
+  aplicar.
 
-La rueda del ratón nunca hace zoom y en táctil el arrastre está desactivado: un
-mapa que secuestra el scroll de la página es un fallo de usabilidad, no una
-función. Para acercar están los botones, y para navegar de verdad el enlace
-"Cómo llegar", que abre Google Maps con la ruta ya puesta.
+La rueda del ratón nunca hace zoom en ningún mapa del sitio: uno que
+secuestra el scroll de la página es un fallo de usabilidad, no una
+función. Para acercar están los botones de zoom del propio mapa.
 
 El proveedor de tiles está en la constante `TILES` de `map.js`. La atribución de
 Esri y OpenStreetMap es obligatoria por licencia: no se quita.
 
-La barra de navegación va blanca sobre el hero oscuro y oscura en el resto.
-Ubicación no tiene hero —empieza con el mapa, que es claro—, así que `navColor()`
-la fuerza a oscura cuando la página activa no trae `.hero`.
+> **Historia:** hasta la Ronda 12 (`docs/ARQUITECTURA.md` más abajo) existía
+> también una página de Ubicación completa (`#page-location`) con un mapa
+> propio a pantalla completa (`window.initLocMap`), un badge "7 minutos
+> caminando" y un enlace "Cómo llegar" a Google Maps. Se eliminó del sitio
+> entero por pedido explícito de la tesista ("la siento redundante"). Lo
+> que queda hoy —y es lo único que describe el resto de esta sección— es
+> la miniatura interactiva dentro del menú (`window.initMenuMap`, ver
+> "Diseño del menú" más abajo). Si se necesita recuperar el detalle del
+> mapa a pantalla completa, está íntegro en el historial de git de este
+> archivo y de `index.html`/`map.js`/`app.js` (buscar `initLocMap`).
 
 ## Navegación
 
-Es una SPA falsa: las cinco páginas están en el HTML dentro de `div.page`, y
+Es una SPA falsa: las cuatro páginas están en el HTML dentro de `div.page`, y
 `goTo()` alterna cuál tiene la clase `active`.
 
 Cada página tiene su hash (`#home`, `#rooms`, `#location`, `#reservas`,
@@ -477,7 +483,7 @@ las visitas. Los otros 3 heroes (Habitaciones, Reservas, Experiencias) llevan
 
 **Esto no siempre fue así, y el porqué del cambio importa.** La primera
 versión marcaba los 4 heroes como eager+high-priority, con el argumento de
-que las 5 páginas conviven siempre en el DOM (ver "Navegación" más abajo) y
+que las páginas conviven siempre en el DOM (ver "Navegación" más abajo) y
 un hero lazy se quedaría sin pedir hasta que el usuario navegara ahí. Medido
 con red móvil simulada (Slow 4G, CDP `Network.emulateNetworkConditions`), el
 efecto real era el opuesto al buscado: **cargar Inicio bajaba también los
@@ -555,7 +561,7 @@ son dos necesidades distintas que comparten el mismo elemento visual:
   de 3.5s, y espera a que el evento `load` **y** la imagen del hero estén
   listos (lo que termine último) — así una carga rápida no se siente
   instantánea y brusca, pero una lenta tampoco deja al visitante mirando la
-  marca más de 3.5s. Al ocultarse, `#app-shell` (nav, menú, las 5 páginas)
+  marca más de 3.5s. Al ocultarse, `#app-shell` (nav, menú, las páginas)
   pasa de `scale(1.03)` a `scale(1)` en sincro — el "asentamiento" de salida.
   Esto pasa en **cada** carga o recarga, no solo la primera vez por sesión:
   no hay ningún `sessionStorage` de por medio a propósito.
@@ -1074,3 +1080,59 @@ Jost) ni paleta (sigue `--ink`/`--green`/`--warm-on-light`) — todo es
 escala sobre las mismas reglas. Verificado en 1440px, 745px y 390px con
 el menú abierto: mapa interactivo (drag confirmado con Playwright), sin
 errores de consola, sin regresión de layout en ningún ancho.
+
+### Ronda 11 (2026-09-15): se quita la flechita de los links del menú
+
+Pedido explícito, sin más contexto. Se saca `.menu-link::after` (el "→"
+agregado en la Ronda 4) junto con su regla de hover
+(`.menu-link:hover::after`) y el `padding-right` que solo existía para
+reservarle aire — el link vuelve a ser únicamente el texto, con su color
++ cursiva al hover de siempre. Verificado en 1440px y 390px.
+
+### Ronda 12 (2026-09-15): se elimina la página de Ubicación entera
+
+Pedido explícito ("la siento redundante"): sacar `#page-location` del
+sitio y su entrada del menú. No era solo borrar un `<div>` — la página
+tenía su propio mapa Leaflet a pantalla completa (`window.initLocMap`,
+`#loc-map-canvas`), su propio footer (cada `.page` trae el suyo, no hay
+un footer global compartido — arquitectura ya así antes de esta ronda) y
+aparecía repetida en la lista "Navegación" del footer de las otras
+cuatro páginas.
+
+**Qué se sacó:**
+- `#page-location` completo del HTML (mapa, badge "7 minutos", datos de
+  contacto, cuadrícula de tiempos de traslado, cercanías, su footer).
+- La entrada "Ubicación" del menú (`.menu-link[data-page="location"]`) —
+  el menú quedó en 4 links (Inicio/Habitaciones/Reservas/Experiencias) y
+  se renumeraron los `.menu-index` (ocultos por CSS, pero por prolijidad).
+- "Ubicación" de las 4 copias restantes del footer "Navegación".
+- `window.initLocMap` y todo su cuerpo en `map.js` (el mapa a pantalla
+  completa con marcador extendido `.loc-line`/`.loc-tag`).
+- `ensureLocMap()`, la llamada `if(page==='location'){...}` en `goTo()` y
+  el disparo de carga inicial `if(current==='location')` en `app.js`.
+- El CSS de la página entera: `.loc-map`, `.loc-overlay`, `.loc-directions`,
+  `.loc-body`, `.loc-head*`, `.loc-fact*`, `.loc-sub`, `.loc-dir*`,
+  `.loc-nearby*`, `.loc-line`, `.loc-tag`, y sus entradas en las listas
+  combinadas de oclusión de vegetación (línea "OCLUSIÓN" cerca del tope
+  del archivo) y de z-index de fotos.
+- Dos referencias en `vines.js`: `.loc-map` en la lista de "zonas duras"
+  que la vegetación no cruza (`zones()`), y tres selectores muertos
+  (`.loc-head .eye`, `.loc-sub`, `.loc-badge`) en la tabla de acentos
+  anclados al contenido — ya no matcheaban nada, pero limpiarlos evita
+  confusión futura (no afectan la secuencia del RNG: un selector sin
+  coincidencias nunca llamaba a `randA()`, así que quitarlo es un no-op
+  para el resto de la tabla).
+
+**Qué se conservó a propósito** (compartido con la miniatura de mapa del
+menú, que SIGUE existiendo — esto no se tocó): `.leaflet-marker-icon.loc-
+marker`, `.loc-marker`, `.loc-dot` (el marcador simple del mapa del
+menú reutiliza ese mismo className), las reglas de `.menu-map-frame
+.leaflet-*` (ya no comparten selector con `.loc-map`, se separaron), y
+`loadLeaflet()`/`ensureMenuMap()`/`window.initMenuMap` completos en
+`app.js`/`map.js`.
+
+Verificado con Playwright: el menú muestra 4 links, el footer de cada
+página muestra "Navegación" sin Ubicación, `#page-location` ya no existe
+en el DOM, forzar `location.hash = 'location'` a mano no rompe nada
+(la SPA simplemente no reconoce esa página y se queda donde estaba), y
+cero errores de consola.
