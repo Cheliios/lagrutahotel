@@ -98,7 +98,7 @@ img { display: block; max-width: 100%; }
       fondo → vegetación (z4) → contenido (flujo) → fotos y mapa (z6)
    Las secciones que SON una foto a sangre suben enteras; en las cards sube solo
    el bloque de imagen, para que las ramas puedan cruzar el texto de la card. */
-.hero, .band { z-index: 6; }
+.hero, .band, .gastro { z-index: 6; }
 .wc-img, .room-card-media, .loc-map { z-index: 6; }
 
 /* ── PRELOADER ──
