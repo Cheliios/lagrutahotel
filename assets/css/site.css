@@ -86,13 +86,20 @@ img { display: block; max-width: 100%; }
    de "contenedor interno sí, sección entera no" que ya regía para el resto:
    la vegetación puede cruzar el fondo oscuro del footer —el padding
    superior/inferior, el hueco entre columnas— pero no el texto. */
-.welcome-grid, .statement, .rooms-inner, .rooms-top, .faq-head, .faq-sec details,
+.statement, .rooms-inner, .rooms-top, .faq-head, .faq-sec details,
 .loc-body, .loc-head, .rv-body, .rv-info, .rv-contact,
-.exp-intro, .exp-note, .offer-strip, .trust-strip, .jardin-sec {
+.exp-intro, .exp-note, .offer-strip, .trust-strip, .jardin-sec, .reviews-sec {
   position: relative;
   z-index: 5;
   background: var(--paper);
 }
+/* `.welcome-grid` SALIÓ de esta lista (mismo motivo que el footer, ver
+   arriba): es un collage con .wc-img absolutos y huecos de sobra entre
+   ellos, y elevar la grilla ENTERA tapaba esos huecos igual que tapaba
+   todo el rectángulo del footer — la vegetación no se notaba nada en la
+   sección de bienvenida. Las fotos (`.wc-img`) ya se protegen solas en
+   z-index 6; lo único que faltaba proteger es el texto central,
+   `.wc-center` (ver su regla más abajo, ahora en z-index 5 en vez de 3). */
 
 /* Orden de apilamiento del sitio:
       fondo → vegetación (z4) → contenido (flujo) → fotos y mapa (z6)
@@ -494,7 +501,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .wc-4 { width: 290px; height: 210px; bottom: 20px; left: 300px; }
 .wc-center {
   position: absolute; top: 43%; left: 50%; transform: translate(-50%,-50%);
-  text-align: center; z-index: 3; background: var(--paper);
+  text-align: center; z-index: 5; background: var(--paper);
   padding: 40px 48px;
 }
 .wc-script { font-family: 'Dancing Script', cursive; font-size: 40px; color: var(--soft); font-weight: 500; line-height: 1; }
