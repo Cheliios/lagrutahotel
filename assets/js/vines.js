@@ -856,19 +856,21 @@
     // resto, que es justo lo que hace falta para que se lean sobre el
     // fondo oscuro del footer.
     //
-    // En mobile van SIN `shy`: con `shy` salían escuálidas —un tallo casi
-    // pelado— porque `reach` en mobile ya arranca corto (viewport angosto)
-    // y `shy` lo recorta encima. Sin esa segunda poda quedan tan frondosas
-    // como cualquier otra planta de esa altura de página (mismo aspecto
-    // que las de "Preguntas frecuentes", pedido explícito). Desktop se
-    // queda con `shy` tal cual —ya se veía bien— así que esto no le toca
-    // nada.
+    // REVERTIDO: hubo un intento de sacarlas del modo `shy` en mobile para
+    // que se vieran "más frondosas". Sin `shy`, `reach` deja de recortarse
+    // y estas dos plantas podían pasar de clase "acento" a "medio"/"macro"
+    // —que a propósito se salen del encuadre (`reach *= 1.22`, ver más
+    // arriba en `vine()`)—, así que en mobile terminaban 1) más altas que
+    // el propio `footer`, estirando el documento y dejando una franja de
+    // papel vacía después del fondo oscuro, y 2) cruzando por encima del
+    // texto de NAVEGACIÓN/CONTACTO en vez de quedarse en las esquinas.
+    // `shy` va siempre en true, mobile y desktop, como antes de ese intento.
     var footerEl = page.querySelector('footer');
     if (footerEl) {
       var fr = footerEl.getBoundingClientRect(), fTop = fr.top + window.scrollY;
       [0.32, 0.68].forEach(function (frac, i) {
         var fy = fTop + fr.height * frac;
-        if (fy < yEnd) vine(fy, i % 2 ? 1 : -1, clamp(fy / Hdoc, 0, 1), !MOBILE);
+        if (fy < yEnd) vine(fy, i % 2 ? 1 : -1, clamp(fy / Hdoc, 0, 1), true);
       });
     }
 
@@ -995,11 +997,51 @@
 
   function boot() {
     build();
-    // Las tipografías web pueden cambiar la altura del documento después del
-    // load. Si se mueve de forma apreciable, se reconstruye una sola vez.
-    setTimeout(function () {
+    var recheck = function () {
       if (Math.abs(document.body.scrollHeight - Hdoc) > 120) build();
-    }, 1200);
+    };
+    // CAUSA REAL de la franja de papel vacío que quedaba después del
+    // footer (medido con Playwright, no adivinado): el preloader escala
+    // #app-shell a scale(1.03) mientras cubre la pantalla y lo asienta a
+    // scale(1) recién cuando se oculta (ver #app-shell.pre-reveal en
+    // site.css / ARQUITECTURA.md, sección Preloader). Chromium cuenta ese
+    // 3% de más como parte del scrollable overflow del documento mientras
+    // dura el pre-reveal — así que si build() corre en ese momento (el
+    // evento 'load', del que depende boot(), no espera el mínimo de 1.4s
+    // del preloader; puede disparar antes), Hdoc queda sobredimensionado
+    // y layer.style.height se congela ahí. El documento nunca vuelve a
+    // pedirle a vines.js que se remida solo.
+    //
+    // Se observa directamente el momento real en que #app-shell pierde
+    // `pre-reveal` (MutationObserver sobre su class, no un timeout a
+    // ciegas) y se re-chequea ahí — pero no en el mismo instante: sacar la
+    // clase dispara la transición CSS de #app-shell (`transition: transform
+    // .7s`, ver ARQUITECTURA.md), así que scale(1.03) no salta a scale(1)
+    // de una, se anima. Medido: a los 50ms de sacar la clase el scrollHeight
+    // seguía en 9439 de 9440 (apenas arrancó la transición); recién a los
+    // ~700ms está asentado en su valor final. Revisar demasiado pronto
+    // — el primer intento de este fix usaba 50ms — mide una altura casi
+    // tan inflada como la vieja Hdoc, la diferencia queda por debajo del
+    // umbral de 120px y el rebuild ni se dispara. 800ms cubre la
+    // transición completa con margen.
+    var shellEl = document.getElementById('app-shell');
+    if (shellEl && shellEl.classList.contains('pre-reveal')) {
+      var mo = new MutationObserver(function () {
+        if (!shellEl.classList.contains('pre-reveal')) {
+          mo.disconnect();
+          setTimeout(recheck, 800);
+        }
+      });
+      mo.observe(shellEl, { attributes: true, attributeFilter: ['class'] });
+    }
+    // Red de seguridad adicional: las tipografías web también pueden
+    // mover la altura del documento después del load (el fallback ocupa
+    // más líneas que la tipografía real una vez que entra).
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () { setTimeout(recheck, 50); });
+    } else {
+      setTimeout(recheck, 1200);
+    }
   }
   if (document.readyState === 'complete') boot();
   else window.addEventListener('load', boot);

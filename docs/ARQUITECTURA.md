@@ -879,3 +879,70 @@ medido de antes/después (pasó de un salto de ~196px de aire vacío dentro
 de `.welcome` a los ~3px normales entre secciones), y una captura de
 escritorio (1440px) para confirmar que ninguno de los cambios —todos
 dentro de `@media (max-width: 900px)`— afecta el layout ahí.
+
+### Ronda 7 (2026-09-15): footer roto en mobile — vegetación invasiva + franja de papel vacía
+
+Reportado con captura: en mobile, flores/hojas grandes cruzaban encima del
+texto de NAVEGACIÓN/CONTACTO del footer (legibilidad rota), y después del
+footer quedaba una franja de papel vacía —de casi 900px, más grande que la
+del `.welcome` de la Ronda 6— antes del botón de WhatsApp. Dos bugs
+distintos, dos causas distintas, ambas en `assets/js/vines.js`.
+
+**1. Vegetación tapando el texto — revertido.** El commit
+`fix(vegetacion): footer en mobile mas frondoso` (ver Ronda 6 del footer)
+le sacó el modo `shy` a las dos enredaderas ancladas al footer en mobile
+para que se vieran "más llenas". Sin `shy`, `reach` (el alcance del tallo)
+deja de recortarse a un 58%, y con eso la planta podía saltar de clase
+`acento` (contenida, pensada para zonas con texto encima) a `medio`/
+`macro` —que a propósito `reach *= 1.22` y "se pasa del encuadre"— así que
+terminaba invadiendo el bloque de NAVEGACIÓN/CONTACTO en vez de quedarse
+en las esquinas. Se revierte: el `vine(...)` del footer vuelve a llamarse
+siempre con `shy = true`, mobile y desktop, como antes de ese commit —
+mismo comentario "REVERTIDO" que ya se usó para el chip del nav (Ronda 5),
+mismo patrón: un experimento de "más frondoso/más vegetación" que no se
+probó contra el caso real (texto del footer en un viewport angosto) antes
+de mergear.
+
+**2. Franja de papel vacía después del footer — causa real encontrada y
+arreglada, no es el mismo bug de `.welcome` (Ronda 6).** Medido con
+Playwright, correlacionando el `scrollHeight` del documento contra el
+estado de `#app-shell`:
+
+```
+#app-shell.pre-reveal presente  → body.scrollHeight = 9440 (inflado)
+se saca la clase pre-reveal     → arranca la transición CSS scale(1.03)→scale(1)
+a los 50ms de sacarla           → sigue en 9439 (la transición apenas empezó)
+a los 700-900ms                 → se asienta en 9300 (el real)
+```
+
+`#app-shell` escala a `scale(1.03)` mientras el preloader cubre la
+pantalla (`#app-shell.pre-reveal` en `site.css`) y Chromium cuenta ese 3%
+de más como scrollable overflow del documento mientras dura. `vines.js`
+mide `Hdoc` (el alto que le da a `.vines-layer`) al boot, disparado por el
+evento `load` — que no espera el mínimo de 1.4s del preloader, puede
+llegar antes — así que si el preloader todavía no se ocultó, `Hdoc` queda
+congelado en el valor inflado (9440) para siempre: nada volvía a
+remedirlo.
+
+Fix en `boot()`: un `MutationObserver` sobre la clase de `#app-shell`
+dispara un re-chequeo de altura justo cuando se saca `pre-reveal` — pero
+con un delay de 800ms, no inmediato, porque sacar la clase dispara la
+transición CSS (`transition: transform .7s`) del propio `#app-shell`, no
+un salto instantáneo; revisar a los 50ms (el primer intento de este fix)
+mide una altura casi tan inflada como la vieja y la diferencia no cruza
+el umbral de 120px que dispara el rebuild. Se mantiene además
+`document.fonts.ready` como red de seguridad adicional (las tipografías
+web pueden mover la altura tarde en una carga lenta), con el `setTimeout`
+de 1200ms de siempre como único fallback para navegadores sin Font
+Loading API.
+
+**Si se vuelve a tocar el timing de `boot()`/`build()` en `vines.js`**,
+tener en cuenta que CUALQUIER transición o animación CSS sobre un
+ancestro de `.vines-layer` que cambie tamaño/posición (no solo el
+preloader) puede inflar temporalmente `document.body.scrollHeight` de la
+misma manera — el fix general es "esperar a que la transición realmente
+termine antes de medir", no un timeout fijo adivinado. Verificado:
+`body.scrollHeight === documentElement.scrollHeight` exacto (9300 = 9300)
+tras el fix, cero diferencia; antes había un delta de 140px. Capturas en
+390px (footer legible, sin flores sobre el texto, sin franja vacía
+después) y 1440px (footer de escritorio sin cambios, ya usaba `shy`).
