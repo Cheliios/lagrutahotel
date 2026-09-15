@@ -946,3 +946,46 @@ termine antes de medir", no un timeout fijo adivinado. Verificado:
 tras el fix, cero diferencia; antes había un delta de 140px. Capturas en
 390px (footer legible, sin flores sobre el texto, sin franja vacía
 después) y 1440px (footer de escritorio sin cambios, ya usaba `shy`).
+
+### Ronda 8 (2026-09-15): se quita la tarjeta del jardín, el mapa pasa a vertical en todos los anchos
+
+Dos pedidos de la tesista con capturas de las tres resoluciones (desktop,
+tablet ~745px, mobile ~467px):
+
+**1. Se quita `.menu-teaser`** (la tarjeta "El jardín" con foto+caption
+que se agregó en la Ronda 4, bajo el contacto, solo desktop). Sacada del
+HTML y del CSS entera — no queda como `display:none`, no hace falta
+conservarla: si se vuelve a pedir un teaser ahí, mejor partir de cero que
+reactivar código viejo que ya perdió una ronda de contexto.
+
+**2. El mapa (`.menu-map`) pasa a ser vertical y a mostrarse en TODOS los
+anchos, no solo desktop.** Antes: en desktop era una franja horizontal
+que se estiraba (`flex:1`) hasta el borde derecho del panel; en mobile y
+tablet ni aparecía (`display:none` por defecto), así que la lista de
+links quedaba flotando sola en medio de una franja de aire vacío bien
+larga — exactamente lo que muestran las capturas de tablet/mobile de
+esta ronda.
+
+Ahora `.menu-map` es una sola regla base (ya no `display:none` +
+reglas solo dentro de `@media (min-width:901px)`):
+`width: min(84vw, 340px)` centrado, apilado bajo `.menu-col` — llena
+justo esa franja vacía en mobile/tablet. En desktop
+(`@media (min-width:901px)`), la fila pasa a `justify-content:space-between`
+con `.menu-map` en un ancho angosto y fijo (`min(26vw,360px)`, ya no
+`flex:1`) y `align-self:stretch` para heredar la altura completa del
+panel — eso es lo que lo vuelve un rectángulo VERTICAL de verdad (angosto
+y alto) en vez de una franja horizontal, en los dos casos con el mismo
+componente y sin duplicar media queries por tamaño.
+
+**Bug encontrado y arreglado en el mismo cambio:** al angostar el marco,
+la atribución de Leaflet (obligatoria por licencia — ver "El mapa" más
+arriba) ya no entraba en su rincón inferior sin ocupar casi todo el
+ancho, y tapaba `.menu-map-tag` ("Selva Alegre · Arequipa"), que también
+vivía abajo. `.menu-map-tag` sube de `bottom:14px` a `top:14px` — en un
+marco ancho y bajo (la versión horizontal de antes) nunca competían por
+el mismo rincón, así que el bug no existía todavía cuando se escribió esa
+regla la primera vez.
+
+Verificado: capturas en 1308px, 745px y 467px con el menú abierto — sin
+errores de consola, mapa interactivo en los tres, etiqueta y atribución
+ya no se pisan.

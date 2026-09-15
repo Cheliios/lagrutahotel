@@ -290,11 +290,13 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    - el burger sigue haciendo de botón "X" al abrir (rotación de sus
      barras), así que no hace falta un cierre aparte.
 
-   En mobile es una sola columna centrada (el mapa y la tarjeta del jardín
-   no entran: ver .menu-map/.menu-teaser más abajo). En desktop (≥901px)
-   pasa a DOS columnas justificadas a los bordes del panel — texto pegado
-   al borde izquierdo, mapa pegado al borde derecho — en vez de un bloque
-   centrado con aire sobrante a los costados. */
+   En mobile es una sola columna centrada, con el mapa (vertical, ver
+   .menu-map más abajo) apilado debajo de la lista — antes esa franja se
+   quedaba vacía, con la lista de links flotando sola en medio de mucho
+   aire sin usar. En desktop (≥901px) pasa a DOS columnas justificadas a
+   los bordes del panel — texto pegado al borde izquierdo, mapa vertical
+   pegado al borde derecho — en vez de un bloque centrado con aire
+   sobrante a los costados. */
 .menu { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; }
 .menu-panel { position: absolute; inset: 0; background: var(--paper); clip-path: circle(0% at 60px 40px); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
 .menu.open { pointer-events: all; }
@@ -348,78 +350,74 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .menu-contact a { font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--soft); text-decoration: none; text-transform: uppercase; transition: color .2s; }
 .menu-contact a:hover { color: var(--warm-on-light); }
 
-/* Tarjeta teaser bajo el contacto (solo desktop, ver media query): no es
-   contenido nuevo inventado, es "El jardín" —la sección de Inicio que ya
-   dice, textual, "El jardín no es un adorno del hotel: es el corazón de
-   todo"— reempaquetado como tarjeta chica para llenar el aire que queda
-   bajo el contacto, con la misma imagen (jardin-1.jpg) que ya usa esa
-   sección. Referencia de la tesista: una tarjeta chica de foto+caption
-   al pie de la columna de navegación. */
-.menu-teaser { display: none; }
-.menu-teaser-img { position: relative; width: 100%; height: 130px; overflow: hidden; border: 1px solid var(--hair); }
-.menu-teaser-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.menu-teaser-eye { margin-top: 14px; }
-.menu-teaser-cap { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; line-height: 1.5; color: var(--soft); margin-top: 6px; }
+/* Mapa de ubicación real (Leaflet, mismas tiles y marcador que Ubicación
+   — ver window.initMenuMap en map.js — nunca una imagen ni un iframe de
+   Google Maps), interactivo (arrastre + zoom con botones) igual que el
+   de Ubicación; solo la rueda del mouse sigue sin hacer zoom, por la
+   misma regla de "nunca secuestrar el scroll de la página" que rige
+   todos los mapas del sitio.
 
-/* Antes había una foto de archivo (jardin.jpg) acá; se descarta a propósito
-   por el mapa de ubicación real — ver más abajo — y solo en desktop: en
-   una pantalla angosta compite demasiado con la lista de links por el
-   mismo espacio vertical. Reutiliza el mismo Leaflet + tiles gris de
-   Ubicación (loadLeaflet()/window.initMenuMap en app.js, ver map.js), no
-   una imagen ni un iframe de Google Maps: mismo estilo, mismo marcador,
-   sin token ni segundo proveedor — y ahora SÍ interactivo (arrastre +
-   zoom con botones), como el de Ubicación; solo la rueda del mouse sigue
-   sin hacer zoom, por la misma regla de "nunca secuestrar el scroll de
-   la página" que rige todos los mapas del sitio. */
-.menu-map { display: none; }
+   VERTICAL a propósito, ya no horizontal: antes solo aparecía en
+   desktop, estirado a lo ancho (flex:1) hasta el borde derecho del
+   panel; en mobile no aparecía en absoluto y la lista de links quedaba
+   flotando en medio de una franja larga de aire vacío. Ahora es una
+   ventana angosta y alta en TODOS los anchos, apilada bajo la lista en
+   mobile (llena justo esa franja) y a la derecha del texto en desktop —
+   el mismo componente, sin duplicar media queries por tamaño. */
+.menu-map {
+  display: block; position: relative; width: min(84vw, 340px); margin: 8px auto 0;
+  padding: 10px; background: var(--paper2);
+  border: 1px solid var(--hair); box-shadow: 0 18px 44px rgba(43,43,38,.14);
+}
+/* "Marquito" tipo paspartú: un borde de aire color papel (--paper2, un
+   tono por debajo de --paper para que se note contra el panel del menú)
+   entre el filete y el mapa, más un filete fino en verde oliva pegado al
+   mapa mismo — el mismo recurso de "ventana enmarcada" que ya usan las
+   fotos del collage de bienvenida, pero sutil: nada de sombra dura ni
+   marco grueso. Así el recuadro se lee aunque las tiles de Esri tarden
+   en cargar (fondo gris claro casi igual al papel de fondo). */
+.menu-map-frame { position: relative; height: min(56vh, 420px); overflow: hidden; border: 1px solid rgba(94,114,59,.4); cursor: grab; }
+.menu-map-frame:active { cursor: grabbing; }
+#menu-map-canvas { position: absolute; inset: 0; }
+/* Arriba, no abajo: con el mapa angosto y vertical la atribución de
+   Leaflet (obligatoria por licencia, ver "El mapa" en ARQUITECTURA.md) ya
+   no cabe en su rincón inferior derecho sin invadir todo el ancho —en un
+   marco ancho y bajo no se notaba, en uno angosto y alto sí— y tapaba
+   esta etiqueta si las dos vivían abajo. */
+.menu-map-tag { position: absolute; top: 14px; left: 14px; z-index: 401; background: var(--green); color: #fff; padding: 8px 16px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
+
 @media (min-width: 901px) {
-  /* justify-content:flex-start (no center): el mapa con flex:1 ya se
-     estira hasta el borde derecho, así que no hace falta repartir el
-     espacio sobrante — se acabó, lo ocupó el mapa. Eso es lo que
-     "justifica a los costados": columna de texto pegada al padding
-     izquierdo, mapa pegado al padding derecho, sin bloque centrado con
-     aire de sobra en medio. align-items:stretch además hace que ambas
-     columnas compartan la misma altura completa del panel. */
+  /* justify-content:space-between: dos hijos de ancho fijo (.menu-col se
+     mide por su contenido, .menu-map por el width de abajo), así que se
+     van solos a los bordes opuestos del panel — eso es lo que "justifica
+     a los costados": texto pegado al padding izquierdo, mapa pegado al
+     derecho, sin bloque centrado con aire de sobra en medio.
+     align-items:stretch además hace que ambas columnas compartan la
+     misma altura completa del panel, así el mapa puede ser alto de
+     verdad y no solo ancho. */
   .menu-inner {
-    flex-direction: row; align-items: stretch; justify-content: flex-start;
+    flex-direction: row; align-items: stretch; justify-content: space-between;
     gap: clamp(32px, 5vw, 80px); padding: 112px clamp(40px, 6vw, 96px) 56px;
   }
-  .menu-col { align-items: flex-start; text-align: left; flex: 0 0 auto; justify-content: space-between; }
+  .menu-col { align-items: flex-start; text-align: left; flex: 0 0 auto; justify-content: center; }
   .menu-col-top { align-items: flex-start; }
   .menu-links, .menu-eye { align-items: flex-start; text-align: left; }
   .menu-contact { align-items: flex-start; }
-  .menu-teaser { display: flex; flex-direction: column; align-items: flex-start; width: 100%; max-width: 260px; }
-  /* "Marquito" tipo paspartú: un borde de aire color papel (--paper2, un
-     tono por debajo de --paper para que se note contra el panel del menú)
-     entre el filete y el mapa, más un filete fino en verde oliva pegado al
-     mapa mismo — el mismo recurso de "ventana enmarcada" que ya usan las
-     fotos del collage de bienvenida, pero sutil: nada de sombra dura ni
-     marco grueso. Así el recuadro se lee aunque las tiles de Esri tarden
-     en cargar (fondo gris claro casi igual al papel de fondo).
-     flex:1: el mapa se estira para llenar todo lo que sobra hasta el
-     borde derecho del panel, en vez de un ancho fijo/viewport-relative
-     que dejaba una franja de papel vacía a su derecha. */
-  .menu-map {
-    display: block; position: relative; flex: 1 1 auto; min-width: 320px; max-width: 760px;
-    padding: 10px; background: var(--paper2);
-    border: 1px solid var(--hair); box-shadow: 0 24px 60px rgba(43,43,38,.16);
-  }
-}
-.menu-map-frame { position: relative; height: min(52vh, 460px); overflow: hidden; border: 1px solid rgba(94,114,59,.4); cursor: grab; }
-.menu-map-frame:active { cursor: grabbing; }
-@media (min-width: 901px) {
+  /* Angosto y fijo (no flex:1 como antes): esto es lo que lo vuelve un
+     rectángulo VERTICAL de verdad, no una franja horizontal que se
+     estira a lo ancho. min(26vw,360px) crece un poco en monitores
+     grandes sin volverse una segunda columna de texto. */
+  .menu-map { width: min(26vw, 360px); margin: 0; align-self: stretch; }
   /* Va DESPUÉS de la regla base (misma especificidad — una sola clase —
      así que en el cascade gana la que aparece después en el archivo, no
      alcanza con que esté dentro de un @media más específico): dentro de
      la columna estirada por align-items:stretch, .menu-map ya tiene una
      altura definida (la del panel completo, menos el padding vertical de
      .menu-inner), y el frame la hereda entera en vez de topar en un
-     máximo fijo, para que el mapa se sienta tan grande como el resto del
+     máximo fijo, para que el mapa se sienta tan alto como el resto del
      panel, no un recuadro flotando en medio de aire vacío. */
   .menu-map-frame { height: 100%; }
 }
-#menu-map-canvas { position: absolute; inset: 0; }
-.menu-map-tag { position: absolute; bottom: 14px; left: 14px; z-index: 401; background: var(--green); color: #fff; padding: 8px 16px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
 
 /* pages */
 .page { display: none; }
