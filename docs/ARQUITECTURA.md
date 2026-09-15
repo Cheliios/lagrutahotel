@@ -1030,3 +1030,47 @@ arbitrarias.
 Verificado: capturas de escritorio en Inicio (cielo+follaje) y Reservas
 (jardín), y mobile en Inicio — mismo scrim oscuro consistente en las
 tres, sin variación de color por foto de fondo.
+
+### Ronda 10 (2026-09-15): refinamiento editorial del menú — mismo layout, menos "cartel"
+
+Pedido explícito de refinamiento visual (no rediseño): que el menú se
+sintiera más boutique/premium sin tocar estructura, tipografías ni
+paleta. Todos los cambios son de escala/espaciado sobre las mismas
+reglas que ya existían:
+
+- **Mapa más chico y elegante, no protagonista.** `.menu-map` baja de
+  `min(84vw,340px)`/`min(26vw,360px)` a `min(62vw,250px)`/`min(19vw,260px)`
+  (mobile/desktop), el frame de `min(56vh,420px)` a `min(44vh,320px)`, la
+  sombra se aligera (`0 18px 44px` → `0 14px 34px`, opacidad .14→.12) y el
+  paspartú interior crece un poco (10px→12px de padding) — un marco más
+  cuidado en vez de un bloque grande compitiendo con la lista de links.
+- **Desktop: de `justify-content:space-between` a `center`.** Con el
+  mapa ya angosto, pegarlo al borde derecho del panel dejaba un vacío
+  MUERTO en el medio (mucho blanco sin composición). Centrado como grupo
+  con un `gap: clamp(64px,9vw,120px)` fijo entre columnas, el mismo aire
+  queda repartido alrededor del conjunto — "mucho blanco sin que parezca
+  vacío" es justamente esto: negative space compuesto, no descuido.
+  Padding vertical de `.menu-inner` también baja un poco (112px→92px
+  arriba, 56px→48px abajo) para que el bloque se sienta más centrado
+  verticalmente, no empujado hacia arriba.
+- **Ritmo de links más compacto.** `.menu-link`: `clamp(30px,4vw,44px)` →
+  `clamp(28px,3.6vw,40px)`, `line-height:1.5` → `1.22` (la separación
+  entre líneas era el principal culpable de que la lista se leyera
+  "suelta"), peso `400` → `500` (más presencia/contraste sin pasar a
+  bold). `.menu-links` gap `6px`→`2px`, `.menu-item` padding `6px 0`→
+  `3px 0`.
+- **Flechas más discretas.** `.menu-link::after`: `font-size` 17px→13px,
+  `margin-left` 16px→10px, desliz de hover 7px→5px — tienen que leerse
+  como remate, no como un segundo elemento peleando con la serif grande.
+- **Tracking bajado en eyebrow y contacto.** `.menu-eye` letter-spacing
+  6px→4.5px, `.menu-contact a` 2px→1.4px — el rastreo tan abierto de
+  antes leía más "cartel de tienda" que boutique.
+- **Contacto más integrado.** `.menu-contact` margin-top 28px→18px: con
+  la lista ya más compacta, el teléfono/correo se sienten parte del mismo
+  bloque en vez de una sección aparte pegada abajo.
+
+Ningún cambio de estructura HTML, tipografías (sigue Cormorant Garamond +
+Jost) ni paleta (sigue `--ink`/`--green`/`--warm-on-light`) — todo es
+escala sobre las mismas reglas. Verificado en 1440px, 745px y 390px con
+el menú abierto: mapa interactivo (drag confirmado con Playwright), sin
+errores de consola, sin regresión de layout en ningún ancho.

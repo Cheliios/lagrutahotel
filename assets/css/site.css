@@ -269,13 +269,15 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    - el burger sigue haciendo de botón "X" al abrir (rotación de sus
      barras), así que no hace falta un cierre aparte.
 
-   En mobile es una sola columna centrada, con el mapa (vertical, ver
-   .menu-map más abajo) apilado debajo de la lista — antes esa franja se
-   quedaba vacía, con la lista de links flotando sola en medio de mucho
-   aire sin usar. En desktop (≥901px) pasa a DOS columnas justificadas a
-   los bordes del panel — texto pegado al borde izquierdo, mapa vertical
-   pegado al borde derecho — en vez de un bloque centrado con aire
-   sobrante a los costados. */
+   En mobile es una sola columna centrada, con el mapa (vertical, chico,
+   ver .menu-map más abajo) apilado debajo de la lista — antes esa franja
+   se quedaba vacía, con la lista de links flotando sola en medio de mucho
+   aire sin usar. En desktop (≥901px) pasa a DOS columnas centradas como
+   grupo (texto a la izquierda, mapa angosto a la derecha, `justify-
+   content:center` con un gap fijo entre ambas) — no pegadas a los bordes
+   del panel: el mapa es un acompañante chico, no un segundo bloque que
+   reclama la mitad del ancho, así que el vacío alrededor del conjunto se
+   lee como aire compuesto, no como espacio muerto. */
 .menu { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; }
 .menu-panel { position: absolute; inset: 0; background: var(--paper); clip-path: circle(0% at 60px 40px); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
 .menu.open { pointer-events: all; }
@@ -283,50 +285,61 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .menu-inner {
   position: relative; z-index: 1; height: 100%;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 28px; padding: 120px 40px 60px; opacity: 0;
+  gap: 24px; padding: 120px 40px 60px; opacity: 0;
 }
 .menu.open .menu-inner { opacity: 1; transition: opacity .5s .3s; }
 .menu-col { display: flex; flex-direction: column; align-items: center; }
 .menu-col-top { display: flex; flex-direction: column; align-items: center; }
-.menu-eye { font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 6px; text-transform: uppercase; color: var(--warm-on-light); }
-.menu-links { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 12px; }
-.menu-item { overflow: hidden; padding: 6px 0; }
+/* Tracking bajado (6px → 4.5px en el eyebrow, 2px → 1.4px en contacto):
+   el rastreo tan abierto de la primera versión leía más "cartel" que
+   "boutique". Sigue siendo un acento uppercase chico, solo menos gritado. */
+.menu-eye { font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 4.5px; text-transform: uppercase; color: var(--warm-on-light); }
+.menu-links { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 10px; }
+.menu-item { overflow: hidden; padding: 3px 0; }
 .menu-index { display: none; }
 .menu-link {
-  font-family: 'Cormorant Garamond', serif; font-size: clamp(30px,4vw,44px);
-  font-weight: 400; color: var(--ink); text-decoration: none;
+  /* clamp más contenido (30–44px → 28–40px) y line-height más ceñido
+     (1.5 → 1.22): la versión anterior tenía tanto aire entre líneas que
+     la lista se leía suelta en vez de como un bloque compuesto. peso
+     400 → 500: un poco más de presencia/contraste sin pasar a bold. */
+  font-family: 'Cormorant Garamond', serif; font-size: clamp(28px,3.6vw,40px);
+  font-weight: 500; color: var(--ink); text-decoration: none;
   display: inline-block; text-align: center; transform: translateY(120%);
   transition: transform .7s cubic-bezier(.33,1,.68,1), color .3s, font-style .3s;
-  letter-spacing: .2px; line-height: 1.5;
+  letter-spacing: .2px; line-height: 1.22;
   /* .menu-item recorta con overflow:hidden para el reveal de entrada
      (máscara del translateY) — sin este padding, el link mide justo su
-     contenido en reposo y el translateX(7px) de la flecha al hover se
-     sale de esa caja y queda cortado por el clip del padre. */
-  padding-right: 12px;
+     contenido en reposo y el translateX de la flecha al hover se sale de
+     esa caja y queda cortado por el clip del padre. */
+  padding-right: 10px;
 }
 /* La flechita es un ::after, no texto agregado al link: viaja gratis con
    el mismo transform:translateY del reveal de entrada (es parte de la
-   misma caja), y en reposo ya se ve (pedido explícito: "como en la
-   foto"), pero MUY sutil — sans-serif chica, gris cálido — para no pelear
-   con el peso visual de la serif grande. El link entero recicla el motivo
-   "▸" que ya usa .nav-book ("▸ Reservar"): misma familia de acento, ahora
-   como sufijo en vez de prefijo, y con su propio desliz al hover. */
+   misma caja). Más chica y más pegada que antes (17px/16px → 13px/10px):
+   tiene que leerse como un remate discreto, no como un segundo elemento
+   compitiendo con el peso de la serif grande. El link entero recicla el
+   motivo "▸" que ya usa .nav-book ("▸ Reservar"): misma familia de
+   acento, ahora como sufijo en vez de prefijo, y con su propio desliz
+   —más corto también— al hover. */
 .menu-link::after {
   content: '→'; display: inline-block; font-family: 'Jost', sans-serif;
-  font-size: 17px; margin-left: 16px; color: var(--warm-on-light);
+  font-size: 13px; margin-left: 10px; color: var(--warm-on-light);
   transform: translateX(0); transition: transform .3s ease, color .3s ease;
   vertical-align: middle;
 }
 .menu-link:hover { color: var(--green); font-style: italic; }
-.menu-link:hover::after { color: var(--green); transform: translateX(7px); }
+.menu-link:hover::after { color: var(--green); transform: translateX(5px); }
 .menu.open .menu-link { transform: translateY(0); }
 .menu.open .menu-item:nth-child(1) .menu-link { transition-delay: .35s; }
 .menu.open .menu-item:nth-child(2) .menu-link { transition-delay: .42s; }
 .menu.open .menu-item:nth-child(3) .menu-link { transition-delay: .49s; }
 .menu.open .menu-item:nth-child(4) .menu-link { transition-delay: .56s; }
 .menu.open .menu-item:nth-child(5) .menu-link { transition-delay: .63s; }
-.menu-contact { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 28px; }
-.menu-contact a { font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--soft); text-decoration: none; text-transform: uppercase; transition: color .2s; }
+/* margin-top baja de 28px a 18px: con la lista ya más compacta, el
+   contacto se siente parte del mismo bloque en vez de una sección
+   aparte pegada abajo. */
+.menu-contact { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 18px; }
+.menu-contact a { font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.4px; color: var(--soft); text-decoration: none; text-transform: uppercase; transition: color .2s; }
 .menu-contact a:hover { color: var(--warm-on-light); }
 
 /* Mapa de ubicación real (Leaflet, mismas tiles y marcador que Ubicación
@@ -343,10 +356,13 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    ventana angosta y alta en TODOS los anchos, apilada bajo la lista en
    mobile (llena justo esa franja) y a la derecha del texto en desktop —
    el mismo componente, sin duplicar media queries por tamaño. */
+/* Más angosto que la ronda anterior (84vw/340px → 62vw/250px): el mapa
+   acompaña, no protagoniza — una ventana chica y elegante, no un bloque
+   que compite en peso con la lista de links. */
 .menu-map {
-  display: block; position: relative; width: min(84vw, 340px); margin: 8px auto 0;
-  padding: 10px; background: var(--paper2);
-  border: 1px solid var(--hair); box-shadow: 0 18px 44px rgba(43,43,38,.14);
+  display: block; position: relative; width: min(62vw, 250px); margin: 8px auto 0;
+  padding: 12px; background: var(--paper2);
+  border: 1px solid var(--hair); box-shadow: 0 14px 34px rgba(43,43,38,.12);
 }
 /* "Marquito" tipo paspartú: un borde de aire color papel (--paper2, un
    tono por debajo de --paper para que se note contra el panel del menú)
@@ -355,7 +371,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    fotos del collage de bienvenida, pero sutil: nada de sombra dura ni
    marco grueso. Así el recuadro se lee aunque las tiles de Esri tarden
    en cargar (fondo gris claro casi igual al papel de fondo). */
-.menu-map-frame { position: relative; height: min(56vh, 420px); overflow: hidden; border: 1px solid rgba(94,114,59,.4); cursor: grab; }
+.menu-map-frame { position: relative; height: min(44vh, 320px); overflow: hidden; border: 1px solid rgba(94,114,59,.4); cursor: grab; }
 .menu-map-frame:active { cursor: grabbing; }
 #menu-map-canvas { position: absolute; inset: 0; }
 /* Arriba, no abajo: con el mapa angosto y vertical la atribución de
@@ -366,35 +382,37 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .menu-map-tag { position: absolute; top: 14px; left: 14px; z-index: 401; background: var(--green); color: #fff; padding: 8px 16px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
 
 @media (min-width: 901px) {
-  /* justify-content:space-between: dos hijos de ancho fijo (.menu-col se
-     mide por su contenido, .menu-map por el width de abajo), así que se
-     van solos a los bordes opuestos del panel — eso es lo que "justifica
-     a los costados": texto pegado al padding izquierdo, mapa pegado al
-     derecho, sin bloque centrado con aire de sobra en medio.
-     align-items:stretch además hace que ambas columnas compartan la
-     misma altura completa del panel, así el mapa puede ser alto de
-     verdad y no solo ancho. */
+  /* justify-content:center (antes space-between): con el mapa ya angosto
+     —ya no compite por protagonismo— pegarlo al borde derecho dejaba un
+     vacío muerto en el medio del panel en vez de aire compuesto. Centrado
+     como grupo, con un gap generoso pero fijo entre las dos columnas, el
+     "mucho blanco" queda repartido de forma pareja alrededor del bloque
+     en vez de amontonado en una sola franja — es lo que lee como
+     editorial/boutique en vez de vacío.
+     padding vertical más chico (112px→92px arriba, 56px→48px abajo) para
+     que el conjunto se sienta un poco más centrado verticalmente, no
+     empujado hacia arriba. align-items:stretch sigue dándole a las dos
+     columnas la misma altura completa del panel. */
   .menu-inner {
-    flex-direction: row; align-items: stretch; justify-content: space-between;
-    gap: clamp(32px, 5vw, 80px); padding: 112px clamp(40px, 6vw, 96px) 56px;
+    flex-direction: row; align-items: stretch; justify-content: center;
+    gap: clamp(64px, 9vw, 120px); padding: 92px clamp(40px, 6vw, 96px) 48px;
   }
   .menu-col { align-items: flex-start; text-align: left; flex: 0 0 auto; justify-content: center; }
   .menu-col-top { align-items: flex-start; }
   .menu-links, .menu-eye { align-items: flex-start; text-align: left; }
   .menu-contact { align-items: flex-start; }
-  /* Angosto y fijo (no flex:1 como antes): esto es lo que lo vuelve un
-     rectángulo VERTICAL de verdad, no una franja horizontal que se
-     estira a lo ancho. min(26vw,360px) crece un poco en monitores
-     grandes sin volverse una segunda columna de texto. */
-  .menu-map { width: min(26vw, 360px); margin: 0; align-self: stretch; }
+  /* Angosto y fijo (antes min(26vw,360px), ahora más chico todavía): el
+     mapa acompaña la composición, no la reparte a la mitad. Sigue siendo
+     un rectángulo VERTICAL de verdad —alto por el align-self:stretch de
+     abajo, angosto por este ancho— nunca una franja horizontal. */
+  .menu-map { width: min(19vw, 260px); margin: 0; align-self: stretch; }
   /* Va DESPUÉS de la regla base (misma especificidad — una sola clase —
      así que en el cascade gana la que aparece después en el archivo, no
      alcanza con que esté dentro de un @media más específico): dentro de
      la columna estirada por align-items:stretch, .menu-map ya tiene una
      altura definida (la del panel completo, menos el padding vertical de
      .menu-inner), y el frame la hereda entera en vez de topar en un
-     máximo fijo, para que el mapa se sienta tan alto como el resto del
-     panel, no un recuadro flotando en medio de aire vacío. */
+     máximo fijo, para que el mapa se sienta alto sin ser ancho. */
   .menu-map-frame { height: 100%; }
 }
 
