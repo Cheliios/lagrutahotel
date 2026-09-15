@@ -1308,3 +1308,34 @@ Habitaciones (`.experience-head h2`): ambos h2 miden `font-family:
 tope del clamp a este ancho) por computed style, capturas confirmando el
 mismo lenguaje visual que el resto de títulos del sitio, sin errores de
 consola.
+
+### Ronda 17 (2026-09-15): "La mesa de La Gruta" ilegible contra el díptico de fotos
+
+Reporte con captura: el texto de `.gastro` (título, párrafo, nota de
+masajes) se perdía contra las fotos, sobre todo en las zonas más claras
+del díptico (ventana/jardín a la izquierda, plato blanco a la derecha).
+
+**Causa:** `.gastro::after` solo aplicaba un velo oscuro uniforme y
+liviano (`rgba(30,28,22,.35)`) sobre toda la sección — el mismo recurso
+que usa `.hero-media::after` (`rgba(30,28,22,.28)`), pero el hero
+trabaja con una sola foto de tono más parejo; el díptico de `.gastro`
+combina dos fotos de brillo muy distinto y el texto queda centrado justo
+en el medio, cruzando ambas — un velo parejo no puede ser suficientemente
+oscuro en las zonas claras sin verse gris y plano en el resto de la foto.
+
+**Fix, dos capas que se refuerzan sin aplanar el díptico:**
+1. `.gastro::after` pasa de un `rgba()` uniforme a un `radial-gradient`
+   concentrado en el centro (donde vive `.gastro-in`): 62% de opacidad
+   en el centro, bajando a 22% en los bordes. Las esquinas de las fotos
+   siguen leyéndose como fotos; el texto tiene oscuro de sobra debajo.
+2. `text-shadow` en `.gastro-in h2/p` y `.gastro-note` — mismo recurso ya
+   autorizado en el sitio para texto blanco sobre foto (`.hero-sub` lo
+   usa con los mismos valores de sombra), como respaldo para el borde
+   entre zonas claras y oscuras del díptico donde el gradiente radial
+   solo no basta.
+
+Verificado con Playwright en 1440px (díptico lado a lado) y 390px
+(díptico apilado verticalmente, `.gastro-media { flex-direction: column
+}` ya existente): título, párrafo y nota de masajes legibles en las dos
+capturas, sin perder el brillo/color de las fotos en las esquinas, sin
+errores de consola.
