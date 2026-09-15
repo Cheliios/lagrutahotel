@@ -26,12 +26,20 @@
       frameId = requestAnimationFrame(paint);
     }
   }
+  /* Observa la SECCIÓN, no cada foto: el estado "sin revelar" de cada foto
+     es clip-path:inset(0 0 100% 0) (ver site.css), y en Chromium eso hace
+     que su propia intersección se mida como 0 aunque esté clavada en medio
+     del viewport — la foto nunca cruza el threshold porque el observer la
+     ve "clipeada a la nada", así que jamás recibe wc-visible y queda
+     invisible para siempre. Comprobado: quitarle el clip-path a mano hace
+     que el mismo observer pase de ratio 0 a ratio 1 al instante. Observar
+     `section` (que no tiene clip-path propio) evita el problema de raíz;
+     el escalonado entre fotos lo da el transition-delay por nth-child en
+     site.css, no el momento en que cada una dispara su propio observer. */
   const reveal = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add('wc-visible');
-      reveal.unobserve(entry.target);
-    });
+    if (!entries[0].isIntersecting) return;
+    frames.forEach(frame => frame.classList.add('wc-visible'));
+    reveal.unobserve(section);
   }, { threshold: 0.08 });
   const visibility = new IntersectionObserver(entries => {
     active = entries[0].isIntersecting;
@@ -43,7 +51,7 @@
     frames.forEach(frame => frame.style.removeProperty('--wc-shift'));
     schedule();
   }
-  frames.forEach(frame => reveal.observe(frame));
+  reveal.observe(section);
   visibility.observe(section);
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', schedule, { passive: true });
