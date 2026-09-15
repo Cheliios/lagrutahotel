@@ -654,10 +654,15 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .faq-item:first-of-type { border-top: 1px solid var(--hair); }
 .faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 0; cursor: pointer; list-style: none; }
 .faq-item summary::marker, .faq-item summary::-webkit-details-marker { display: none; }
-.faq-q { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); }
+/* min-width:0 + overflow-wrap: sin esto, un flex item de texto largo
+   (".faq-q" es hijo de un summary display:flex) no se encoge por debajo
+   de su ancho intrínseco — en una pregunta larga en mobile eso empuja el
+   texto a desbordar el padding de .faq-sec y pegarse al borde de la
+   pantalla en vez de envolver limpio dentro de la columna. */
+.faq-q { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink); min-width: 0; overflow-wrap: break-word; }
 .faq-chevron { font-size: 15px; color: var(--warm-on-light); transition: transform .3s; flex-shrink: 0; }
 .faq-item[open] .faq-chevron { transform: rotate(180deg); }
-.faq-a { padding: 0 0 30px; font-size: 14px; line-height: 1.8; color: var(--soft); max-width: 680px; }
+.faq-a { padding: 0 0 30px; font-size: 14px; line-height: 1.8; color: var(--soft); max-width: 680px; overflow-wrap: break-word; }
 
 /* ═══ FULL IMAGE BAND ═══ */
 /* Invierte el desplazamiento del statement: allí el texto va a la izquierda,
@@ -842,9 +847,28 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 @keyframes pulse { 0%,100%{box-shadow:0 0 0 7px rgba(169,143,95,.2),0 0 0 18px rgba(169,143,95,.08)} 50%{box-shadow:0 0 0 12px rgba(169,143,95,.12),0 0 0 26px rgba(169,143,95,.04)} }
 
 @media (max-width: 900px) {
+  /* .welcome traía min-height:90vh de la maqueta desktop (necesario ahí
+     porque .wc-center flota position:absolute sobre la grilla de fotos de
+     860px) y nunca se desactivaba en mobile: con las fotos apiladas
+     (mucho más bajas que 90vh) el navegador igual forzaba la sección a
+     medir 90vh, dejando un bloque de aire vacío entero debajo del texto
+     antes de la siguiente sección. En mobile la altura la da el
+     contenido apilado, no un mínimo pensado para el collage flotante. */
+  .welcome { min-height: 0; }
   .welcome-grid { height: auto; display: flex; flex-direction: column; gap: 16px; }
   .wc-img { position: relative; width: 100% !important; height: 240px !important; inset: auto !important; }
-  .wc-center { position: relative; transform: none; top: auto; left: auto; margin: 20px 0; }
+  /* En desktop .wc-center es una tarjeta chica flotando sobre las fotos:
+     shrink-to-fit + padding:40px 48px (mucho horizontal, poco texto). En
+     mobile pasa a un bloque de ancho completo dentro de .welcome-grid
+     (flex-direction:column, align-items:stretch por defecto) — ese mismo
+     padding le comía 96px de ancho al párrafo (48px por lado), y sumado
+     al max-width:300px de .wc-desc (calibrado para la tarjeta angosta de
+     desktop) lo aplastaba a ~214px: el texto envolvía en líneas cortas y
+     el bloque salía mucho más alto de lo necesario. Se reduce el padding
+     y se libera el ancho máximo del párrafo para que use el espacio real
+     disponible (el de .welcome, ya con su propio padding de 24px). */
+  .wc-center { position: relative; transform: none; top: auto; left: auto; margin: 20px 0; padding: 32px 24px; }
+  .wc-desc { max-width: none; }
   .rooms-grid, .rv-body, .rv-row { grid-template-columns: 1fr; gap: 32px; }
   /* En una sola columna el desfase y los desplazamientos no aportan ritmo,
      solo desalinean. Se desactivan. */
@@ -858,7 +882,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .jardin-media { height: 340px; }
   .jardin-text p { max-width: none; margin: 0 auto; }
   .gastro-media { flex-direction: column; }
-  .faq-sec { padding: 90px 24px; }
+  .faq-sec { padding: 90px 28px; }
   .faq-head { text-align: center; }
   .faq-a { max-width: none; }
   .band { justify-content: center; padding-right: 0; }

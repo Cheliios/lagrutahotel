@@ -827,3 +827,55 @@ mobile-sólido/desktop-chip: no volver a sacar el chip de dentro del
 explícitamente en 390px con `nav.dark` activo (scrolleado más allá del
 hero) antes de dar por buena la ronda — ese es exactamente el caso que
 se rompió y el que no cubrió la verificación original.
+
+### Ronda 6 (2026-09-15): hueco enorme en "Bienvenido a La Gruta" (mobile) + FAQ pegado al borde
+
+Dos bugs reportados con capturas de mobile real.
+
+**El hueco enorme era `.welcome` con `min-height: 90vh` sin resetear en
+mobile.** Ese mínimo existe para la maqueta desktop, donde `.wc-center`
+flota `position:absolute` sobre una grilla de fotos de 860px — sin él, la
+sección podría medir menos que la grilla. En mobile la grilla pasa a
+apilar las fotos (`.welcome-grid` → `flex-direction:column`, mucho más
+baja que 90vh), pero el `min-height:90vh` de `.welcome` no se tocaba, así
+que el navegador igual forzaba la sección a esa altura — dejando un
+bloque de aire vacío entero después del párrafo, antes de que empezara
+"Por qué La Gruta". Fix: `.welcome { min-height: 0; }` dentro del
+`@media (max-width: 900px)` que ya existía.
+
+**Encima, el párrafo se veía angosto y con muchas líneas cortas** por la
+misma causa raíz (una regla pensada para la tarjeta chica de desktop, sin
+resetear en mobile): `.wc-center` trae `padding: 40px 48px` porque en
+desktop es una tarjeta shrink-to-fit flotando sobre las fotos. En mobile
+pasa a ser un bloque de ancho completo (`position:relative`, dentro de un
+flex-column con `align-items:stretch` por defecto) — ese mismo padding le
+comía 96px de ancho al contenido, y sumado al `max-width:300px` de
+`.wc-desc` (también calibrado para la tarjeta angosta), el párrafo
+quedaba aplastado a ~214px de ancho real medido. Fix, mismo `@media`:
+`.wc-center` baja su padding a `32px 24px` y `.wc-desc` pierde el
+`max-width` (usa el ancho real disponible, ya acotado por el padding de
+`.welcome`).
+
+Se revisó si algún otro bloque comparte el patrón "tarjeta chica
+`position:absolute` + `transform:translate(-50%,-50%)`" que pudiera tener
+el mismo problema en mobile — solo lo comparten `.hero-caption` (que sí
+usa `width:100%`, no shrink-to-fit, así que no aplica) y `.wc-center`. No
+hay otro caso pendiente de este mismo bug.
+
+**FAQ con el texto pegado al borde:** `.faq-sec` en mobile tenía
+`padding: 90px 24px`; se sube el lateral a `28px`. Además `.faq-q` (el
+texto de la pregunta, hijo de un `summary` `display:flex`) y `.faq-a` (la
+respuesta) ganan `overflow-wrap: break-word`, y `.faq-q` también
+`min-width: 0` — sin eso, un flex item de texto no se encoge por debajo
+de su ancho intrínseco, y una pregunta larga puede desbordar el padding
+del contenedor en vez de envolver limpio. No se pudo reproducir el
+desborde exacto de la captura (pudo ser la ventana real de la tesista
+más angosta que las probadas, o system font-scaling de Android) pero
+este es el mismo tipo de fix defensivo que ya se aplicó en el menú
+(`.menu-link`, Ronda 4) para un problema de recorte de texto análogo.
+
+**Verificado:** capturas en 390px y 320px (FAQ), gap `.welcome`→`.statement`
+medido de antes/después (pasó de un salto de ~196px de aire vacío dentro
+de `.welcome` a los ~3px normales entre secciones), y una captura de
+escritorio (1440px) para confirmar que ninguno de los cambios —todos
+dentro de `@media (max-width: 900px)`— afecta el layout ahí.
