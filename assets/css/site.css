@@ -45,7 +45,7 @@ body {
    también frena el rebote de iOS Safari. `top` lo fija JS al scrollY
    exacto de donde estaba el usuario, para poder devolverlo ahí al cerrar
    sin que la página "salte" al inicio. */
-body.menu-lock { position: fixed; left: 0; right: 0; overflow: hidden; }
+body.menu-lock, body.modal-lock { position: fixed; left: 0; right: 0; overflow: hidden; }
 img { display: block; max-width: 100%; }
 .imgc { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 /* ── CAPA VEGETAL PERIMETRAL (vines.js) ──
@@ -88,7 +88,7 @@ img { display: block; max-width: 100%; }
    superior/inferior, el hueco entre columnas— pero no el texto. */
 .statement, .rooms-inner, .rooms-top, .faq-head, .faq-sec details,
 .loc-body, .loc-head, .rv-body, .rv-info, .rv-contact,
-.exp-intro, .exp-note, .offer-strip, .trust-strip, .jardin-sec, .reviews-sec {
+.exp-intro, .exp-note, .offer-strip, .jardin-sec, .reviews-sec {
   position: relative;
   z-index: 5;
   background: var(--paper);
@@ -476,15 +476,6 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   opacity: 0; animation: fade .9s 1.4s forwards;
 }
 
-/* ═══ FRANJA DE CONFIANZA (home) ═══
-   Línea fina entre el buscador del hero y la bienvenida. El "·" va como
-   elemento propio (no ::before/::after) para poder ocultarlo en la grilla
-   2x2 de móvil sin dejar un punto suelto. */
-.trust-strip { background: var(--paper); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 20px 40px; }
-.trust-strip-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 20px; }
-.trust-item { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--soft); white-space: nowrap; }
-.trust-sep { color: var(--warm-on-light); font-size: 13px; }
-
 /* ═══ WELCOME COLLAGE (asymmetric, image 3) ═══ */
 .welcome { position: relative; padding: 160px 40px; max-width: 1300px; margin: 0 auto; min-height: 90vh; }
 /* Alto de grilla y ancla vertical de .wc-center calibrados juntos: con el
@@ -534,6 +525,21 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .statement p { grid-column: 2 / span 8; font-size: 16px; line-height: 1.85; color: var(--soft); max-width: 640px; margin-top: 24px; }
 
 /* ═══ ROOM CARDS (image 2 style) ═══ */
+/* ═══ AMENITIES (Habitaciones) ═══
+   Fila de 4 iconos+texto corto, sin fondo ni borde propio — vive sobre
+   var(--paper) igual que el hero, como un respiro entre el buscador y las
+   tarjetas de habitación. Mismo criterio que .loc-fact (icono en
+   --warm-on-light, texto en --soft) pero horizontal en vez de en lista. */
+.amenities-strip { padding: 64px 40px 0; }
+.amenities-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+.amenity { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
+.amenity svg { width: 30px; height: 30px; color: var(--warm-on-light); }
+.amenity span { font-size: 13px; line-height: 1.5; color: var(--soft); max-width: 160px; }
+@media (max-width: 720px) {
+  .amenities-strip { padding: 48px 24px 0; }
+  .amenities-inner { grid-template-columns: 1fr 1fr; gap: 36px 20px; }
+}
+
 .rooms-sec { background: var(--paper2); padding: 140px 40px; }
 .rooms-inner { max-width: 1240px; margin: 0 auto; }
 .rooms-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 56px; }
@@ -920,13 +926,6 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   .loc-head { text-align: center; max-width: none; }
   .avail { grid-template-columns: 1fr 1fr; }
   .ft-top { grid-template-columns: 1fr; }
-  .trust-strip-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
-  /* .trust-item trae white-space:nowrap para la fila de escritorio; en la
-     grilla 2x2 esa misma regla impedía partir "Camas que nuestros huéspedes
-     elogian" en dos líneas, así que la celda se estiraba más ancha que su
-     1fr y toda la página quedaba con scroll horizontal. */
-  .trust-item { white-space: normal; text-align: center; min-width: 0; }
-  .trust-sep { display: none; }
   .offer-strip-in { padding: 40px 24px; }
   /* deja aire abajo del pie de página para que el botón flotante de WhatsApp
      no tape el último bloque de contacto/enlaces en pantallas chicas — va
@@ -937,4 +936,49 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
   /* Las flechas del carrusel de fotos dependían de :hover, que en touch no
      existe de forma confiable — sin esto, en móvil nadie las ve ni las usa. */
   .room-card-arrows { opacity: 1; }
+}
+
+/* ═══ MODAL "VER MÁS" DE HABITACIÓN ═══
+   z-index 500: por encima del botón de WhatsApp (200) y del menú (400) —
+   si algún día se abre uno encima del otro, el modal gana —, por debajo
+   del preloader (9000, que solo se ve un instante en cada carga). La
+   entrada/salida es opacity con la imagen en scale (evita el "salto" de
+   display:none a flex): por eso [hidden] no basta solo, hace falta la
+   clase .on con un frame de por medio (requestAnimationFrame en el JS)
+   para que la transición sí se anime al abrir. */
+.room-modal { position: fixed; inset: 0; z-index: 500; opacity: 0; transition: opacity .3s ease; }
+.room-modal.on { opacity: 1; }
+.room-modal[hidden] { display: none; }
+.room-modal-backdrop { position: absolute; inset: 0; background: rgba(30,28,22,.55); }
+.room-modal-panel {
+  position: relative; margin: 5vh auto; width: min(92%, 880px); max-height: 90vh; overflow-y: auto;
+  background: var(--white); display: grid; grid-template-columns: 1.1fr 1fr;
+  transform: scale(.97); transition: transform .3s ease;
+}
+.room-modal.on .room-modal-panel { transform: scale(1); }
+.room-modal-close {
+  position: absolute; top: 14px; right: 14px; z-index: 2; width: 36px; height: 36px;
+  background: var(--white); border: 1px solid var(--hair); color: var(--ink); font-size: 14px; cursor: pointer;
+}
+.room-modal-close:hover { background: var(--ink); color: #fff; }
+.room-modal-media { position: relative; aspect-ratio: 4/5; overflow: hidden; }
+.room-modal-img { width: 100%; height: 100%; object-fit: cover; }
+.room-modal-arrows { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+.room-modal-arrow { width: 38px; height: 38px; border: none; background: rgba(255,255,255,.85); color: var(--ink); font-size: 15px; cursor: pointer; }
+.room-modal-arrow:hover { background: #fff; }
+.room-modal-dots { position: absolute; left: 0; right: 0; bottom: 16px; display: flex; justify-content: center; gap: 7px; }
+.room-modal-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.55); }
+.room-modal-dot.on { background: #fff; }
+.room-modal-body { padding: 48px 40px; display: flex; flex-direction: column; }
+.room-modal-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--green-lt); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 18px; }
+.room-modal-desc { font-size: 14px; line-height: 1.8; color: var(--soft); margin-bottom: 28px; }
+.room-modal-amenities { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-bottom: 36px; }
+.room-modal-amenities span { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .3px; color: var(--soft); }
+.room-modal-amenities svg { width: 18px; height: 18px; color: var(--warm-on-light); }
+.room-modal-actions { margin-top: auto; }
+.room-modal-book { display: inline-block; }
+@media (max-width: 720px) {
+  .room-modal-panel { grid-template-columns: 1fr; margin: 0; width: 100%; max-height: 100vh; min-height: 100vh; }
+  .room-modal-media { aspect-ratio: 4/3; }
+  .room-modal-body { padding: 32px 24px 40px; }
 }

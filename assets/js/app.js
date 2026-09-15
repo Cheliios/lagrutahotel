@@ -516,3 +516,87 @@ document.querySelectorAll('.room-card-arrow').forEach(arrow => {
     });
   });
 })();
+
+/* ── Modal "Ver más" de habitación ──
+   Un solo modal en todo el documento, rellenado al vuelo con los datos de
+   la .room-card sobre la que se hizo click: nombre, lista de fotos
+   (data-images, la misma que ya usa el carrusel de la tarjeta) y el
+   texto largo de data-detail (si la tarjeta no lo tiene, cae al
+   .room-card-desc corto — así ninguna tarjeta futura rompe el modal por
+   no traer el atributo). El scroll-lock del body reutiliza el mismo
+   truco de position:fixed que setMenuOpen() en vez de overflow:hidden a
+   secas, por el mismo motivo (rebote de iOS Safari, ver ese comentario). */
+(function () {
+  var modal = document.getElementById('roomModal');
+  if (!modal) return;
+  var img = modal.querySelector('.room-modal-img');
+  var nameEl = modal.querySelector('.room-modal-name');
+  var descEl = modal.querySelector('.room-modal-desc');
+  var dotsEl = modal.querySelector('.room-modal-dots');
+  var arrows = modal.querySelectorAll('.room-modal-arrow');
+  var images = [];
+  var current = 0;
+  var modalScrollY = 0;
+
+  function renderDots() {
+    dotsEl.innerHTML = '';
+    if (images.length < 2) return;
+    images.forEach(function (_, i) {
+      var dot = document.createElement('span');
+      dot.className = 'room-modal-dot' + (i === current ? ' on' : '');
+      dotsEl.appendChild(dot);
+    });
+  }
+
+  function showImage(i) {
+    if (!images.length) return;
+    current = ((i % images.length) + images.length) % images.length;
+    img.src = images[current];
+    renderDots();
+  }
+
+  function openModal(card) {
+    var mediaImg = card.querySelector('.room-card-media img');
+    images = (mediaImg?.dataset.images || mediaImg?.src || '').split(',').filter(Boolean);
+    img.alt = card.querySelector('.room-card-name')?.textContent || '';
+    img.dataset.ph = mediaImg?.dataset.ph || '';
+    nameEl.textContent = card.querySelector('.room-card-name')?.textContent || '';
+    descEl.textContent = card.dataset.detail || card.querySelector('.room-card-desc')?.textContent || '';
+    var arrowsWrap = modal.querySelector('.room-modal-arrows');
+    arrowsWrap.style.display = images.length > 1 ? '' : 'none';
+    showImage(0);
+
+    modal.hidden = false;
+    requestAnimationFrame(function () { modal.classList.add('on'); });
+    modalScrollY = window.scrollY;
+    document.body.classList.add('modal-lock');
+    document.body.style.top = (-modalScrollY) + 'px';
+  }
+
+  function closeModal() {
+    modal.classList.remove('on');
+    document.body.classList.remove('modal-lock');
+    document.body.style.top = '';
+    window.scrollTo({ top: modalScrollY, left: 0, behavior: 'instant' });
+    setTimeout(function () { modal.hidden = true; }, 250);
+  }
+
+  document.querySelectorAll('.room-more').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var card = link.closest('.room-card');
+      if (card) openModal(card);
+    });
+  });
+
+  modal.querySelectorAll('[data-modal-close]').forEach(function (el) {
+    el.addEventListener('click', closeModal);
+  });
+  arrows.forEach(function (arrow) {
+    arrow.addEventListener('click', function () { showImage(current + Number(arrow.dataset.dir)); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.hidden) closeModal();
+  });
+  modal.querySelector('.room-modal-book')?.addEventListener('click', closeModal);
+})();
