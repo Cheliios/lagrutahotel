@@ -1339,3 +1339,22 @@ Verificado con Playwright en 1440px (díptico lado a lado) y 390px
 }` ya existente): título, párrafo y nota de masajes legibles en las dos
 capturas, sin perder el brillo/color de las fotos en las esquinas, sin
 errores de consola.
+
+### Ronda 18 (2026-09-15): la foto de "Calma" recortaba las sillas y la mesa
+
+Reporte con captura: en `.experience-full` (la foto grande al final de
+la sección "La experiencia La Gruta", con la etiqueta "CALMA"), el
+encuadre por defecto (`.imgc { object-position: center }`, heredado del
+resto del sitio) mostraba sobre todo el panelado de madera y las
+plantas, y cortaba justo el sillón/mesa de vidrio del balcón — lo más
+reconocible de la foto.
+
+**Fix:** `.experience-full .imgc { object-position: center 80%; }` — baja
+el punto de anclaje del recorte sin tocar `object-fit: cover` ni
+`.imgc` en general (sigue en `center center` para el resto de fotos del
+sitio que lo usan). Cambio de una sola sección, un solo valor.
+
+Verificado con Playwright en 1440px y 390px: el sillón rosa, los cojines
+azules y la mesa de vidrio quedan completos dentro del encuadre en
+ambos anchos, sin recortar el texto "CALMA" ni el degradado inferior ya
+existente (`.experience-full::after`).

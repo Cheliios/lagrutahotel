@@ -690,6 +690,11 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    esquina (no centrada) — el remate asimétrico de la secuencia en vez de
    repetir el mismo layout centrado que ya usa .gastro en Inicio. */
 .experience-full { position: relative; height: 68vh; min-height: 420px; overflow: hidden; margin-top: 40px; }
+/* La foto "Calma" recortaba justo la zona de las sillas/mesa del balcón
+   (lo más interesante de la toma) porque .imgc usa object-position
+   center por defecto. Se baja el encuadre para revelar esa esquina sin
+   tocar el object-fit:cover ni el resto de fotos que comparten .imgc. */
+.experience-full .imgc { object-position: center 80%; }
 .experience-full::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(30,28,22,.55), rgba(30,28,22,0) 55%); }
 .experience-full-caption { position: absolute; left: 60px; bottom: 56px; z-index: 2; max-width: 380px; }
 .experience-full-caption h3 { font-family: 'Cormorant Garamond', serif; font-size: clamp(26px,3vw,36px); font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: #fff; margin-bottom: 14px; }
