@@ -562,12 +562,13 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .reviews-top { text-align: center; margin-bottom: 48px; }
 .reviews-top .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 22px; }
 
-/* Dos columnas de igual ancho: en pantallas angostas de escritorio (donde
-   720–980px ya no entran 2 tarjetas de 220px por columna) se cae a 1 sola
-   columna en vez de apretar las tarjetas hasta ilegibilidad. */
-.reviews-platforms { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px; align-items: start; }
+/* Una sola columna siempre (Booking encima de TripAdvisor, en el orden
+   del HTML) — pedido explícito: mismo apilado vertical de mobile
+   también en desktop, en vez de las dos columnas lado a lado que traía
+   antes. .review-platform mantiene min-width:0 aunque ya no comparta
+   fila con otro grid item, por si el ancho vuelve a acortarse algún día. */
+.reviews-platforms { display: grid; grid-template-columns: minmax(0,1fr); gap: 64px; }
 .review-platform { min-width: 0; }
-@media (max-width: 980px) { .reviews-platforms { grid-template-columns: 1fr; gap: 64px; } }
 
 /* Header de cada plataforma: logo a la izquierda, score a la derecha —
    mismo layout para las dos, solo cambia el contenido interno del score
