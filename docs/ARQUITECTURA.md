@@ -1280,3 +1280,31 @@ de tiles sin la capa `labels` ya removida, sin errores de consola nuevos.
 Los tiles reales de Esri (color, calles, parques) no se pudieron
 confirmar visualmente en este entorno por el mismo bloqueo de proxy TLS
 de la Ronda 14 — ajeno al sitio.
+
+### Ronda 16 (2026-09-15): dos títulos sin la tipografía del sitio
+
+Reporte puntual: el título de "Opiniones de huéspedes" (home) y "La
+experiencia La Gruta" (habitaciones) se veían con la fuente por defecto
+del navegador, no con la identidad tipográfica del resto del sitio.
+
+**Causa:** en ambas secciones se estilizó el `.eye` (eyebrow) pero nunca
+se agregó una regla para el `<h2>` — quedaban sin `font-family` propio,
+así que heredaban el serif del sistema del navegador (tamaño y peso
+también por defecto), en vez de 'Cormorant Garamond' con
+`font-weight:300` que usa cada otro título de sección del sitio
+(`.faq-head h2`, `.jardin-text h2`, etc.). No fue un cambio deliberado
+de estilo, fue una regla que faltó al construir esas dos secciones.
+
+**Fix:** se agregan `.reviews-top h2` y `.experience-head h2`, mismo
+patrón que `.faq-head h2` (otro título centrado de sección):
+`font-family:'Cormorant Garamond', serif; font-size:clamp(32px,4vw,48px);
+font-weight:300; color:var(--ink); line-height:1.25;`. Sin tocar el
+`.eye` de ninguna de las dos (ya estaba bien) ni ningún otro elemento de
+esas secciones.
+
+Verificado con Playwright en 1440px, en Inicio (`.reviews-top h2`) y en
+Habitaciones (`.experience-head h2`): ambos h2 miden `font-family:
+"Cormorant Garamond", serif`, `font-weight:300`, `font-size:48px` (el
+tope del clamp a este ancho) por computed style, capturas confirmando el
+mismo lenguaje visual que el resto de títulos del sitio, sin errores de
+consola.
