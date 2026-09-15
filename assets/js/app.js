@@ -519,12 +519,19 @@ document.querySelectorAll('.room-card-arrow').forEach(arrow => {
 /* ── Modal "Ver más" de habitación ──
    Un solo modal en todo el documento, rellenado al vuelo con los datos de
    la .room-card sobre la que se hizo click: nombre, lista de fotos
-   (data-images, la misma que ya usa el carrusel de la tarjeta) y el
-   texto largo de data-detail (si la tarjeta no lo tiene, cae al
-   .room-card-desc corto — así ninguna tarjeta futura rompe el modal por
-   no traer el atributo). El scroll-lock del body reutiliza el mismo
-   truco de position:fixed que setMenuOpen() en vez de overflow:hidden a
-   secas, por el mismo motivo (rebote de iOS Safari, ver ese comentario). */
+   (data-images, la misma que ya usa el carrusel de la tarjeta) y el texto
+   largo. Nombre y descripción corta se leen del propio DOM de la tarjeta
+   (.room-card-name/.room-card-desc), que i18n.js ya tradujo al idioma
+   activo — no hace falta lógica extra ahí. El texto LARGO no vive en el
+   DOM como texto visible (antes era el atributo `data-detail`, texto
+   plano en español); ahora la tarjeta lleva `data-detail-key` con la
+   clave del diccionario y se resuelve acá con I18N.t() al abrir el modal,
+   para que también salga en el idioma activo. Si la tarjeta no trae la
+   clave (o I18N no cargó por algún motivo), cae al .room-card-desc corto
+   — así ninguna tarjeta futura rompe el modal por no traer el atributo.
+   El scroll-lock del body reutiliza el mismo truco de position:fixed que
+   setMenuOpen() en vez de overflow:hidden a secas, por el mismo motivo
+   (rebote de iOS Safari, ver ese comentario). */
 (function () {
   var modal = document.getElementById('roomModal');
   if (!modal) return;
@@ -536,6 +543,15 @@ document.querySelectorAll('.room-card-arrow').forEach(arrow => {
   var images = [];
   var current = 0;
   var modalScrollY = 0;
+  var lastCard = null;
+
+  function renderText(card) {
+    nameEl.textContent = card.querySelector('.room-card-name')?.textContent || '';
+    var detailKey = card.dataset.detailKey;
+    descEl.textContent = (detailKey && window.I18N)
+      ? window.I18N.t(detailKey)
+      : (card.querySelector('.room-card-desc')?.textContent || '');
+  }
 
   function renderDots() {
     dotsEl.innerHTML = '';
@@ -555,12 +571,12 @@ document.querySelectorAll('.room-card-arrow').forEach(arrow => {
   }
 
   function openModal(card) {
+    lastCard = card;
     var mediaImg = card.querySelector('.room-card-media img');
     images = (mediaImg?.dataset.images || mediaImg?.src || '').split(',').filter(Boolean);
     img.alt = card.querySelector('.room-card-name')?.textContent || '';
     img.dataset.ph = mediaImg?.dataset.ph || '';
-    nameEl.textContent = card.querySelector('.room-card-name')?.textContent || '';
-    descEl.textContent = card.dataset.detail || card.querySelector('.room-card-desc')?.textContent || '';
+    renderText(card);
     var arrowsWrap = modal.querySelector('.room-modal-arrows');
     arrowsWrap.style.display = images.length > 1 ? '' : 'none';
     showImage(0);
@@ -598,4 +614,11 @@ document.querySelectorAll('.room-card-arrow').forEach(arrow => {
     if (e.key === 'Escape' && !modal.hidden) closeModal();
   });
   modal.querySelector('.room-modal-book')?.addEventListener('click', closeModal);
+
+  // Si el idioma cambia con el modal abierto, refresca nombre/descripción
+  // (las amenities ya se actualizan solas: son data-i18n normales, i18n.js
+  // las recorre a todas sin importar si el modal está abierto o cerrado).
+  document.addEventListener('i18n:change', function () {
+    if (!modal.hidden && lastCard) renderText(lastCard);
+  });
 })();

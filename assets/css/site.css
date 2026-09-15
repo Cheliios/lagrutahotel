@@ -304,6 +304,32 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    el rastreo tan abierto de la primera versión leía más "cartel" que
    "boutique". Sigue siendo un acento uppercase chico, solo menos gritado. */
 .menu-eye { font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 4.5px; text-transform: uppercase; color: var(--warm-on-light); }
+
+/* Selector de idioma — referencia visual traída por la tesista (Intursa):
+   ESPAÑOL — ENGLISH — NEDERLANDS, integrado como parte editorial del menú
+   (sin fondo, sin borde, sin apariencia de botón), no una fila de chips.
+   Mismo nivel jerárquico que .menu-eye (Jost, uppercase, tracking amplio)
+   pero MÁS chico (10px vs 11px) para no competir con el eyebrow ni con
+   los .menu-link grandes de abajo — es un control secundario, no otro
+   título. El idioma activo sube a --ink + weight 500 (mismo contraste que
+   usa el resto del sitio para "seleccionado"); los inactivos se quedan en
+   --soft, más sueltos, y pasan a --warm-on-light al pasar el mouse (mismo
+   acento que .menu-contact a:hover) — nunca sin distinguirse del activo.
+   flex-wrap:wrap + tracking moderado (no el 4.5px del eyebrow, que con
+   "NEDERLANDS" ya desbordaría en mobile) para que los tres nombres, con
+   sus separadores, quepan en una sola fila incluso a 360-390px; si algún
+   día no cupieran igual, el wrap los pasa a dos líneas centradas en vez
+   de cortar el contenedor. */
+.menu-lang { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; row-gap: 4px; }
+.menu-lang-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase;
+  color: var(--soft); background: none; border: none; padding: 2px 0; cursor: pointer;
+  font-weight: 400; transition: color .2s, font-weight .2s;
+}
+.menu-lang-btn:hover { color: var(--warm-on-light); }
+.menu-lang-btn.on { color: var(--ink); font-weight: 500; }
+.menu-lang-sep { font-size: 10px; color: var(--hair); }
+
 .menu-links { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 10px; }
 .menu-item { overflow: hidden; padding: 3px 0; }
 .menu-index { display: none; }
@@ -560,7 +586,13 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    de la retícula. Con 6 tarjetas produce un ritmo de ladrillo constante. */
 .rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px 64px; align-items: start; }
 .rooms-grid > :nth-child(even) { margin-top: 96px; }
-.room-card { background: var(--white); }
+/* min-width:0 evita que la grilla (1fr en mobile, ver breakpoint más
+   abajo) crezca más allá del viewport cuando un idioma trae un nombre de
+   habitación como una sola palabra larga sin espacios donde partir (p.
+   ej. NL "Tweepersoonskamer") — sin esto, un grid item con texto de
+   ancho mínimo mayor al track fuerza el track entero (y toda la fila) a
+   ensancharse, aunque el resto de las tarjetas tenga texto corto. */
+.room-card { background: var(--white); min-width: 0; }
 .room-card-media { position: relative; aspect-ratio: 16/10; overflow: hidden; }
 .room-card-media .imgc { transition: transform .8s cubic-bezier(.16,.84,.44,1); }
 .room-card:hover .room-card-media .imgc { transform: scale(1.05); }
@@ -568,7 +600,12 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .room-card:hover .room-card-arrows { opacity: 1; }
 .room-card-arrow { color: #fff; font-size: 24px; text-shadow: 0 1px 8px rgba(0,0,0,.4); cursor: pointer; }
 .room-card-body { padding: 40px 32px 44px; text-align: left; }
-.room-card-name { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--green-lt); margin-bottom: 16px; }
+/* overflow-wrap:break-word — respaldo para el mismo caso (nombre de una
+   sola palabra larga en algún idioma): con min-width:0 ya no fuerza el
+   ancho de la tarjeta, pero sin esto igual podía desbordar SU PROPIA
+   caja en vez de partirse a una segunda línea. No afecta a ES/EN, donde
+   ningún nombre es una sola palabra tan larga como para necesitarlo. */
+.room-card-name { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--green-lt); margin-bottom: 16px; overflow-wrap: break-word; }
 .room-card-desc { font-size: 14px; line-height: 1.7; color: var(--soft); max-width: 380px; margin: 0 0 28px; }
 .room-card-actions { display: flex; align-items: center; justify-content: flex-start; gap: 28px; }
 .rc-book { background: var(--ink); color: #fff; border: none; padding: 14px 28px; font-family: 'Jost',sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background .3s; text-decoration: none; }

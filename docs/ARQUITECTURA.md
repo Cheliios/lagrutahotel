@@ -1416,3 +1416,98 @@ con la barra de disponibilidad del hero ni otro elemento de la página.
 No se pudo reproducir el badge de Netlify en el servidor local (solo lo
 inyecta el hosting real), así que la verificación fue de la posición del
 botón en sí, no de la ausencia de solapamiento con el badge en vivo.
+
+### Ronda 21 (2026-09-15): i18n — selector de idioma en el menú + traducción completa ES/EN/NL
+
+Pedido explícito con referencia visual (Intursa): agregar un selector de
+idioma al menú (ESPAÑOL — ENGLISH — NEDERLANDS) integrado como parte
+editorial del menú, no como botones, y traducir el sitio completo a
+inglés y neerlandés a partir del español como única fuente de verdad, sin
+librerías ni APIs de traducción.
+
+**Arquitectura (`assets/js/i18n.js`, nuevo):**
+- Un diccionario plano por idioma (`STRINGS.es/en/nl`), ~150 claves, con
+  el español como fallback si a una clave le faltara traducción en algún
+  idioma.
+- El HTML no lleva texto embebido en más de un idioma: cada nodo
+  traducible lleva `data-i18n="clave"` (textContent), `data-i18n-html="clave"`
+  (innerHTML — solo para los pocos casos con `<em>`/`<br>` dentro, ej. el
+  título de `.home-map-card` o de `.band`) o `data-i18n-attr="attr:clave"`
+  (uno o más atributos: `aria-label`, `placeholder`).
+- `I18N.setLang(lang)` recorre el DOM completo (las 4 páginas a la vez,
+  aunque 3 estén `hidden` — no hace falta re-aplicar al cambiar de
+  página dentro de la SPA), persiste en `localStorage` (`lg-lang`) y
+  dispara `i18n:change` para que otro script reaccione si lo necesita.
+- Los tres nombres del selector (ESPAÑOL/ENGLISH/NEDERLANDS) están
+  hardcodeados fuera del diccionario a propósito — cada idioma escribe
+  siempre su propio nombre, sin importar el idioma activo (patrón
+  estándar de cualquier selector de idioma real).
+- Persistencia: si no hay nada guardado, arranca en `es` — no se intenta
+  adivinar desde `navigator.language`, para no sorprender con un idioma
+  no elegido a propósito. Con el preloader (mínimo 1.4s en pantalla) de
+  por medio, no hay flash de contenido sin traducir al cargar.
+- `i18n.js` se carga primero entre los `<script defer>` del `<head>`,
+  antes que `app.js`: aplica las traducciones apenas el DOM está
+  parseado, así que cuando el modal de habitación lee `.room-card-name`/
+  `.room-card-desc` del DOM ya sale en el idioma activo sin lógica extra.
+
+**Selector visual (menú, `.menu-lang`):** entre `.menu-eye` ("Hotel La
+Gruta") y `.menu-links`, centrado, sin apariencia de botón (sin fondo ni
+borde). Mismo lenguaje tipográfico que el resto de etiquetas chicas del
+menú (Jost, uppercase, tracking amplio) pero más chico que `.menu-eye`
+(10px vs 11px) para no competir como otro título. Activo: `--ink` +
+weight 500. Inactivos: `--soft`, hover a `--warm-on-light` (mismo acento
+que `.menu-contact a:hover`). `flex-wrap:wrap` como red de seguridad,
+aunque a 390px los tres nombres con separadores caben en una sola línea
+con el tracking moderado elegido (4.5px del eyebrow habría desbordado
+con "NEDERLANDS").
+
+**Contenido dinámico — modal "Ver más" (`app.js`):** el nombre y la
+descripción corta del modal se leían ya del DOM de la tarjeta
+(`.room-card-name`/`.room-card-desc`), que i18n.js tradujo de antemano
+— sin cambios ahí. El texto LARGO vivía en el atributo `data-detail`
+(español plano, invisible al traductor); se reemplazó por
+`data-detail-key` con la clave del diccionario, resuelta con
+`I18N.t(key)` al abrir el modal. Si el idioma cambia con el modal
+abierto, un listener de `i18n:change` vuelve a pintar nombre/descripción
+(las amenities no necesitan nada especial: son `data-i18n` normales,
+i18n.js las recorre igual estén el modal abierto o cerrado).
+
+**Bug encontrado y corregido — overflow horizontal en mobile (NL):** los
+nombres de tres habitaciones en neerlandés son compuestos sin espacio
+("Tweepersoonskamer", "Driepersoonskamer", "Eenpersoonskamer") — en
+mayúsculas con `letter-spacing:3px` (`.room-card-name`), una sola
+"palabra" sin dónde partir. Con `.rooms-grid { grid-template-columns:
+1fr }` en mobile y sin `min-width:0` en `.room-card`, el min-content de
+esa palabra empujaba la pista de la grilla (y con ella las 6 tarjetas)
+más ancha que el viewport, aunque las demás tarjetas tuvieran texto
+corto. Fix de dos líneas: `min-width:0` en `.room-card` (ya no fuerza el
+ancho del track) y `overflow-wrap:break-word` en `.room-card-name`
+(respaldo: si igual no cupiera, parte a una segunda línea en vez de
+desbordar su propia caja). No afecta a ES/EN, donde ningún nombre llega
+a ese largo como palabra única.
+
+**Cobertura:** ~150 claves — nav/menú, los 4 heroes, barra de
+disponibilidad, welcome, mapa+dirección, opiniones (títulos, plataformas
+y los 10 testimonios con sus países, traducidos con el mismo criterio
+que el resto del copy), 6 habitaciones (nombre/descripción
+corta/descripción larga del modal), jardín, gastronomía, FAQ (6
+pares), band, footer (compartido en las 4 páginas), "La experiencia La
+Gruta" (3 bloques), formulario de Reservas completo (labels,
+placeholders, opciones del <select>, botones), los 7 tours de
+Experiencias, el botón flotante de WhatsApp y el modal de habitación
+(amenities, aria-labels, botón reservar). Direcciones, teléfonos,
+horarios y el nombre "La Gruta" no se tradujeron (datos que no deben
+traducirse, sección explícita del pedido).
+
+Verificado con Playwright en 1440px y 390px: selector visible y centrado
+en ambos anchos sin overflow, cambio de idioma actualiza el DOM completo
+al instante (probado con `hero-eye` en las 3 páginas), persistencia
+confirmada tras recargar (`localStorage['lg-lang']`), modal de
+habitación traducido (incluido el texto largo vía `data-detail-key`),
+barrido de las 4 páginas × 3 idiomas a 390px sin overflow horizontal
+real tras el fix (un primer barrido reportó overflow en Inicio en los 3
+idiomas por igual — se confirmó que era un falso positivo del propio
+script de verificación, no un problema del sitio: una medición limpia
+dio `scrollWidth` exactamente igual al viewport), sin errores de consola
+nuevos.
