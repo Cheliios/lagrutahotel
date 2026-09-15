@@ -219,6 +219,18 @@ body:has(.menu.open) .nav-book { opacity: 0 !important; pointer-events: none; tr
   opacity: 0; animation: fade 1s .4s forwards;
 }
 .nav-book:hover { background: #fff; color: var(--ink); }
+@media (max-width: 600px) {
+  /* Columnas simétricas: logo centrado y CTA sin saltos ni solapamientos. */
+  nav { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; padding: 18px 16px; }
+  .nav-logo-img { height: 36px; }
+  .nav-logo small { font-size: 8px; letter-spacing: 2px; margin-top: 5px; }
+  .burger { min-width: 44px; min-height: 44px; justify-content: center; }
+  .nav-book {
+    justify-content: center; min-height: 44px; padding: 10px;
+    font-size: 11px; letter-spacing: 1px; line-height: 1;
+    white-space: nowrap;
+  }
+}
 /* Sobre contenido claro (tras el hero, o en una página sin hero — ninguna
    lo es hoy, pero la extinta página de Ubicación tampoco tenía uno):
    fondo papel semitransparente con desenfoque, no el scrim oscuro. */
