@@ -434,8 +434,25 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   .welcome-motion .wc-4.wc-visible { transition-delay: .45s; }
 }
 @media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
-  .welcome-motion .wc-img .imgc { top: -12.5%; bottom: auto; height: 125%; transform: translate3d(0, var(--wc-shift, 0%), 0); }
+  .welcome-motion .wc-img .imgc {
+    top: -12.5%; bottom: auto; height: 125%;
+    transform: translate3d(0, var(--wc-shift, 0%), 0) scale(var(--wc-zoom, 1));
+  }
+  /* Respiración lenta y continua sobre cada foto una vez revelada — el
+     "siempre vivo" de las fotos boutique en vez de una imagen estática
+     una vez terminó su entrada. Se anima solo --wc-zoom (registrada con
+     @property más abajo para que el navegador SEPA que es un <number> y
+     la interpole con fluidez, no como texto); el transform de arriba ya
+     combina esa variable con el desplazamiento del parallax, así que las
+     dos animaciones (scroll + tiempo) conviven en la misma propiedad sin
+     pisarse. Arranca sola, sin depender de scroll ni de JS adicional. */
+  .welcome-motion .wc-img.wc-visible .imgc { animation: wcZoom 11s ease-in-out .4s infinite alternate; }
+  .wc-2.wc-visible .imgc { animation-delay: .9s; }
+  .wc-3.wc-visible .imgc { animation-delay: 1.4s; }
+  .wc-4.wc-visible .imgc { animation-delay: 1.9s; }
 }
+@property --wc-zoom { syntax: '<number>'; inherits: false; initial-value: 1; }
+@keyframes wcZoom { from { --wc-zoom: 1; } to { --wc-zoom: 1.08; } }
 @media (max-width: 900px) {
   .welcome-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
   .wc-img { width: 100%; height: auto; align-self: start; aspect-ratio: 4 / 5; }
@@ -534,6 +551,10 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .reviews-inner { max-width: 1180px; margin: 0 auto; }
 .reviews-top { text-align: center; margin-bottom: 48px; }
 .reviews-top .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 22px; }
+/* Faltaba: el h2 caía al serif por defecto del navegador en vez del
+   lenguaje tipográfico del sitio (mismo patrón que .faq-head h2, otro
+   título centrado de sección). */
+.reviews-top h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,48px); font-weight: 300; color: var(--ink); line-height: 1.25; }
 
 /* Una sola columna siempre (Booking encima de TripAdvisor, en el orden
    del HTML) — pedido explícito: mismo apilado vertical de mobile
@@ -640,6 +661,9 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .experience-sec { padding: 60px 40px 0; }
 .experience-head { max-width: 1240px; margin: 0 auto 100px; text-align: center; }
 .experience-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 22px; }
+/* Faltaba: mismo caso que .reviews-top h2 — el h2 caía al serif por
+   defecto del navegador en vez del lenguaje tipográfico del sitio. */
+.experience-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,48px); font-weight: 300; color: var(--ink); line-height: 1.25; }
 
 .experience-block { max-width: 1240px; margin: 0 auto; padding: 70px 0; display: grid; grid-template-columns: 7fr 5fr; gap: 90px; align-items: center; }
 .experience-reverse { grid-template-columns: 5fr 7fr; }
