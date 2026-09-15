@@ -434,8 +434,25 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   .welcome-motion .wc-4.wc-visible { transition-delay: .45s; }
 }
 @media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
-  .welcome-motion .wc-img .imgc { top: -12.5%; bottom: auto; height: 125%; transform: translate3d(0, var(--wc-shift, 0%), 0); }
+  .welcome-motion .wc-img .imgc {
+    top: -12.5%; bottom: auto; height: 125%;
+    transform: translate3d(0, var(--wc-shift, 0%), 0) scale(var(--wc-zoom, 1));
+  }
+  /* Respiración lenta y continua sobre cada foto una vez revelada — el
+     "siempre vivo" de las fotos boutique en vez de una imagen estática
+     una vez terminó su entrada. Se anima solo --wc-zoom (registrada con
+     @property más abajo para que el navegador SEPA que es un <number> y
+     la interpole con fluidez, no como texto); el transform de arriba ya
+     combina esa variable con el desplazamiento del parallax, así que las
+     dos animaciones (scroll + tiempo) conviven en la misma propiedad sin
+     pisarse. Arranca sola, sin depender de scroll ni de JS adicional. */
+  .welcome-motion .wc-img.wc-visible .imgc { animation: wcZoom 11s ease-in-out .4s infinite alternate; }
+  .wc-2.wc-visible .imgc { animation-delay: .9s; }
+  .wc-3.wc-visible .imgc { animation-delay: 1.4s; }
+  .wc-4.wc-visible .imgc { animation-delay: 1.9s; }
 }
+@property --wc-zoom { syntax: '<number>'; inherits: false; initial-value: 1; }
+@keyframes wcZoom { from { --wc-zoom: 1; } to { --wc-zoom: 1.08; } }
 @media (max-width: 900px) {
   .welcome-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
   .wc-img { width: 100%; height: auto; align-self: start; aspect-ratio: 4 / 5; }
