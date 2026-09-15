@@ -175,7 +175,7 @@
   // vegetación, pero corta y pegada al borde: acompaña sin competir.
   function zones(page) {
     var hard = [], soft = [];
-    page.querySelectorAll('.hero, .band, .gastro, .experience-full').forEach(function (el) {
+    page.querySelectorAll('.hero, .band, .gastro, .experience-full, .home-map-frame').forEach(function (el) {
       var r = el.getBoundingClientRect();
       hard.push([r.top + window.scrollY - 40, r.bottom + window.scrollY + 40]);
     });

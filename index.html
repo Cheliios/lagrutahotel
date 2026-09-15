@@ -108,12 +108,32 @@
     </div>
   </section>
 
-  <!-- STATEMENT -->
-  <div class="statement rv-el">
-    <p class="eye">Por qué La Gruta</p>
-    <h2 data-reveal="words">Todo cerca. <em>Nada de ruido.</em></h2>
-    <p data-reveal="fade">A siete minutos caminando de la Plaza de Armas, el ruido se queda atrás. Aquí conviven la Ciudad Blanca y la calma: la arquitectura de sillar cuando la buscas, el canto de los pájaros cuando no.</p>
-  </div>
+  <!-- MAPA + DIRECCIÓN (home)
+       Mismo mapa/coordenadas/zoom que la miniatura del menú (ver LAT/LNG
+       y zoom:14 en initHomeMap(), assets/js/map.js) — a propósito el
+       mismo encuadre en los dos sitios, no una vista distinta. Se carga
+       bajo demanda (loadLeaflet + initHomeMap) recién cuando la sección
+       entra en viewport (ver el IntersectionObserver en app.js), igual
+       de perezoso que la miniatura del menú, que carga al abrirlo. La
+       tarjeta reutiliza el copy que antes vivía en .statement — mismo
+       mensaje, ahora con el mapa real detrás en vez de solo texto. -->
+  <section class="home-map rv-el">
+    <div class="home-map-inner">
+      <div class="home-map-frame">
+        <div id="home-map-canvas"></div>
+      </div>
+      <div class="home-map-card">
+        <p class="eye">Por qué La Gruta</p>
+        <h2 data-reveal="words">Todo cerca. <em>Nada de ruido.</em></h2>
+        <p data-reveal="fade">A siete minutos caminando de la Plaza de Armas, el ruido se queda atrás. Aquí conviven la Ciudad Blanca y la calma.</p>
+        <div class="home-map-divider"></div>
+        <div class="home-map-fact"><span>Dirección</span><strong>Pasaje La Gruta 304, Urb. Selva Alegre, Arequipa</strong></div>
+        <div class="home-map-fact"><span>Check-in</span><strong>14:00</strong></div>
+        <div class="home-map-fact"><span>Check-out</span><strong>12:00</strong></div>
+        <a class="home-map-directions" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;destination=-16.387764,-71.530067">Cómo llegar &rsaquo;</a>
+      </div>
+    </div>
+  </section>
 
   <!-- OPINIONES DE HUÉSPEDES (TripAdvisor + Booking.com)
        Dos paneles .review-platform con el MISMO peso visual a propósito

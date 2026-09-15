@@ -92,11 +92,49 @@
     requestAnimationFrame(function () { map.invalidateSize(); });
   };
 
+  // Mapa grande de Inicio (ver .home-map en site.css): mismo centro y mismo
+  // zoom que la miniatura del menú, a propósito — es el mismo lugar visto
+  // dos veces, no dos encuadres distintos que confundan a quien ya vio uno.
+  // Igual que el del menú, la rueda del mouse no hace zoom (scroll de la
+  // página primero, ver initMenuMap más arriba).
+  window.initHomeMap = function () {
+    var host = document.getElementById('home-map-canvas');
+    if (window.homeMap || !window.L || !host) return;
+
+    var map = L.map(host, {
+      center: [LAT, LNG],
+      zoom: 14,
+      zoomControl: false,
+      scrollWheelZoom: false,
+      dragging: true,
+      tap: true,
+      doubleClickZoom: true,
+      boxZoom: true,
+      keyboard: false,
+      attributionControl: true
+    });
+
+    L.tileLayer(TILES.base, { maxZoom: TILES.maxZoom, attribution: TILES.attribution }).addTo(map);
+    L.tileLayer(TILES.labels, { maxZoom: TILES.maxZoom }).addTo(map);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    L.marker([LAT, LNG], {
+      interactive: false,
+      keyboard: false,
+      icon: L.divIcon({ className: 'loc-marker', html: '<div class="loc-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
+    }).addTo(map);
+
+    window.homeMap = map;
+    requestAnimationFrame(function () { map.invalidateSize(); });
+  };
+
   var t;
   window.addEventListener('resize', function () {
     clearTimeout(t);
     t = setTimeout(function () {
       if (window.menuMap) window.menuMap.invalidateSize();
+      if (window.homeMap) window.homeMap.invalidateSize();
     }, 300);
   }, { passive: true });
 })();

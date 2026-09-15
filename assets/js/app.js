@@ -383,6 +383,21 @@ function loadLeaflet(){
 }
 function ensureMenuMap(){ loadLeaflet().then(() => window.initMenuMap?.()); }
 
+/* Mapa grande de Inicio: se carga bajo demanda recién cuando la sección
+   entra en viewport (a diferencia del héroe, no hace falta tenerlo listo
+   desde el primer frame), no al abrir el menú como su miniatura — mismo
+   motivo de siempre, no pagar el peso de Leaflet si nunca se llega a ver. */
+const homeMapSec = document.querySelector('.home-map');
+if (homeMapSec) {
+  const io = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      loadLeaflet().then(() => window.initHomeMap?.());
+      io.disconnect();
+    }
+  }, { rootMargin: '200px' });
+  io.observe(homeMapSec);
+}
+
 // Atrás/adelante del navegador, o alguien que edita el hash a mano estando ya
 // en la página: se sigue igual que un click en el menú.
 window.addEventListener('hashchange', () => goTo(pageFromHash() || 'home'));
