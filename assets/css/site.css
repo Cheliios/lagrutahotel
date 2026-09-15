@@ -471,6 +471,25 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 }
 @property --wc-zoom { syntax: '<number>'; inherits: false; initial-value: 1; }
 @keyframes wcZoom { from { --wc-zoom: 1; } to { --wc-zoom: 1.08; } }
+
+/* Mismo revelado (cortina + respiración) que .wc-img, aplicado a las dos
+   fotos de "Un jardín para descansar" — welcome.js observa también
+   .jardin-sec y agrega jardin-motion/jardin-visible con la misma lógica
+   (observar la SECCIÓN, no cada foto clipeada; ver el comentario largo
+   sobre por qué en welcome.js). Nombres de clase propios en vez de
+   reutilizar wc-visible: son fotos e IDs distintos, y mezclarlas haría
+   que tocar una sección afecte a la otra por accidente. */
+@media (prefers-reduced-motion: no-preference) {
+  .jardin-motion .jardin-img { clip-path: inset(0 0 100% 0); transition: clip-path 1.2s cubic-bezier(.22, 1, .36, 1); }
+  .jardin-motion .jardin-img.jardin-visible { clip-path: inset(0); }
+  .jardin-motion .jardin-img-1.jardin-visible { transition-delay: 0s; }
+  .jardin-motion .jardin-img-2.jardin-visible { transition-delay: .2s; }
+}
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  .jardin-motion .jardin-img .imgc { transform: scale(var(--wc-zoom, 1)); }
+  .jardin-motion .jardin-img.jardin-visible .imgc { animation: wcZoom 11s ease-in-out .4s infinite alternate; }
+  .jardin-img-2.jardin-visible .imgc { animation-delay: 1s; }
+}
 @media (max-width: 900px) {
   .welcome-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
   .wc-img { width: 100%; height: auto; align-self: start; aspect-ratio: 4 / 5; }

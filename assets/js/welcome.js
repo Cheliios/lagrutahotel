@@ -60,3 +60,30 @@
   desktop.addEventListener('change', preferences);
   preferences();
 })();
+
+/* "Un jardín para descansar": mismo revelado en cortina + respiración que
+   el collage de arriba, pero sin el parallax de scroll (esas dos fotos no
+   tienen el recorte alto-y-desplazable de .wc-img, así que no hace falta
+   el requestAnimationFrame de paint() — la respiración es una animación
+   CSS pura, arranca sola en cuanto se agrega jardin-visible). Reutiliza
+   el mismo motivo de "observar la sección, no cada foto clipeada" que ya
+   está documentado arriba. */
+(() => {
+  const section = document.querySelector('.jardin-sec');
+  if (!section || !('IntersectionObserver' in window)) return;
+  const frames = [...section.querySelectorAll('.jardin-img')];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  const reveal = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    frames.forEach(frame => frame.classList.add('jardin-visible'));
+    reveal.unobserve(section);
+  }, { threshold: 0.08 });
+
+  function preferences() {
+    section.classList.toggle('jardin-motion', !reduced.matches);
+  }
+  reveal.observe(section);
+  reduced.addEventListener('change', preferences);
+  preferences();
+})();
