@@ -648,7 +648,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .jardin-sec { padding: 150px 40px; }
 .jardin-grid { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: center; }
 .jardin-media { position: relative; height: 520px; }
-.jardin-img { position: absolute; overflow: hidden; }
+.jardin-img { position: absolute; overflow: hidden; box-shadow: 0 2px 6px rgba(30,28,22,.10), 0 18px 40px -12px rgba(30,28,22,.22); }
 .jardin-img-1 { width: 76%; height: 68%; top: 0; left: 0; }
 .jardin-img-2 { width: 56%; height: 56%; bottom: 0; right: 0; border: 8px solid var(--paper); }
 .jardin-text .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 22px; }
