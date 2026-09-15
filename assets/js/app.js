@@ -6,7 +6,7 @@
 
 // Número real del hotel: mismo que usan los links directos de wa.me de
 // Experiencias y de los botones flotante/CTA del sitio.
-const WA_NUMBER = '51959344759';
+const WA_NUMBER = '51974330699';
 
 /* ── Preloader ──
    Se ve en TODA carga o recarga del sitio, no solo la primera vez (a
