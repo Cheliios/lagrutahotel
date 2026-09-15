@@ -682,7 +682,14 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    ::-webkit-details-marker, y el chevron propio gira con el atributo
    [open], que el navegador ya mantiene solo. */
 .faq-sec { padding: 140px 40px; max-width: 880px; margin: 0 auto; }
-.faq-head { margin-bottom: 56px; }
+/* margin-bottom baja de 56px a 28px: con el espacio grande, el título
+   quedaba flotando como su propia tarjeta separada de la lista en vez de
+   leerse como el encabezado del mismo bloque (queja de la tesista, con
+   captura). Menos aire + el border-top que ya trae el primer
+   .faq-item (ver .faq-item:first-of-type) hacen que esa línea se sienta
+   como el cierre natural del título, no como el arranque de un bloque
+   aparte. */
+.faq-head { margin-bottom: 28px; }
 .faq-head .eye { display: block; font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 18px; }
 .faq-head h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,4vw,48px); font-weight: 300; color: var(--ink); }
 .faq-item { border-bottom: 1px solid var(--hair); list-style: none; }
