@@ -504,13 +504,15 @@ document.querySelectorAll('.room-card-arrow').forEach(arrow => {
 })();
 
 (function () {
-  var track = document.querySelector('.reviews-track');
-  var arrow = document.querySelector('.reviews-arrow');
-  if (!track || !arrow) return;
-  arrow.addEventListener('click', function () {
-    var card = track.querySelector('.review-card');
-    var step = card ? card.offsetWidth + 20 : 280;
-    var atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
-    track.scrollTo({ left: atEnd ? 0 : track.scrollLeft + step, behavior: 'smooth' });
+  document.querySelectorAll('.reviews-track-wrap').forEach(function (wrap) {
+    var track = wrap.querySelector('.reviews-track');
+    var arrow = wrap.querySelector('.reviews-arrow');
+    if (!track || !arrow) return;
+    arrow.addEventListener('click', function () {
+      var card = track.querySelector('.review-card');
+      var step = card ? card.offsetWidth + 16 : 220;
+      var atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+      track.scrollTo({ left: atEnd ? 0 : track.scrollLeft + step, behavior: 'smooth' });
+    });
   });
 })();
