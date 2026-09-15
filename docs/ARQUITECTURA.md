@@ -97,6 +97,7 @@ Las secciones no se componen todas igual a propósito. El ritmo de Inicio es:
 | hero | centrada (fotografía a sangre) |
 | welcome | collage asimétrico |
 | statement | desplazada a la izquierda, aire generoso a la derecha |
+| opiniones de huéspedes | dos paneles (Booking.com + TripAdvisor) de mismo peso visual, carrusel horizontal cada uno |
 | habitaciones | rejilla escalonada, texto de tarjeta alineado a la izquierda |
 | el jardín | split imagen/texto, dos fotos superpuestas contra el bloque de texto |
 | gastronomía | foto a sangre partida en dos, texto centrado encima (variante simétrica de banda) |
