@@ -1207,15 +1207,23 @@ no reemplaza una altura CSS ausente.
 El canvas ocupa el marco y sigue sus dos alturas responsive. Sin cambios
 en JavaScript, HTML, proveedor de tiles, coordenadas, navegación o vegetación.
 
-**Verificación realizada:** servidor HTTP local: 200 para HTML, CSS del sitio,
-app.js, map.js y JS/CSS vendorizados de Leaflet; `node --check` de ambos
-scripts y `git diff --check` correctos. No se ha confirmado el estado HTTP
-del hosting en vivo ni la disponibilidad de tiles de Esri desde un navegador.
+> **Nota:** el commit `1b88c2d` ("fix mapa") documentó correctamente esta
+> causa y esta regla en esta misma sección, pero la regla nunca se agregó
+> al `site.css` — el diff de ese commit solo tocó `.welcome`/`.wc-*` (un
+> ajuste distinto, del collage) y `ARQUITECTURA.md`. La sección quedó
+> describiendo un fix que no estaba aplicado. Esta ronda agrega la regla
+> que faltaba.
 
-**Validación visual pendiente:** este entorno no tiene Chromium; su descarga
-con Playwright falla por timeout de red. No se afirman capturas ni tiles
-visibles. Antes del commit, comprobar a 1440px y 390px: hacer scroll hasta
-`.home-map`, verificar canvas de 620px/340px, `window.homeMap.getSize().y`
-positivo, tiles cargados, marcador y controles visibles, tarjeta legible,
-zoom/arrastre y regreso a Inicio desde otra página, sin errores de consola.
-Se entrega el cambio sin commit hasta completar esa comprobación.
+**Verificación realizada** (con Chromium/Playwright, sí disponible en este
+entorno): servidor HTTP local, scroll hasta `.home-map` a 1440px y 390px.
+`#home-map-canvas`/`.home-map-frame` miden 1240×620 y 342×340 respectivamente
+(antes del fix: colapsados a 0 de alto), `window.homeMap.getSize()` devuelve
+`{x:1240,y:620}` y `{x:342,y:340}`, marcador y controles de zoom visibles,
+atribución de Leaflet presente, tarjeta de dirección legible en ambos anchos,
+sin errores de consola nuevos. Los tiles de Esri no se pudieron confirmar
+visualmente en este entorno de pruebas específico (el proxy TLS del sandbox
+bloquea `server.arcgisonline.com` con `ERR_TUNNEL_CONNECTION_FAILED`, no
+relacionado con el sitio) — el placeholder gris de Leaflet se ve correcto y
+del tamaño esperado, que es lo que este fix controla; la carga de tiles en
+producción depende solo de que el navegador del visitante alcance Esri, ya
+verificado en rondas anteriores del mismo mapa (Ronda 8 y otras).

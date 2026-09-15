@@ -431,6 +431,12 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .home-map-inner { position: relative; max-width: 1240px; margin: 0 auto; }
 .home-map-frame { position: relative; height: 620px; overflow: hidden; cursor: grab; }
 .home-map-frame:active { cursor: grabbing; }
+/* Leaflet posiciona sus paneles internos con position:absolute, así que no
+   le dan altura al contenedor por flujo normal — el alto de .home-map-frame
+   (620px/340px) no se hereda solo. Sin esto #home-map-canvas colapsa a
+   altura 0 y el mapa no se ve, aunque Leaflet cargue y se inicialice bien
+   (ver Ronda 14 en ARQUITECTURA.md). */
+#home-map-canvas { width: 100%; height: 100%; }
 .home-map-card {
   position: absolute; top: 50%; right: 56px; transform: translateY(-50%);
   width: min(38%, 420px); background: var(--paper); padding: 48px 44px;
