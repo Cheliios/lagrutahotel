@@ -527,16 +527,17 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 /* ═══ ROOM CARDS (image 2 style) ═══ */
 /* ═══ AMENITIES (Habitaciones) ═══
    Fila de 4 iconos+texto corto, sin fondo ni borde propio — vive sobre
-   var(--paper) igual que el hero, como un respiro entre el buscador y las
-   tarjetas de habitación. Mismo criterio que .loc-fact (icono en
-   --warm-on-light, texto en --soft) pero horizontal en vez de en lista. */
-.amenities-strip { padding: 64px 40px 0; }
+   var(--paper), después de las tarjetas de habitación y antes del
+   footer, como cierre de la página en vez de intro. Mismo criterio que
+   .loc-fact (icono en --warm-on-light, texto en --soft) pero horizontal
+   en vez de en lista. */
+.amenities-strip { padding: 40px 40px 120px; }
 .amenities-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
 .amenity { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
 .amenity svg { width: 30px; height: 30px; color: var(--warm-on-light); }
 .amenity span { font-size: 13px; line-height: 1.5; color: var(--soft); max-width: 160px; }
 @media (max-width: 720px) {
-  .amenities-strip { padding: 48px 24px 0; }
+  .amenities-strip { padding: 32px 24px 80px; }
   .amenities-inner { grid-template-columns: 1fr 1fr; gap: 36px 20px; }
 }
 
