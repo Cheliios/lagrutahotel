@@ -307,28 +307,8 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
   display: inline-block; text-align: center; transform: translateY(120%);
   transition: transform .7s cubic-bezier(.33,1,.68,1), color .3s, font-style .3s;
   letter-spacing: .2px; line-height: 1.22;
-  /* .menu-item recorta con overflow:hidden para el reveal de entrada
-     (máscara del translateY) — sin este padding, el link mide justo su
-     contenido en reposo y el translateX de la flecha al hover se sale de
-     esa caja y queda cortado por el clip del padre. */
-  padding-right: 10px;
-}
-/* La flechita es un ::after, no texto agregado al link: viaja gratis con
-   el mismo transform:translateY del reveal de entrada (es parte de la
-   misma caja). Más chica y más pegada que antes (17px/16px → 13px/10px):
-   tiene que leerse como un remate discreto, no como un segundo elemento
-   compitiendo con el peso de la serif grande. El link entero recicla el
-   motivo "▸" que ya usa .nav-book ("▸ Reservar"): misma familia de
-   acento, ahora como sufijo en vez de prefijo, y con su propio desliz
-   —más corto también— al hover. */
-.menu-link::after {
-  content: '→'; display: inline-block; font-family: 'Jost', sans-serif;
-  font-size: 13px; margin-left: 10px; color: var(--warm-on-light);
-  transform: translateX(0); transition: transform .3s ease, color .3s ease;
-  vertical-align: middle;
 }
 .menu-link:hover { color: var(--green); font-style: italic; }
-.menu-link:hover::after { color: var(--green); transform: translateX(5px); }
 .menu.open .menu-link { transform: translateY(0); }
 .menu.open .menu-item:nth-child(1) .menu-link { transition-delay: .35s; }
 .menu.open .menu-item:nth-child(2) .menu-link { transition-delay: .42s; }
