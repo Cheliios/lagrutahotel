@@ -128,70 +128,11 @@ img { display: block; max-width: 100%; }
    frame siguiente, así que el fundido de salida de .hide no se pierde) */
 .preloader.instant { transition: none; }
 .preloader-mark {
-  position: relative; z-index: 2;
   width: clamp(150px, 20vw, 230px); height: auto;
   opacity: 0; transform: scale(.95);
   animation: preloaderMark .9s ease forwards;
 }
 @keyframes preloaderMark { to { opacity: 1; transform: scale(1); } }
-
-/* ── VEGETACIÓN DEL PRELOADER ──
-   8 tallos que nacen en los 4 bordes y las 4 esquinas de la PANTALLA
-   (no del centro: pedido explícito, "desde los extremos hacia adentro,
-   desde todos los bordes") y crecen hacia el sello, con la misma técnica
-   de vines.js: pathLength="1" normaliza cada trazo a longitud 1, así que
-   el dashoffset SIEMPRE va de 1 (oculto) a 0 (dibujado completo) sin
-   depender de cuánto mida el trazo real. La animación sigue de 0 a -1:
-   el trazo se "borra" empezando por el borde donde nació, dando el
-   efecto de repliegue de vuelta al borde en vez de solo desvanecerse. Un
-   ciclo entero (crece → se sostiene un instante → se repliega) dura 1.8s,
-   y se repite en bucle mientras el preloader esté en pantalla: como el
-   tiempo visible varía (1.4s en la primera carga, menos entre páginas),
-   lo normal es ver un pulso a medio camino, no el ciclo completo — es
-   justamente el efecto "fugaz" que se pidió, no una animación que haya
-   que esperar a que termine.
-   El SVG cubre la pantalla entera (preserveAspectRatio="none" en el
-   HTML, viewBox 0 0 1000 1000 estirado sin conservar proporción) para
-   que cada tallo nazca en el borde real sea cual sea el aspect ratio;
-   `vector-effect: non-scaling-stroke` compensa ese estiramiento no
-   uniforme para que el grosor de línea se vea igual en los dos ejes en
-   vez de más grueso o fino según la dirección del tallo.
-   Limpio a propósito: 8 trazos finos (1.3px), opacidad tope 0.5, sin
-   hojas ni flores — un gesto, no una composición. Con
-   prefers-reduced-motion el preloader entero se saca del DOM (ver
-   html.no-preload más abajo), así que esto no hace falta silenciarlo
-   aparte.
-   PARA REVERTIR: cambiar el `display: block` de abajo a `display: none`
-   (o borrar el <svg class="preloader-veg"> del HTML). Nada más depende
-   de esto. */
-.preloader-veg {
-  display: block;
-  position: absolute; inset: 0; z-index: 1;
-  width: 100%; height: 100%;
-  pointer-events: none;
-}
-.preloader-veg path {
-  fill: none; stroke: #A89468; stroke-width: 1.3; stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0;
-  animation: preVeg 1.8s cubic-bezier(.65,0,.35,1) infinite;
-}
-.preloader-veg path:nth-child(1) { animation-delay: 0s; }
-.preloader-veg path:nth-child(2) { animation-delay: .05s; }
-.preloader-veg path:nth-child(3) { animation-delay: .1s; }
-.preloader-veg path:nth-child(4) { animation-delay: .15s; }
-.preloader-veg path:nth-child(5) { animation-delay: .2s; }
-.preloader-veg path:nth-child(6) { animation-delay: .25s; }
-.preloader-veg path:nth-child(7) { animation-delay: .3s; }
-.preloader-veg path:nth-child(8) { animation-delay: .35s; }
-@keyframes preVeg {
-  0%   { stroke-dashoffset: 1;  opacity: 0; }
-  12%  { opacity: .5; }
-  45%  { stroke-dashoffset: 0;  opacity: .5; }
-  55%  { stroke-dashoffset: 0;  opacity: .5; }
-  88%  { opacity: 0; }
-  100% { stroke-dashoffset: -1; opacity: 0; }
-}
 
 #app-shell.pre-reveal { transform: scale(1.03); }
 #app-shell { transition: transform .7s cubic-bezier(.76,0,.24,1); }
@@ -957,7 +898,7 @@ footer { background: var(--ink); padding: 90px 40px 40px; }
 @media (prefers-reduced-motion: reduce) {
   .rw-in { opacity: 1; transform: none; transition: none; }
   [data-reveal="fade"] { opacity: 1; transform: none; transition: none; }
-  .preloader, .preloader-mark, .preloader-veg path, #app-shell { animation: none !important; transition: none !important; }
+  .preloader, .preloader-mark, #app-shell { animation: none !important; transition: none !important; }
 }
 
 @keyframes fade { to { opacity: 1; } }
