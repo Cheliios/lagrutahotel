@@ -1189,3 +1189,33 @@ errores de consola nuevos (el único error de red observado es un
 `ERR_CERT_AUTHORITY_INVALID` del proxy TLS del entorno de pruebas al
 pedir tiles/fuentes externas — no relacionado con este cambio, no
 aparece para un visitante real).
+
+### Ronda 14 (2026-09-15): altura del canvas del mapa de Inicio
+
+Investigación sobre `master` en `d574000`. El HTML conserva `.home-map`,
+`.home-map-frame` y `#home-map-canvas`; el observer de `app.js` apunta al
+selector correcto y `map.js` solo inicializa el mapa de Inicio.
+
+**Causa encontrada:** el marco tiene altura explícita (620px en escritorio,
+340px hasta 860px de ancho), pero el div hijo `#home-map-canvas` no tenía
+altura. Leaflet posiciona sus paneles fuera del flujo normal, de modo que
+no le dan altura al contenedor. La altura del padre no se hereda: el canvas
+queda colapsado aunque la carga de Leaflet se complete. `invalidateSize()`
+no reemplaza una altura CSS ausente.
+
+**Fix:** `#home-map-canvas { width: 100%; height: 100%; }` en `site.css`.
+El canvas ocupa el marco y sigue sus dos alturas responsive. Sin cambios
+en JavaScript, HTML, proveedor de tiles, coordenadas, navegación o vegetación.
+
+**Verificación realizada:** servidor HTTP local: 200 para HTML, CSS del sitio,
+app.js, map.js y JS/CSS vendorizados de Leaflet; `node --check` de ambos
+scripts y `git diff --check` correctos. No se ha confirmado el estado HTTP
+del hosting en vivo ni la disponibilidad de tiles de Esri desde un navegador.
+
+**Validación visual pendiente:** este entorno no tiene Chromium; su descarga
+con Playwright falla por timeout de red. No se afirman capturas ni tiles
+visibles. Antes del commit, comprobar a 1440px y 390px: hacer scroll hasta
+`.home-map`, verificar canvas de 620px/340px, `window.homeMap.getSize().y`
+positivo, tiles cargados, marcador y controles visibles, tarjeta legible,
+zoom/arrastre y regreso a Inicio desde otra página, sin errores de consola.
+Se entrega el cambio sin commit hasta completar esa comprobación.
