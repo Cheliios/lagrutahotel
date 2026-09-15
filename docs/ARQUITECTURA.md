@@ -989,3 +989,44 @@ regla la primera vez.
 Verificado: capturas en 1308px, 745px y 467px con el menú abierto — sin
 errores de consola, mapa interactivo en los tres, etiqueta y atribución
 ya no se pisan.
+
+### Ronda 9 (2026-09-15): el chip translúcido del nav se ELIMINA (no se vuelve a acotar, se saca)
+
+Tercera vez que el header se reporta roto, siempre por el mismo origen: el
+experimento de la Ronda 5 —`.nav-logo`/`.nav-book`/`.burger` con su propio
+`background: rgba(...)` + `backdrop-filter: blur(...)` y el `nav` en sí
+transparente, para que la vegetación de fondo se viera cruzar por detrás—
+volvió a fallar, esta vez en **desktop**, que la Ronda 5 había dejado
+intacto por creerlo ya probado. Captura de la tesista: el chip de
+"Reservar" se veía **azul** sobre el hero de Inicio (cielo despejado
+detrás). No es un bug de espacio como en mobile — es que un chip
+translúcido con blur **toma el color de lo que tiene detrás**: sobre
+cielo se ve azul, sobre follaje se ve verde, nunca el mismo botón dos
+veces. Estructuralmente no hay overlap ni error de layout — por eso no se
+detectó antes —, pero el resultado se lee como "roto" porque un botón de
+marca no puede cambiar de color según la foto de fondo.
+
+Con dos fallos reales del mismo mecanismo (Ronda 5: overlap en mobile;
+esta ronda: color impredecible en desktop) y la tesista pidiendo
+explícitamente que no se vuelva a romper, esta vez **no se acota más el
+experimento — se elimina entero**. El `@media (min-width:901px)` que
+tenía los chips se borra por completo; `nav`/`nav.dark` vuelven a ser el
+scrim de ancho completo de siempre (gradiente oscuro + blur sobre hero,
+papel translúcido sobre contenido claro), igual en mobile y desktop, sin
+distinción — la única versión de este header que nunca se rompió.
+
+**Regla dura, no solo un comentario en el CSS:** ningún agente debe
+volver a introducir un chip translúcido por elemento en el nav —ni en
+desktop, ni detrás de un `@media` nuevo, ni con otros valores de
+`rgba`/blur— sin que la tesista lo pida explícitamente de nuevo y con los
+ojos abiertos sobre este historial. El bloque de `site.css` justo antes
+de `.menu` (sección `── NAV ──`) trae el mismo aviso en detalle. Si en el
+futuro se quiere que la vegetación se note cruzando el header, la vía es
+otra (bajar el z-index del nav solo donde no hay texto, o animar la
+vegetación con opacidad reducida detrás), no repetir "chip translúcido +
+blur", que ya demostró dos veces que no es predecible sobre fotos
+arbitrarias.
+
+Verificado: capturas de escritorio en Inicio (cielo+follaje) y Reservas
+(jardín), y mobile en Inicio — mismo scrim oscuro consistente en las
+tres, sin variación de color por foto de fondo.

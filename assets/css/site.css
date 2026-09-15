@@ -160,15 +160,12 @@ html.no-preload .preloader { display: none; }
   .wa-float svg { width: 27px; height: 27px; }
 }
 
-/* ── NAV ── */
-/* Mobile se queda EXACTAMENTE como estaba: barra con scrim de ancho
-   completo (o fondo papel de nav.dark), sin chips ni padding extra. El
-   rediseño "barra transparente + chip por elemento" —pensado para que la
-   vegetación de fondo se vea a través del nav— sólo entra en el
-   @media (min-width: 901px) de más abajo. En mobile había overlap real:
-   los chips añadían padding a `.nav-logo`/`.nav-book`/`.burger` y en un
-   viewport angosto la fila (burger + logo + botón) ya no entraba, así que
-   el botón "Reservar" terminaba superpuesto sobre el logo. */
+/* ── NAV ──
+   Barra ÚNICA, mismo comportamiento en todos los anchos: scrim de ancho
+   completo (gradiente oscuro + blur) sobre foto/hero, o fondo papel
+   translúcido vía `nav.dark` sobre contenido claro. Ver el aviso grande
+   más abajo, después de `nav.dark`, antes de intentar un diseño distinto
+   para desktop — ya se rompió dos veces por eso mismo. */
 nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 500;
   display: grid; grid-template-columns: 1fr auto 1fr;
@@ -235,47 +232,29 @@ nav.dark .nav-logo small { color: var(--soft); }
 nav.dark .nav-book { color: var(--ink); border-color: var(--hair); }
 nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 
-/* Desktop únicamente: la barra pierde su scrim de ancho completo —eso es
-   justo lo que le tapaba el paso a la vegetación de fondo (`.vines-layer`,
-   z-index 4) contra el nav (z-index 500)— y la legibilidad se resuelve
-   por elemento en su lugar: `.nav-logo`, `.nav-book` y `.burger` llevan su
-   propio chip translúcido con blur, del tamaño de su contenido, y el
-   resto de la barra queda transparente dejando ver lo que pase detrás. Con
-   más aire lateral que en mobile esto nunca compite por espacio, así que
-   no hace falta tocar mobile para nada de esto. */
-@media (min-width: 901px) {
-  nav { background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .burger {
-    padding: 13px 15px; border-radius: 999px;
-    background: rgba(15,14,10,.38);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: background .3s;
-  }
-  /* El panel del menú (.menu-panel) es siempre claro, abra donde abra el
-     burger: su chip pasa a claro para no quedar como un círculo oscuro
-     flotando sobre un fondo papel. */
-  .burger.open { background: rgba(251,250,246,.82); }
-  .nav-logo {
-    padding: 9px 22px; border-radius: 14px;
-    background: rgba(15,14,10,.34);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: background .3s;
-  }
-  .nav-book {
-    background: rgba(15,14,10,.30);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
-  /* nav.dark ya no pinta un fondo papel de ancho completo detrás de TODA
-     la barra: sólo retoca el color de cada chip —que ya trae el suyo—
-     para pasar de "sobre foto oscura" a "sobre papel claro". */
-  nav.dark { background: none; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
-  nav.dark .burger { background: rgba(251,250,246,.72); }
-  nav.dark .nav-logo { background: rgba(251,250,246,.72); }
-  nav.dark .nav-book { background: rgba(251,250,246,.55); }
-}
+/* NO REINTRODUCIR el diseño de "chips translúcidos por elemento" en
+   desktop (`.nav-logo`/`.nav-book`/`.burger` cada uno con su propio
+   `background: rgba(...); backdrop-filter: blur(...)`, nav en sí
+   transparente). Se probó DOS VECES — para dejar pasar la vegetación de
+   fondo por detrás del nav — y las dos veces rompió el header:
+   1) overlap real en mobile (los chips no entraban en el ancho
+      disponible, ver Ronda 5 en ARQUITECTURA.md) — se corrigió
+      encerrándolo en `@media (min-width:901px)`;
+   2) en desktop cada chip es translúcido sobre `backdrop-filter:blur`,
+      así que TOMA EL COLOR DE LO QUE HAY DETRÁS: sobre cielo azul se ve
+      un botón azulado, sobre follaje uno verdoso — nunca el mismo color
+      dos veces, reportado por la tesista como "se rompió" con captura
+      del chip de Reservar en azul sobre el hero de Inicio.
+   El nav vuelve a ser SIEMPRE el scrim de ancho completo (gradiente
+   oscuro con blur sobre hero / papel translúcido vía nav.dark sobre
+   contenido claro) en todos los anchos, sin distinción mobile/desktop —
+   mismo color predecible en cualquier foto de fondo, cero riesgo de
+   overlap porque ya no hay chips individuales compitiendo por espacio.
+   Si se quiere que la vegetación se note cruzando el header, hace falta
+   un enfoque que no dependa de recortar el fondo del nav (por ejemplo,
+   bajar el z-index del nav solo en el tramo donde no hay texto encima, o
+   animar la vegetación por detrás con opacidad reducida) — consultar con
+   la tesista antes de tocar esto de nuevo. */
 
 /* ── MENU ──
    El LAYOUT base (panel claro, lista centrada, sin la imagen lateral de
