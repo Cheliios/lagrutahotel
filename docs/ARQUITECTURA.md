@@ -1358,3 +1358,41 @@ Verificado con Playwright en 1440px y 390px: el sillón rosa, los cojines
 azules y la mesa de vidrio quedan completos dentro del encuadre en
 ambos anchos, sin recortar el texto "CALMA" ni el degradado inferior ya
 existente (`.experience-full::after`).
+
+### Ronda 19 (2026-09-15): más amenities en el modal "Ver más" de habitaciones
+
+Pedido con capturas de referencia (listas de características/servicios
+de una OTA tipo Booking): el modal `#roomModal` solo mostraba dos
+amenities (Wifi gratis, Agua caliente 24 h) — pocas comparadas con todo
+lo que el sitio ya cuenta que ofrece el hotel en otras secciones.
+
+**Se agregaron tres, todas ya confirmadas en el copy existente del
+sitio (no se inventó ningún dato nuevo):**
+- **Desayuno incluido** — respaldado por `.gastro-in p` ("Empieza el
+  día frente al jardín con pan artesanal, fruta de estación y café
+  recién pasado").
+- **Estacionamiento gratuito** — respaldado por la FAQ "¿Tienen
+  estacionamiento?" ("Sí, estacionamiento privado dentro del hotel, sin
+  costo para nuestros huéspedes").
+- **Masaje con cita previa** — respaldado por `.gastro-note` ("Servicio
+  de masajes disponible en el hotel con cita previa — coordínalo en
+  recepción").
+
+Se descartó agregar ítems tipo "Recepción 24h" o "TV pantalla plana"
+porque no hay ningún texto en el sitio que los confirme — la regla fue
+solo sumar lo que ya está dicho en otra parte de la página, no
+completar la lista al estilo Booking con suposiciones.
+
+**Implementación:** tres `<span>` nuevos dentro de `.room-modal-
+amenities` (index.html), mismo patrón que los dos existentes — ícono
+SVG en línea (stroke, viewBox 24×24, stroke-width 1.5, mismo lenguaje
+visual que Wifi/Agua caliente) + texto. No hizo falta tocar CSS:
+`.room-modal-amenities` ya usaba `flex-wrap: wrap`, así que los 5 ítems
+se acomodan solos en dos columnas sin desbordar. Es el mismo modal para
+todas las habitaciones (no hay datos por-habitación), así que las 5
+amenities aplican a cualquier tipo de cuarto que se abra.
+
+Verificado con Playwright en 1440px y 390px: modal abierto desde "Ver
+más" en la tarjeta Suite, los 5 amenities visibles y legibles en ambos
+anchos, sin desbordar el panel ni superponerse con el botón "Reservar
+esta habitación", sin errores de consola.

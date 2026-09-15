@@ -412,10 +412,19 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .welcome-grid { position: relative; display: grid; grid-template-columns: minmax(0, 28fr) minmax(0, 40fr) minmax(0, 28fr); column-gap: 2%; row-gap: clamp(24px, 3vw, 48px); }
 .wc-img { position: relative; overflow: hidden; min-width: 0; margin: 0; }
 .wc-img .imgc { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.wc-1 { grid-column: 2; grid-row: 1; width: 85%; aspect-ratio: 4 / 3; justify-self: start; }
+/* Superposición en las esquinas (pedido explícito, "como en la
+   referencia"): wc-1/wc-4 se meten un poco sobre wc-2/wc-3 con margin
+   negativo en % — no en px fijos — para que el solape encoja y crezca
+   con el resto del collage en vez de volverse desproporcionado (mucho
+   en mobile, invisible en pantallas grandes) o directamente romper el
+   layout en algún ancho intermedio, que es justo el bug que ya se
+   arregló una vez en esta sección. z-index propio porque el orden en
+   el DOM (wc-1 antes de wc-2) las dejaba por debajo, tapadas en la
+   zona de solape. */
+.wc-1 { grid-column: 2; grid-row: 1; width: 85%; aspect-ratio: 4 / 3; justify-self: start; margin-left: -6%; z-index: 7; }
 .wc-2 { grid-column: 1; grid-row: 1 / 4; align-self: end; height: 74%; min-height: 0; }
 .wc-3 { grid-column: 3; grid-row: 1 / 4; align-self: start; height: 74%; min-height: 0; }
-.wc-4 { grid-column: 2; grid-row: 3; width: 85%; aspect-ratio: 4 / 3; justify-self: end; }
+.wc-4 { grid-column: 2; grid-row: 3; width: 85%; aspect-ratio: 4 / 3; justify-self: end; margin-right: -6%; z-index: 7; }
 .wc-center { position: relative; grid-column: 2; grid-row: 2; min-width: 0; padding: 12px 8px; text-align: center; z-index: 5; background: var(--paper); }
 .wc-script { font-family: 'Dancing Script', cursive; font-size: clamp(30px, 3vw, 44px); color: var(--soft); font-weight: 500; line-height: 1.2; }
 .wc-logo { width: min(100%, 280px); height: auto; margin: 12px auto 0; display: block; }
@@ -456,6 +465,11 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 @media (max-width: 900px) {
   .welcome-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
   .wc-img { width: 100%; height: auto; align-self: start; aspect-ratio: 4 / 5; }
+  /* El solape de esquina de wc-1/wc-4 es cosa de la grilla asimétrica de
+     desktop (3 columnas de ancho desigual); en esta grilla de 2 columnas
+     iguales no hay "esquina" que superponer, así que se resetea en vez
+     de heredar un margen negativo pensado para otra proporción. */
+  .wc-1, .wc-4 { margin-left: 0; margin-right: 0; z-index: 6; }
   .wc-1 { grid-area: 1 / 1; }
   .wc-2 { grid-area: 1 / 2; margin-top: 32px; }
   .wc-center { grid-area: 2 / 1 / 3 / 3; padding: 16px 0; }
