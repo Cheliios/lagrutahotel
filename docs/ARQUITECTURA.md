@@ -1511,3 +1511,10 @@ idiomas por igual — se confirmó que era un falso positivo del propio
 script de verificación, no un problema del sitio: una medición limpia
 dio `scrollWidth` exactamente igual al viewport), sin errores de consola
 nuevos.
+
+### Ronda 22 (2026-09-15): más aire entre el texto y el botón del band
+
+Reporte con captura: en `.band` ("Arequipa para descubrir. La Gruta
+para disfrutar."), el botón "RESERVA TU ESTADÍA" quedaba pegado casi
+encima de la última línea de texto. `.band-in .rc-book { margin-top:
+28px; }` → `40px`. Ajuste de un solo valor, verificado en 1440px.

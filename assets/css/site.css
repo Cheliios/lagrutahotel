@@ -836,7 +836,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    el punto de mayor intención de conversión de la página y no tenía la
    misma jerarquía que su equivalente en el resto del sitio. Solo el
    margen superior es propio de este lugar. */
-.band-in .rc-book { margin-top: 28px; }
+.band-in .rc-book { margin-top: 40px; }
 
 /* ═══ ROOMS PAGE hero uses same .hero + avail ═══ */
 /* room list on rooms page — use same card grid */
