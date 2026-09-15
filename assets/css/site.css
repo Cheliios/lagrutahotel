@@ -88,7 +88,8 @@ img { display: block; max-width: 100%; }
    superior/inferior, el hueco entre columnas— pero no el texto. */
 .statement, .rooms-inner, .rooms-top, .faq-head, .faq-sec details,
 .rv-body, .rv-info, .rv-contact,
-.exp-intro, .exp-note, .offer-strip, .jardin-sec, .reviews-sec {
+.exp-intro, .exp-note, .offer-strip, .jardin-sec, .reviews-sec,
+.experience-head, .experience-block {
   position: relative;
   z-index: 5;
   background: var(--paper);
@@ -105,7 +106,7 @@ img { display: block; max-width: 100%; }
       fondo → vegetación (z4) → contenido (flujo) → fotos y mapa (z6)
    Las secciones que SON una foto a sangre suben enteras; en las cards sube solo
    el bloque de imagen, para que las ramas puedan cruzar el texto de la card. */
-.hero, .band, .gastro { z-index: 6; }
+.hero, .band, .gastro, .experience-full { z-index: 6; }
 .wc-img, .room-card-media { z-index: 6; }
 
 /* ── PRELOADER ──
@@ -637,6 +638,51 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .gastro-in h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px,4.5vw,60px); font-weight: 300; color: #fff; line-height: 1.2; margin-bottom: 20px; }
 .gastro-in p { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,.85); }
 .gastro-note { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 20px; }
+
+/* ═══ LA EXPERIENCIA LA GRUTA (Habitaciones) ═══
+   Cierre editorial de la página: tres piezas foto+título+una línea, sin
+   la retícula de tarjetas de .rooms-grid ni el split-imagen-doble de
+   .jardin-sec — acá cada bloque es una sola foto grande y asimétrica
+   (7/5 y 5/7 alternados) para que se sienta como una revista, no como un
+   catálogo. El título de cada bloque toma el mismo tratamiento tipográfico
+   que .room-card-name (serif, versalitas, verde) para que "Jardines",
+   "Desayuno" y "Calma" se lean como parte del mismo sistema y no como una
+   sección aparte pegada con cinta. */
+.experience-sec { padding: 60px 40px 0; }
+.experience-head { max-width: 1240px; margin: 0 auto 100px; text-align: center; }
+.experience-head .eye { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--warm-on-light); margin-bottom: 22px; }
+
+.experience-block { max-width: 1240px; margin: 0 auto; padding: 70px 0; display: grid; grid-template-columns: 7fr 5fr; gap: 90px; align-items: center; }
+.experience-reverse { grid-template-columns: 5fr 7fr; }
+.experience-reverse .experience-media { order: 2; }
+.experience-reverse .experience-text { order: 1; text-align: right; }
+.experience-media { position: relative; overflow: hidden; }
+.experience-media-tall { aspect-ratio: 5/6; }
+.experience-media-wide { aspect-ratio: 16/10; }
+.experience-text h3 { font-family: 'Cormorant Garamond', serif; font-size: clamp(26px,3vw,36px); font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: var(--green-lt); margin-bottom: 18px; }
+.experience-text p { font-size: 15px; line-height: 1.7; color: var(--soft); max-width: 360px; }
+.experience-reverse .experience-text p { margin-left: auto; }
+
+/* Tercera pieza a sangre completa, como .band pero con la leyenda en una
+   esquina (no centrada) — el remate asimétrico de la secuencia en vez de
+   repetir el mismo layout centrado que ya usa .gastro en Inicio. */
+.experience-full { position: relative; height: 68vh; min-height: 420px; overflow: hidden; margin-top: 40px; }
+.experience-full::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(30,28,22,.55), rgba(30,28,22,0) 55%); }
+.experience-full-caption { position: absolute; left: 60px; bottom: 56px; z-index: 2; max-width: 380px; }
+.experience-full-caption h3 { font-family: 'Cormorant Garamond', serif; font-size: clamp(26px,3vw,36px); font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: #fff; margin-bottom: 14px; }
+.experience-full-caption p { font-size: 15px; line-height: 1.7; color: rgba(255,255,255,.85); }
+
+@media (max-width: 860px) {
+  .experience-sec { padding: 48px 24px 0; }
+  .experience-head { margin-bottom: 64px; }
+  .experience-block, .experience-reverse { grid-template-columns: 1fr; gap: 32px; padding: 40px 0; text-align: center; }
+  .experience-reverse .experience-media { order: 0; }
+  .experience-reverse .experience-text { order: 0; text-align: center; }
+  .experience-media-tall { aspect-ratio: 4/3; }
+  .experience-text p, .experience-reverse .experience-text p { max-width: none; margin-left: 0; }
+  .experience-full { height: 52vh; min-height: 340px; }
+  .experience-full-caption { left: 24px; right: 24px; bottom: 32px; max-width: none; }
+}
 
 /* ═══ PREGUNTAS FRECUENTES (home) ═══
    Acordeón nativo: <details>/<summary>, sin una línea de JS. El marcador
