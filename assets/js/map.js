@@ -14,14 +14,17 @@
    cargarse de un CDN: el sitio tiene que poder subirse tal cual a cualquier
    hosting sin depender de que un tercero siga sirviendo el archivo.
 
-   Se inicializa BAJO DEMANDA desde app.js (`window.initMenuMap`, ver
-   ensureMenuMap()) y no al cargar: un mapa creado dentro de un contenedor
-   oculto nace con tamaño 0 y se ve roto. Se dispara la primera vez que se
-   abre el menú.
+   Se inicializa BAJO DEMANDA desde app.js (`window.initHomeMap`, disparado
+   por un IntersectionObserver sobre `.home-map`) y no al cargar: un mapa
+   creado dentro de un contenedor oculto/fuera de viewport nace con tamaño 0
+   y se ve roto.
 
    La página de Ubicación (que tenía su propio mapa a pantalla completa,
    `window.initLocMap`/`#loc-map-canvas`) se retiró del sitio por pedido
-   de la tesista — ver ARQUITECTURA.md. Solo queda la miniatura del menú.
+   de la tesista — ver ARQUITECTURA.md. El menú también tuvo su propia
+   miniatura de mapa (`window.initMenuMap`/`#menu-map-canvas`) hasta que se
+   volvió redundante con el mapa de Inicio y se quitó — ver ARQUITECTURA.md.
+   Ahora solo queda el mapa de Inicio.
    ============================================================================= */
 (function () {
   'use strict';
@@ -51,52 +54,9 @@
                  'Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
   };
 
-  // Miniatura de ubicación dentro del menú (ver .menu-map en site.css).
-  // Interactiva (arrastre + zoom con botones), salvo la rueda del mouse,
-  // que en NINGÚN mapa del sitio hace zoom — un overlay a pantalla
-  // completa como el menú lo necesita todavía más que el resto: no
-  // secuestrar el scroll de la página.
-  window.initMenuMap = function () {
-    var host = document.getElementById('menu-map-canvas');
-    if (window.menuMap || !window.L || !host) return;
-
-    var map = L.map(host, {
-      center: [LAT, LNG],
-      zoom: 14,
-      zoomControl: false,
-      scrollWheelZoom: false,
-      dragging: true,
-      tap: true,
-      doubleClickZoom: true,
-      boxZoom: true,
-      keyboard: false,
-      attributionControl: true
-    });
-
-    L.tileLayer(TILES.base, { maxZoom: TILES.maxZoom, attribution: TILES.attribution }).addTo(map);
-    L.tileLayer(TILES.labels, { maxZoom: TILES.maxZoom }).addTo(map);
-
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    L.marker([LAT, LNG], {
-      interactive: false,
-      keyboard: false,
-      icon: L.divIcon({ className: 'loc-marker', html: '<div class="loc-dot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
-    }).addTo(map);
-
-    window.menuMap = map;
-
-    // El menú nace oculto (clip-path en 0%, pointer-events:none) hasta que
-    // se abre: Leaflet mide un contenedor con tamaño real recién en el
-    // frame siguiente a hacerse visible.
-    requestAnimationFrame(function () { map.invalidateSize(); });
-  };
-
-  // Mapa grande de Inicio (ver .home-map en site.css): mismo centro y mismo
-  // zoom que la miniatura del menú, a propósito — es el mismo lugar visto
-  // dos veces, no dos encuadres distintos que confundan a quien ya vio uno.
-  // Igual que el del menú, la rueda del mouse no hace zoom (scroll de la
-  // página primero, ver initMenuMap más arriba).
+  // Mapa grande de Inicio (ver .home-map en site.css). Interactivo
+  // (arrastre + zoom con botones), salvo la rueda del mouse, que en NINGÚN
+  // mapa del sitio hace zoom — para no secuestrar el scroll de la página.
   window.initHomeMap = function () {
     var host = document.getElementById('home-map-canvas');
     if (window.homeMap || !window.L || !host) return;
@@ -133,7 +93,6 @@
   window.addEventListener('resize', function () {
     clearTimeout(t);
     t = setTimeout(function () {
-      if (window.menuMap) window.menuMap.invalidateSize();
       if (window.homeMap) window.homeMap.invalidateSize();
     }, 300);
   }, { passive: true });

@@ -259,9 +259,12 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
    la tesista antes de tocar esto de nuevo. */
 
 /* ── MENU ──
-   El LAYOUT base (panel claro, lista centrada, sin la imagen lateral de
-   antes) viene del patrón de referencia que trajo la tesista, con la
-   identidad propia de La Gruta encima:
+   Panel claro, lista centrada en una sola columna — el patrón de
+   referencia que trajo la tesista (Intursa), igual en mobile y desktop,
+   sin la grilla de dos columnas ni el mapa lateral que hubo en rondas
+   intermedias (ver ARQUITECTURA.md): el mapa ahora vive en la propia
+   página de Inicio (`.home-map`), así que tenerlo también acá era
+   redundante. Identidad propia de La Gruta encima del mismo layout:
    - tipografía: 'Cormorant Garamond' (la misma serif de .hero-title) para
      los links, con el mismo recurso de cursiva al hover que ya usa
      .hero-title em — no una convención nueva, la que el sitio ya tenía;
@@ -269,17 +272,7 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
      anterior, y el eyebrow uppercase+letter-spacing de --warm-on-light que
      ya usa .hero-eye sobre el hero;
    - el burger sigue haciendo de botón "X" al abrir (rotación de sus
-     barras), así que no hace falta un cierre aparte.
-
-   En mobile es una sola columna centrada, con el mapa (vertical, chico,
-   ver .menu-map más abajo) apilado debajo de la lista — antes esa franja
-   se quedaba vacía, con la lista de links flotando sola en medio de mucho
-   aire sin usar. En desktop (≥901px) pasa a DOS columnas centradas como
-   grupo (texto a la izquierda, mapa angosto a la derecha, `justify-
-   content:center` con un gap fijo entre ambas) — no pegadas a los bordes
-   del panel: el mapa es un acompañante chico, no un segundo bloque que
-   reclama la mitad del ancho, así que el vacío alrededor del conjunto se
-   lee como aire compuesto, no como espacio muerto. */
+     barras), así que no hace falta un cierre aparte. */
 .menu { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; }
 .menu-panel { position: absolute; inset: 0; background: var(--paper); clip-path: circle(0% at 60px 40px); transition: clip-path .8s cubic-bezier(.76,0,.24,1); }
 .menu.open { pointer-events: all; }
@@ -324,79 +317,18 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 .menu-contact a { font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.4px; color: var(--soft); text-decoration: none; text-transform: uppercase; transition: color .2s; }
 .menu-contact a:hover { color: var(--warm-on-light); }
 
-/* Mapa de ubicación real (Leaflet, mismas tiles y marcador que Ubicación
-   — ver window.initMenuMap en map.js — nunca una imagen ni un iframe de
-   Google Maps), interactivo (arrastre + zoom con botones) igual que el
-   de Ubicación; solo la rueda del mouse sigue sin hacer zoom, por la
-   misma regla de "nunca secuestrar el scroll de la página" que rige
-   todos los mapas del sitio.
-
-   VERTICAL a propósito, ya no horizontal: antes solo aparecía en
-   desktop, estirado a lo ancho (flex:1) hasta el borde derecho del
-   panel; en mobile no aparecía en absoluto y la lista de links quedaba
-   flotando en medio de una franja larga de aire vacío. Ahora es una
-   ventana angosta y alta en TODOS los anchos, apilada bajo la lista en
-   mobile (llena justo esa franja) y a la derecha del texto en desktop —
-   el mismo componente, sin duplicar media queries por tamaño. */
-/* Más angosto que la ronda anterior (84vw/340px → 62vw/250px): el mapa
-   acompaña, no protagoniza — una ventana chica y elegante, no un bloque
-   que compite en peso con la lista de links. */
-.menu-map {
-  display: block; position: relative; width: min(62vw, 250px); margin: 8px auto 0;
-  padding: 12px; background: var(--paper2);
-  border: 1px solid var(--hair); box-shadow: 0 14px 34px rgba(43,43,38,.12);
-}
-/* "Marquito" tipo paspartú: un borde de aire color papel (--paper2, un
-   tono por debajo de --paper para que se note contra el panel del menú)
-   entre el filete y el mapa, más un filete fino en verde oliva pegado al
-   mapa mismo — el mismo recurso de "ventana enmarcada" que ya usan las
-   fotos del collage de bienvenida, pero sutil: nada de sombra dura ni
-   marco grueso. Así el recuadro se lee aunque las tiles de Esri tarden
-   en cargar (fondo gris claro casi igual al papel de fondo). */
-.menu-map-frame { position: relative; height: min(44vh, 320px); overflow: hidden; border: 1px solid rgba(94,114,59,.4); cursor: grab; }
-.menu-map-frame:active { cursor: grabbing; }
-#menu-map-canvas { position: absolute; inset: 0; }
-/* Arriba, no abajo: con el mapa angosto y vertical la atribución de
-   Leaflet (obligatoria por licencia, ver "El mapa" en ARQUITECTURA.md) ya
-   no cabe en su rincón inferior derecho sin invadir todo el ancho —en un
-   marco ancho y bajo no se notaba, en uno angosto y alto sí— y tapaba
-   esta etiqueta si las dos vivían abajo. */
-.menu-map-tag { position: absolute; top: 14px; left: 14px; z-index: 401; background: var(--green); color: #fff; padding: 8px 16px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
-
-@media (min-width: 901px) {
-  /* justify-content:center (antes space-between): con el mapa ya angosto
-     —ya no compite por protagonismo— pegarlo al borde derecho dejaba un
-     vacío muerto en el medio del panel en vez de aire compuesto. Centrado
-     como grupo, con un gap generoso pero fijo entre las dos columnas, el
-     "mucho blanco" queda repartido de forma pareja alrededor del bloque
-     en vez de amontonado en una sola franja — es lo que lee como
-     editorial/boutique en vez de vacío.
-     padding vertical más chico (112px→92px arriba, 56px→48px abajo) para
-     que el conjunto se sienta un poco más centrado verticalmente, no
-     empujado hacia arriba. align-items:stretch sigue dándole a las dos
-     columnas la misma altura completa del panel. */
-  .menu-inner {
-    flex-direction: row; align-items: stretch; justify-content: center;
-    gap: clamp(64px, 9vw, 120px); padding: 92px clamp(40px, 6vw, 96px) 48px;
-  }
-  .menu-col { align-items: flex-start; text-align: left; flex: 0 0 auto; justify-content: center; }
-  .menu-col-top { align-items: flex-start; }
-  .menu-links, .menu-eye { align-items: flex-start; text-align: left; }
-  .menu-contact { align-items: flex-start; }
-  /* Angosto y fijo (antes min(26vw,360px), ahora más chico todavía): el
-     mapa acompaña la composición, no la reparte a la mitad. Sigue siendo
-     un rectángulo VERTICAL de verdad —alto por el align-self:stretch de
-     abajo, angosto por este ancho— nunca una franja horizontal. */
-  .menu-map { width: min(19vw, 260px); margin: 0; align-self: stretch; }
-  /* Va DESPUÉS de la regla base (misma especificidad — una sola clase —
-     así que en el cascade gana la que aparece después en el archivo, no
-     alcanza con que esté dentro de un @media más específico): dentro de
-     la columna estirada por align-items:stretch, .menu-map ya tiene una
-     altura definida (la del panel completo, menos el padding vertical de
-     .menu-inner), y el frame la hereda entera en vez de topar en un
-     máximo fijo, para que el mapa se sienta alto sin ser ancho. */
-  .menu-map-frame { height: 100%; }
-}
+/* "Síguenos" + ícono de Facebook, mismo patrón de la referencia de la
+   tesista (Intursa): una fila chica al pie del menú, separada del resto
+   por el mismo margin-top que ya usaba .menu-contact. El label reusa la
+   tipografía/tracking de .menu-contact (mismo nivel jerárquico); el
+   ícono es un solo <path> con currentColor, sin depender de una librería
+   de iconos — coherente con el resto del sitio (los iconos de contacto
+   de Ubicación/Reservas también son SVG en línea). */
+.menu-social { display: flex; align-items: center; gap: 14px; margin-top: 22px; }
+.menu-social-label { font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.4px; color: var(--soft); text-transform: uppercase; }
+.menu-social-link { display: flex; color: var(--soft); transition: color .2s; }
+.menu-social-link:hover { color: var(--green); }
+.menu-social-link svg { width: 20px; height: 20px; fill: currentColor; }
 
 /* pages */
 .page { display: none; }
@@ -742,27 +674,26 @@ nav.dark .nav-book:hover { background: var(--ink); color: #fff; }
 /* room list on rooms page — use same card grid */
 
 /* Especificidad por encima de `.leaflet-marker-icon { display:block }`.
-   Compartida con la miniatura interactiva del menú (.menu-map-frame) y con
-   el mapa grande de Inicio (.home-map-frame): su marcador reutiliza el
+   El marcador del mapa grande de Inicio (.home-map-frame) reutiliza el
    mismo className 'loc-marker'/'loc-dot' que usaba la página de Ubicación
    (ya retirada, ver ARQUITECTURA.md) — no borrar estas reglas pensando
    que quedaron huérfanas. */
 .leaflet-marker-icon.loc-marker { display: flex; background: none; border: none; }
 
-/* Controles y atribución de los dos mapas del sitio (miniatura del menú y
-   mapa grande de Inicio), alineados con el resto del sitio. La atribución
-   es obligatoria por licencia de OpenStreetMap y Esri: no se elimina. */
-.menu-map-frame .leaflet-control-attribution, .home-map-frame .leaflet-control-attribution {
+/* Controles y atribución del mapa de Inicio, alineados con el resto del
+   sitio. La atribución es obligatoria por licencia de OpenStreetMap y
+   Esri: no se elimina. */
+.home-map-frame .leaflet-control-attribution {
   background: rgba(251,250,246,.88); font-family: 'Jost', sans-serif;
   font-size: 10px; color: var(--muted); padding: 4px 8px;
 }
-.menu-map-frame .leaflet-control-attribution a, .home-map-frame .leaflet-control-attribution a { color: var(--soft); }
-.menu-map-frame .leaflet-bar a, .home-map-frame .leaflet-bar a {
+.home-map-frame .leaflet-control-attribution a { color: var(--soft); }
+.home-map-frame .leaflet-bar a {
   background: var(--white); color: var(--ink);
   border-bottom-color: var(--hair); width: 34px; height: 34px; line-height: 34px;
 }
-.menu-map-frame .leaflet-bar a:hover, .home-map-frame .leaflet-bar a:hover { background: var(--paper2); color: var(--green); }
-.menu-map-frame .leaflet-bar, .home-map-frame .leaflet-bar { border: none; box-shadow: 0 2px 18px rgba(30,28,22,.12); }
+.home-map-frame .leaflet-bar a:hover { background: var(--paper2); color: var(--green); }
+.home-map-frame .leaflet-bar { border: none; box-shadow: 0 2px 18px rgba(30,28,22,.12); }
 .loc-marker { display: flex; flex-direction: column; align-items: center; }
 .loc-dot { width: 13px; height: 13px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 7px rgba(58,82,54,.18), 0 0 0 18px rgba(58,82,54,.08); animation: pulse 2s infinite; }
 .contact-link { color: inherit; text-decoration: none; transition: color .2s, text-decoration-color .2s; }

@@ -89,10 +89,6 @@ function setMenuOpen(open){
     scrollLockY = window.scrollY;
     document.body.classList.add('menu-lock');
     document.body.style.top = (-scrollLockY)+'px';
-    // La miniatura de mapa del menú (ver .menu-map en site.css) se carga
-    // recién al abrir por primera vez, no de entrada: bajo demanda, para
-    // no pagar el peso de Leaflet en una visita que nunca abre el menú.
-    ensureMenuMap();
   } else {
     document.body.classList.remove('menu-lock');
     document.body.style.top = '';
@@ -381,8 +377,6 @@ function loadLeaflet(){
   });
   return leafletReady;
 }
-function ensureMenuMap(){ loadLeaflet().then(() => window.initMenuMap?.()); }
-
 /* Mapa grande de Inicio: se carga bajo demanda recién cuando la sección
    entra en viewport (a diferencia del héroe, no hace falta tenerlo listo
    desde el primer frame), no al abrir el menú como su miniatura — mismo

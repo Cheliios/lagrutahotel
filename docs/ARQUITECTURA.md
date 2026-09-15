@@ -1137,3 +1137,55 @@ página muestra "Navegación" sin Ubicación, `#page-location` ya no existe
 en el DOM, forzar `location.hash = 'location'` a mano no rompe nada
 (la SPA simplemente no reconoce esa página y se queda donde estaba), y
 cero errores de consola.
+
+### Ronda 13 (2026-09-15): el menú vuelve al layout de referencia (Intursa) — sin mapa, con "Síguenos"
+
+Pedido explícito con captura de la referencia original ("Intursa") que
+inspiró el menú desde el inicio: volver a la lista centrada en una sola
+columna, igual en mobile y desktop, sin la grilla de dos columnas ni el
+mapa lateral que se fueron sumando en rondas intermedias (Ronda 3 metió
+el mapa y el layout de dos columnas en desktop; Ronda 8 lo hizo vertical
+pero mantuvo la división en desktop). Motivo adicional, no solo estético:
+otro agente agregó en paralelo un mapa grande a la página de Inicio
+(`.home-map`, ver `window.initHomeMap` en `map.js`) con el mismo punto y
+el mismo zoom — mantener además la miniatura del menú era mostrar el
+mismo mapa dos veces en la misma sesión de navegación.
+
+**Qué se sacó:**
+- `<div class="menu-map" id="menu-map">...</div>` completo del HTML
+  (el frame, el canvas y el tag "Selva Alegre · Arequipa").
+- El bloque `@media (min-width: 901px) { .menu-inner{flex-direction:row...} }`
+  de `site.css` que partía el menú en dos columnas en desktop — con esto
+  fuera, `.menu-inner` vuelve a su única regla base (columna, centrado,
+  `justify-content:center`) en cualquier ancho, que es exactamente el
+  layout de la referencia.
+- Todo el CSS de `.menu-map`/`.menu-map-frame`/`.menu-map-tag`.
+- `window.initMenuMap` completo de `map.js` (creaba el Leaflet de la
+  miniatura del menú) y la referencia `window.menuMap` del resize
+  handler — solo queda `window.initHomeMap`/`window.homeMap`.
+- `ensureMenuMap()` de `app.js` y su llamada dentro de `setMenuOpen()`
+  (se disparaba al abrir el menú por primera vez).
+- La mitad `.menu-map-frame` de los selectores combinados de atribución/
+  controles de Leaflet (línea ~684 de `site.css`, compartida antes con
+  `.home-map-frame`) — ahora esas reglas aplican solo a `.home-map-frame`.
+
+**Qué se agregó:** `.menu-social`, una fila chica al pie del menú —
+mismo patrón que la referencia de Intursa (ahí decía "Síguenos" +
+LinkedIn). Reutiliza la tipografía/tracking de `.menu-contact` (mismo
+nivel jerárquico, Jost 12px uppercase con letter-spacing), separada por
+el mismo `margin-top` que ya usaba `.menu-contact`. El ícono es un único
+`<svg><path>` de Facebook con `fill:currentColor` (sin librería de
+iconos, coherente con los demás íconos en línea del sitio — Ubicación/
+Reservas), en `--soft` con hover a `--green` como el resto de los links
+del menú. Enlaza a `https://www.facebook.com/LaGrutaHotelArequipa/` con
+`target="_blank" rel="noopener"`.
+
+Verificado con Playwright en 1440px y 390px con el menú abierto:
+`.menu-inner` mide `flex-direction:column`/`justify-content:center` en
+ambos anchos (cero diferencia desktop/mobile, como pide la referencia),
+`.menu-map` ya no existe en el DOM, `.menu-social` está presente con el
+texto "Síguenos" y el link de Facebook apunta a la URL correcta, y cero
+errores de consola nuevos (el único error de red observado es un
+`ERR_CERT_AUTHORITY_INVALID` del proxy TLS del entorno de pruebas al
+pedir tiles/fuentes externas — no relacionado con este cambio, no
+aparece para un visitante real).
